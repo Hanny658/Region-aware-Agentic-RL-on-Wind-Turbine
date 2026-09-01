@@ -1,0 +1,33 @@
+# Unified region-conditional reward shared by ALL methods (decision: single reward, only the
+# policy parameterisation differs between mono / mono+flag / specialized).
+#
+#   r_t = 1[R2]*w_P*(P_t/P_base_t - 1) + 1[R3]*w_w*exp(-|d_wg|/tau) - lam_L*load_proxy_t - lam_A*(dbeta/kappa_b)^2
+#   (load_proxy: see envs/reward.py; ~1 per step under GSPI)
+#
+# w_P, w_w are to be calibrated so that per-step reward magnitude under pure GSPI is comparable in
+# both regions (see scripts/calibrate_reward.py, TODO).
+w_power: 220.0           # calibrated on toy (random residuals): equalises task-term std across regions (decision 2026-08-29)
+w_speed: 20.0
+tau_speed_err: 0.02        # normalised generator-speed error scale (paper: 0.02)
+lambda_load: 1.0           # sweep value; Pareto sweep planned over {0.1, 0.3, 1, 3}
+M_ref_nm: 8.0e6            # blade-root OoP moment normaliser for the observation only
+load_proxy: range_inc      # increment | range_inc | ema_std  (see envs/reward.py; decision 2026-08-29: (d) range_inc)
+load_signal: M_oop         # M_oop (blade-root OoP moment, ZMQ) | fa_acc (tower-top fore-aft acceleration, OpenFAST only)
+fitness_target: tower      # decision 2026-08-30: tower-base DEL is the evaluation objective (OpenFAST); the toy twin falls back to blade
+window_s: 10.0             # trailing window for range_inc
+ema_tau_s: 5.0             # time constant for ema_std
+# reference scales under GSPI per backend (scripts/dev/calib_dM_ref.py, 2026-08-29)
+dM_ref_nm: {toy: 3979, openfast: 13595}        # mean |M_t - M_{t-1}| per 10 ms step
+R_ref_nm:  {toy: 1256884, openfast: 2886431}   # mean 10 s window range
+S_ref_nm:  {toy: 380041, openfast: 741968}     # mean EMA std (tau 5 s)
+# references for load_signal = fa_acc (tower-top fore-aft acceleration, m/s^2), OpenFAST GSPI
+fa_dM_ref: {openfast: 0.002815}   # mean |dx| per 10 ms step (m/s^2), OpenFAST GSPI S1-S3
+fa_R_ref:  {openfast: 0.356133}   # mean 10 s range
+fa_S_ref:  {openfast: 0.082236}   # mean EMA std
+lambda_act: 0.1            # paper W2 = 0.1
+kappa_beta_rad: 0.1        # paper kappa = 0.1 rad
+# Region label (oracle rule, decision #3):
+#   R3 <=> ROSCO native pitch cmd > (current lower pitch limit incl. peak shaving) + 0.5 deg for >= 1.0 s ; back to R2 after < threshold for >= 1.0 s
+region_rule:
+  pitch_threshold_deg: 0.5
+  hold_s: 1.0

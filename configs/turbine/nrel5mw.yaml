@@ -1,0 +1,38 @@
+# NREL 5 MW onshore reference turbine — values taken from ROSCO v2.10.5
+# Examples/Test_Cases/NREL-5MW (DISCON.IN, ElastoDyn, ServoDyn). Do not edit by hand
+# to "tune"; these must stay consistent with the OpenFAST input files.
+name: nrel5mw_onshore
+rotor_radius_m: 63.0
+hub_height_m: 90.0
+gearbox_ratio: 97.0
+gen_efficiency: 0.944
+rho_air: 1.225
+drivetrain_inertia_lss_kgm2: 43702538.057     # WE_Jtot (blades+hub+gen referred to LSS)
+rated_power_w: 5.0e6
+rated_gen_torque_nm: 43093.5                  # VS_RtTq
+max_gen_torque_nm: 47402.9                    # VS_MaxTq
+rated_gen_speed_rads: 122.90967               # VS_RefSpd / PC_RefSpd (HSS)
+rated_rotor_speed_rpm: 12.1
+min_gen_speed_rads: 34.64286                  # VS_MinOMSpd
+cut_in_ms: 3.0
+rated_wind_ms: 11.4
+cut_out_ms: 25.0
+fine_pitch_rad: 0.0                           # PC_FinePit
+min_pitch_rad: 0.0                            # PC_MinPit
+max_pitch_rad: 1.5708                         # PC_MaxPit
+max_pitch_rate_rads: 0.1745                   # PC_MaxRat (10 deg/s in ROSCO example; NREL spec is 8 deg/s)
+tsr_opt: 7.5                                  # VS_TSRopt
+# ROSCO run-time options that define the GSPI baseline (kept as shipped, see decisions log)
+rosco:
+  VS_ControlMode: 2        # WSE-based TSR tracking below rated
+  VS_ConstPower: 0         # decision 2026-08-29: constant TORQUE above rated (paper-consistent); shipped default was 1
+  PC_ControlMode: 1
+  PS_Mode: 1               # peak shaving ON (decision: keep)
+  SS_Mode: 1
+  WE_Mode: 2
+  ZMQ_Mode: 1
+  ZMQ_UpdatePeriod: 0.01
+  LoggingLevel: 0
+# Simulation / control timing
+dt_sim_s: 0.01
+dt_ctrl_s: 0.01

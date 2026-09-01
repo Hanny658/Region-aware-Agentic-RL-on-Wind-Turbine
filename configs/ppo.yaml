@@ -1,0 +1,16 @@
+# PPO hyper-parameters (paper Table II as starting point)
+actor_lr: 1.0e-4
+critic_lr: 1.0e-3
+gamma: 0.998             # 2026-08-30 E4: 0.99 (1 s horizon at 10 ms) made the R3 residual myopic on OpenFAST (fast pitching excites the ~3 s tower mode, speed std ratio 1.27); 0.998 (5 s) -> 0.93
+gae_lambda: 0.98
+clip_range: 0.1
+batch_size: 1024
+n_epochs: 10
+hidden: [64, 64]
+init: xavier_normal_gain0.1
+# residual action scaling (paper: +-0.05 rad); R2 agent lower bound is 0 (decision)
+dbeta_max_rad: 0.05
+# second-order critically damped smoothing of the residual (paper eq. 2): omega_n = 6 * 4*9.23/T_rot
+damper:
+  zeta: 1.0
+  omega_n_mult: 6.0
