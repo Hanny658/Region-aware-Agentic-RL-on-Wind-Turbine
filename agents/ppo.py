@@ -104,10 +104,10 @@ class PPOConfig:
 class PPOLearner:
     """One actor/critic pair + its own transition buffer."""
 
-    def __init__(self, obs_dim: int, cfg: PPOConfig, name: str = "agent"):
+    def __init__(self, obs_dim: int, cfg: PPOConfig, name: str = "agent", act_dim: int = 1):
         self.cfg = cfg
         self.name = name
-        self.actor = Actor(obs_dim, 1, cfg.hidden, cfg.init_gain, cfg.log_std_init)
+        self.actor = Actor(obs_dim, act_dim, cfg.hidden, cfg.init_gain, cfg.log_std_init)
         self.critic = Critic(obs_dim, cfg.hidden, cfg.init_gain)
         self.opt_a = torch.optim.Adam(self.actor.parameters(), lr=cfg.actor_lr)
         self.opt_c = torch.optim.Adam(self.critic.parameters(), lr=cfg.critic_lr)
@@ -220,11 +220,11 @@ class SharedCriticPPO:
     shared critic), then each actor is updated on the steps where it acted. This removes the
     truncation-at-switch bias of the independent-learner variant (`spec`)."""
 
-    def __init__(self, obs_dim: int, cfg: PPOConfig, regions=(0, 1), names=("R2", "R3")):
+    def __init__(self, obs_dim: int, cfg: PPOConfig, regions=(0, 1), names=("R2", "R3"), act_dim: int = 1):
         self.cfg = cfg
         self.regions = tuple(regions)
         self.names = dict(zip(regions, names))
-        self.actors = {r: Actor(obs_dim, 1, cfg.hidden, cfg.init_gain, cfg.log_std_init) for r in regions}
+        self.actors = {r: Actor(obs_dim, act_dim, cfg.hidden, cfg.init_gain, cfg.log_std_init) for r in regions}
         self.critic = Critic(obs_dim, cfg.hidden, cfg.init_gain)
         self.opt_a = {r: torch.optim.Adam(self.actors[r].parameters(), lr=cfg.actor_lr) for r in regions}
         self.opt_c = torch.optim.Adam(self.critic.parameters(), lr=cfg.critic_lr)

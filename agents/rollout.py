@@ -77,13 +77,13 @@ def episode_metrics(L: dict, dt: float, wg_rated: float, warmup_s: float, outb: 
     return out
 
 
-def _build_actors(policy_set: dict, obs_dim: int, hidden) -> dict:
+def _build_actors(policy_set: dict, obs_dim: int, hidden, act_dim: int = 1) -> dict:
     actors = {}
     for reg, snap in policy_set.items():
         if snap is None:
             actors[reg] = None
             continue
-        a = Actor(obs_dim, 1, hidden)
+        a = Actor(obs_dim, act_dim, hidden)
         a.load_state_dict(snap["actor"])
         a.eval()
         rms = RunningMeanStd((obs_dim,))
@@ -95,7 +95,8 @@ def _build_actors(policy_set: dict, obs_dim: int, hidden) -> dict:
 def run_episode(env, policy_set: dict, hidden, episode_index: int, deterministic: bool,
                 seed: int | None = None, knobs: dict | None = None, keep_log: bool = False) -> dict:
     obs_dim = env.observation_space.shape[0]
-    actors = _build_actors(policy_set, obs_dim, hidden)
+    act_dim = env.action_space.shape[0]
+    actors = _build_actors(policy_set, obs_dim, hidden, act_dim)
     if knobs:
         env.set_knobs(knobs)
     if seed is not None:
@@ -107,7 +108,7 @@ def run_episode(env, policy_set: dict, hidden, episode_index: int, deterministic
         region = env.region
         pol = actors.get(region)
         if pol is None:
-            a, lp = np.zeros(1, np.float32), 0.0
+            a, lp = np.zeros(act_dim, np.float32), 0.0
         else:
             actor, rms = pol
             a, lp = actor.act(rms.normalize(obs).astype(np.float32), deterministic)
@@ -118,7 +119,7 @@ def run_episode(env, policy_set: dict, hidden, episode_index: int, deterministic
     L = env.log_arrays()
     metrics = episode_metrics(L, env.dt, env.wg_rated, env.spec_ep.warmup_s, getattr(env, "outb", None))
     return {
-        "obs": np.asarray(O, np.float32), "act": np.asarray(A, np.float32).reshape(-1, 1),
+        "obs": np.asarray(O, np.float32), "act": np.asarray(A, np.float32).reshape(len(A), -1),
         "logp": np.asarray(LP, np.float32), "rew": np.asarray(RW, np.float32),
         "region": np.asarray(RG, np.int8), "last_obs": obs.astype(np.float32),
         "terminated": bool(terminated), "episode_index": episode_index,
