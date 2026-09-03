@@ -11,7 +11,7 @@ micromamba activate wtrl
 
 SRC="$WTRL/ROSCO/rosco/controller"
 # apply patch (keep pristine copies for diffing)
-for f in ZeroMQInterface.f90 zmq_client.c; do
+for f in ZeroMQInterface.f90 zmq_client.c Controllers.f90 Filters.f90 ControllerBlocks.f90; do
   [ -f "$SRC/src/$f.orig" ] || cp "$SRC/src/$f" "$SRC/src/$f.orig"
   tr -d '\r' < "$PROJ/controllers/rosco_patch/$f" > "$SRC/src/$f"
 done
