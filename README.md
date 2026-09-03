@@ -115,16 +115,55 @@ real reward loopholes were identified and guarded on the way (overspeed farming 
 region label; kinetic-energy draining), plus one critical infrastructure bug
 (action-buffer misalignment for multi-dim actions) — see roadmap §15 for the honest chronicle.
 
-**5. Hard-won implementation facts (F3, F4, F7).** PPO γ must be 0.998 at 10 ms steps (0.99 is
+**5. LPV-MPC baseline (roadmap §16).** Comparison baselines are **GSPI + MPC** (decision
+2026-09-03; the Wang et al. paper numbers return as a reference once IPC lands). The MPC is a
+3-state LPV controller (rotor + first tower fore-aft mode, Cp/Ct-table linearisation each 0.1 s,
+OSQP, live peak-shaving floor, no preview), tuned on the supervisor winds by F — the same model
+selection every method gets. Held-out S3–S6:
+
+| method | F | Pwr MSE ↓% | Spd MSE ↓% | TwrBsMyt DEL ↓% | RootMyc1 DEL ↓% | Eloss % | spd std ratio |
+|---|---|---|---|---|---|---|---|
+| GSPI (ref) | 0 | 0 | 0 | 0 | 0 | 0 | 1.000 |
+| LPV-MPC (tuned) | **−17.6** | +7.5 | +4.2 | **−17.6** | −0.7 | −0.30 | **0.912** |
+| spec + guard (5 seeds) | +13.9 ± 2.3 | +6.2 | +6.2 | +13.9 | +4.4 | +0.26 | 0.968 |
+| spec + schedule (5 seeds) | +15.6 ± 3.7 | −2.4 | +6.0 | +15.6 | +5.1 | +0.36 | 0.968 |
+| spec + llm_fork (2 local seeds) | +15.8 | +1.7 | +1.6 | +15.8 | +5.4 | +0.33 | 0.991 |
+
+The MPC reproduces (amplified) the classic trade-off: best regulation of all methods, paid for
+with tower fatigue — a regulation-optimal pitch loop pumps the ~0.32 Hz tower mode. The
+region-aware RL rows Pareto-dominate it on the combined objective. Ours is deliberately a simple
+MPC (no preview, no load terms — fatigue is not expressible as a QP cost, and a naive
+tower-velocity term drives the optimum to feathering); on the 1-DOF toy twin, where its model is
+exact, the same MPC beats everything (speed std 0.03 vs GSPI 0.48) — its shortfall on OpenFAST is
+model mismatch plus the non-quadratic objective, which is precisely the gap the residual-RL fills.
+
+### R3 trajectories (held-out episode U15 TI8 S3)
+
+Single above-rated episode, all three controllers on identical wind; in each figure the
+best-scoring method (per-figure metric in the legend) is drawn on top.
+
+![R3 power](docs/figures/r3_power.png)
+![R3 generator speed](docs/figures/r3_speed.png)
+![R3 tower-base fore-aft moment](docs/figures/r3_tower.png)
+![R3 blade-root out-of-plane moment](docs/figures/r3_blade.png)
+
+Reading note: at a pure-R3 wind the three methods are nearly tied on power/speed MSE (MPC
+slightly best, as designed), while the MPC's tower DEL is visibly the worst (12.3 vs 9.2 MN·m);
+the RL methods' tower-base *gains* live mostly in the R2/transition winds (F2), so these R3
+figures show the regulation story, not the load story.
+
+**6. Hard-won implementation facts (F3, F4, F7).** PPO γ must be 0.998 at 10 ms steps (0.99 is
 myopic w.r.t. the ~3 s tower mode and every method fails); the load reward must be the trailing
 peak-to-peak increment (`range_inc`) — |M| and |ΔM| both destabilise; λ_L has a cliff (start ≤ 1,
 raise only after competence — the curriculum effect, first found by the LLM); `ckpt_last` is
 frequently degraded, best-checkpoint selection is essential; the toy twin screens mechanisms and
 rewards but its policies do not transfer zero-shot.
 
-**Boundaries.** No MPC comparison exists (open item). Numbers are not directly comparable to the
-baseline paper's 15 MW results (different plant and objective weights: we prioritise loads).
-Wind bank was regenerated on migration (2026-09-01); cross-machine F values are not seed-paired.
+**Boundaries.** Numbers are not directly comparable to the Wang et al. 15 MW results (different
+plant and objective weights: we prioritise loads); their paper serves as method reference, not a
+numeric baseline, until IPC lands. Wind bank was regenerated on migration (2026-09-01);
+cross-machine F values are not seed-paired. MPC rows use wind-relabeled pairing (both sides),
+since the oracle region label keys off ROSCO's native command.
 
 ## Status / ongoing
 
@@ -132,8 +171,9 @@ Wind bank was regenerated on migration (2026-09-01); cross-machine F values are 
 - **IPC (dq-frame cyclic-pitch residual for R3)** in progress: Coleman-transform channel validated
   physically (a hand-tuned I-controller already gives blade-root DEL −22 % at 15 m/s; ±1°/axis,
   R3-gated); ipc_on vs ipc_off campaign (blade objective, 5 + 5 seeds) running.
+- MPC baseline: done (see above); IPC campaign paused for it, resumable.
 - Queued: robustness evaluation (higher TI / ETM wind classes on existing checkpoints),
-  MPC baseline (decision pending), learned router, 15 MW extension.
+  learned router, 15 MW extension.
 
 ## How to run
 
