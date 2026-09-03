@@ -95,6 +95,7 @@ class ToyTurbineEnv(ResidualPitchEnv):
         self.N = float(tb["gearbox_ratio"])
         self.eta = float(tb["gen_efficiency"])
         self.rate_max = float(tb["max_pitch_rate_rads"])
+        self.tq_max = float(tb["max_gen_torque_nm"])
         self.flap_w = 2 * np.pi * flap_hz
         self.flap_z = flap_zeta
         self.one_p_amp = one_p_amp
@@ -141,17 +142,21 @@ class ToyTurbineEnv(ResidualPitchEnv):
         self.rosco.init(self.beta, self.omega * self.N, self.omega, v0, self.Tg)
         self.beta_native, self.Tg = self.rosco.step(0.0, self.beta, self.omega * self.N, self.omega,
                                                     self.Tg, self.eta, v0)
+        self.Tg_app = self.Tg
         return self._measure(v0, 0.0)
 
-    def _sim_step(self, pitch_offset: float) -> dict:
+    def _sim_step(self, pitch_offset: float, tq_offset: float = 0.0, ipc3=None) -> dict:
+        assert ipc3 is None, "the 1-DOF toy twin cannot represent per-blade pitch (IPC is OpenFAST-only)"
         v = sample_at(self.series, self.wind_dt, self.t)
         # actuator: total command = ROSCO native + residual, rate-limited
         cmd = self.beta_native + pitch_offset
         d = np.clip(cmd - self.beta, -self.rate_max * self.dt, self.rate_max * self.dt)
         self.beta = float(self.beta + d)
+        # torque: native + residual, hard-limited (mirrors the patched avrSWAP(47) write)
+        self.Tg_app = float(np.clip(self.Tg + tq_offset, 0.0, self.tq_max))
         # rotor
         T_aero, F_T = self._aero(v, self.omega, self.beta)
-        self.omega += self.dt * (T_aero - self.N * self.Tg) / self.J
+        self.omega += self.dt * (T_aero - self.N * self.Tg_app) / self.J
         self.omega = max(self.omega, 0.05)
         self.azimuth = (self.azimuth + self.omega * self.dt) % (2 * np.pi)
         # blade root flap load: static + mode + 1P
@@ -163,16 +168,18 @@ class ToyTurbineEnv(ResidualPitchEnv):
         self.flap_x[:] = (x, xd)
         self.M_oop = x * (1.0 + self.one_p_amp * np.sin(self.azimuth))
         self.t += self.dt
-        # controller (measurements after the physics update)
+        # controller (measurements after the physics update; DISCON sees the *applied* torque,
+        # as OpenFAST would, while its own PI state stays native — the Fortran patch guarantees that)
         self.beta_native, self.Tg = self.rosco.step(self.t, self.beta, self.omega * self.N, self.omega,
-                                                    self.Tg, self.eta, v, root_oop=(self.M_oop,) * 3)
+                                                    self.Tg_app, self.eta, v, root_oop=(self.M_oop,) * 3)
         return self._measure(v, pitch_offset)
 
     def _measure(self, v, pitch_offset) -> dict:
         wg = self.omega * self.N
+        tq = getattr(self, "Tg_app", self.Tg)
         return {
-            "t": self.t, "P": wg * self.Tg * self.eta, "gen_speed": wg, "rot_speed": self.omega,
-            "gen_torque": self.Tg, "v_hub": v, "v_est": v, "M_oop": getattr(self, "M_oop", 0.0),
+            "t": self.t, "P": wg * tq * self.eta, "gen_speed": wg, "rot_speed": self.omega,
+            "gen_torque": tq, "v_hub": v, "v_est": v, "M_oop": getattr(self, "M_oop", 0.0),
             "beta_meas": self.beta, "beta_native": self.beta_native, "min_pit": self._min_pit(v),
             "beta_applied": self.beta, "offset": pitch_offset, "fa_acc": 0.0,
         }

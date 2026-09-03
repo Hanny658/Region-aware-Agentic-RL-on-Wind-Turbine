@@ -20,6 +20,7 @@ import yaml
 
 from controllers.router import R2, R3, OracleRegionRouter
 from envs.reward import RegionReward
+from envs.coleman import coleman, coleman_inverse
 from envs.safety import ResidualSafety, SecondOrderDamper
 
 PROJ = Path(__file__).resolve().parents[1]
@@ -49,6 +50,8 @@ class EnvConfig:
     damper_omega_mult: float = 6.0
     baseline_dir: str | None = None      # cache of paired GSPI trajectories (P_base)
     obs_fa_acc: bool = False             # append tower-top fore-aft acceleration to the observation
+    dtau_max_nm: float = 0.0             # R2 torque residual bound [Nm]; 0 disables (action stays 1-D)
+    ipc_max_rad: float = 0.0             # R3 dq-frame cyclic-pitch bound [rad]; 0 disables (+2 act, +2 obs)
     obs_scales: dict = field(default_factory=lambda: {
         "dwg_dot": 0.05,     # normalised gen accel scale [1/s]
         "v": 25.0,
@@ -70,7 +73,8 @@ class ResidualPitchEnv(gym.Env):
         self._ep_idx = -1
 
         self.wg_rated = float(self.tb["rated_gen_speed_rads"])
-        self.reward_fn = RegionReward(cfg.reward, self.wg_rated, self.BACKEND, self.dt)
+        self.reward_fn = RegionReward({**cfg.reward, "rated_power_w": self.tb["rated_power_w"]},
+                                      self.wg_rated, self.BACKEND, self.dt)
         rr = cfg.reward["region_rule"]
         self.router = OracleRegionRouter(float(self.tb["fine_pitch_rad"]),
                                          np.deg2rad(rr["pitch_threshold_deg"]), rr["hold_s"], self.dt)
@@ -79,13 +83,33 @@ class ResidualPitchEnv(gym.Env):
             T_rot = 60.0 / float(self.tb["rated_rotor_speed_rpm"])
             wn = cfg.damper_omega_mult * 4.0 * 9.23 / T_rot
             damper = SecondOrderDamper(wn, cfg.damper_zeta, self.dt)
+        tau_damper = None
+        if cfg.use_damper and cfg.dtau_max_nm > 0.0:
+            tau_damper = SecondOrderDamper(wn, cfg.damper_zeta, self.dt)
+        ipc_dampers = None
+        if cfg.use_damper and cfg.ipc_max_rad > 0.0:
+            ipc_dampers = (SecondOrderDamper(wn, cfg.damper_zeta, self.dt),
+                           SecondOrderDamper(wn, cfg.damper_zeta, self.dt))
         self.safety = ResidualSafety(cfg.dbeta_max, float(self.tb["min_pitch_rad"]),
-                                     float(self.tb["max_pitch_rad"]), damper)
+                                     float(self.tb["max_pitch_rad"]), damper,
+                                     dtau_max_nm=cfg.dtau_max_nm, tq_min_nm=0.0,
+                                     tq_max_nm=float(self.tb["max_gen_torque_nm"]),
+                                     tau_damper=tau_damper)
+        self.safety.tq_speed_cut = 0.98 * self.wg_rated
+        self.safety.ipc_max = float(cfg.ipc_max_rad)
+        self.safety.ipc_dampers = ipc_dampers
+        self._J_lss = float(self.tb["drivetrain_inertia_lss_kgm2"])
+        self._gen_eff = float(self.tb["gen_efficiency"])
+        # dq-moment observation filter (EMA tau 0.5 s) for the IPC channel
+        self._dq_alpha = min(1.0, self.dt / 0.5)
+        self._dq = np.zeros(2)
 
         self.load_key = "fa_acc" if cfg.reward.get("load_signal", "M_oop") == "fa_acc" else "M_oop"
-        n_obs = 5 + (2 if cfg.region_flag_in_obs else 0) + (1 if cfg.obs_fa_acc else 0)
+        n_obs = (5 + (2 if cfg.region_flag_in_obs else 0) + (1 if cfg.obs_fa_acc else 0)
+                 + (2 if cfg.ipc_max_rad > 0.0 else 0))
+        n_act = 1 + (1 if cfg.dtau_max_nm > 0.0 else 0) + (2 if cfg.ipc_max_rad > 0.0 else 0)
         self.observation_space = gym.spaces.Box(-np.inf, np.inf, (n_obs,), np.float32)
-        self.action_space = gym.spaces.Box(-1.0, 1.0, (1,), np.float32)
+        self.action_space = gym.spaces.Box(-1.0, 1.0, (n_act,), np.float32)
 
         self.M_scale = cfg.obs_scales["M"] or float(cfg.reward["M_ref_nm"])
         self._baseline = None
@@ -95,7 +119,7 @@ class ResidualPitchEnv(gym.Env):
     def _sim_reset(self, spec: EpisodeSpec) -> dict:
         raise NotImplementedError
 
-    def _sim_step(self, pitch_offset: float) -> dict:
+    def _sim_step(self, pitch_offset: float, tq_offset: float = 0.0, ipc3=None) -> dict:
         raise NotImplementedError
 
     def _sim_close(self):
@@ -126,6 +150,8 @@ class ResidualPitchEnv(gym.Env):
              m["v_hub"] / self.cfg.obs_scales["v"], m["M_oop"] / self.M_scale]
         if self.cfg.obs_fa_acc:
             o.append(m.get("fa_acc", 0.0))
+        if self.cfg.ipc_max_rad > 0.0:
+            o += [self._dq[0] / self.M_scale, self._dq[1] / self.M_scale]
         if self.cfg.region_flag_in_obs:
             o += [1.0 if region == R2 else 0.0, 1.0 if region == R3 else 0.0]
         return np.asarray(o, dtype=np.float32)
@@ -151,6 +177,7 @@ class ResidualPitchEnv(gym.Env):
         self._load_baseline(self.spec_ep)
         self.log = {}
         self._prev_dwg = None
+        self._dq = np.zeros(2)
         self.safety.reset()
         self.reward_fn.reset()
         m = self._sim_reset(self.spec_ep)
@@ -165,7 +192,11 @@ class ResidualPitchEnv(gym.Env):
             self.region = self.router.update(m["beta_native"], m["min_pit"])
             r, info = self.reward_fn(region, m["P"], self._P_base(m["t"], m["P"]), m["gen_speed"],
                                      m[self.load_key], m_prev[self.load_key], 0.0)
-            self._log(m, region, 0.0, r, {**info, "warmup": 1})
+            if self.cfg.ipc_max_rad > 0.0:
+                md, mq = coleman((m["M_oop"], m["M_oop2"], m["M_oop3"]), m["azimuth"])
+                self._dq += self._dq_alpha * (np.array([md, mq]) - self._dq)
+            self._log(m, region, 0.0, r, {**info, "warmup": 1, "dtau": 0.0,
+                                          "theta_d": 0.0, "theta_q": 0.0})
         self._m = m
         return self._obs(m, self.region), {"region": self.region}
 
@@ -173,10 +204,34 @@ class ResidualPitchEnv(gym.Env):
         m_prev = self._m
         region = self.region
         dbeta = self.safety.apply(float(action[0]), region, m_prev["beta_native"], m_prev["min_pit"])
-        m = self._sim_step(dbeta)
+        i = 1
+        dtau = 0.0
+        if self.cfg.dtau_max_nm > 0.0:
+            dtau = self.safety.apply_tau(float(action[i]), region, m_prev["gen_torque"],
+                                         m_prev["gen_speed"])
+            i += 1
+        ipc3 = None
+        theta_d = theta_q = 0.0
+        if self.cfg.ipc_max_rad > 0.0:
+            theta_d, theta_q = self.safety.apply_ipc(float(action[i]), float(action[i + 1]), region)
+            # apply at the azimuth of THIS step (measurement is one step old: advance by omega*dt)
+            psi = m_prev["azimuth"] + m_prev["rot_speed"] * self.dt
+            ipc3 = coleman_inverse(theta_d, theta_q, psi)
+        m = self._sim_step(dbeta, dtau, ipc3)
+        # exact rotor-KE flux (electrical-equivalent) so the torque channel cannot profit from
+        # draining/storing kinetic energy; None when the channel is off (pitch-only runs unchanged)
+        ke_dot = None
+        if self.cfg.dtau_max_nm > 0.0:
+            ke_dot = 0.5 * self._J_lss * (m["rot_speed"] ** 2 - m_prev["rot_speed"] ** 2) / self.dt \
+                     * self._gen_eff
+        dipc = float(np.hypot(theta_d, theta_q))
         r, info = self.reward_fn(region, m["P"], self._P_base(m["t"], m["P"]), m["gen_speed"],
-                                 m[self.load_key], m_prev[self.load_key], dbeta)
-        self._log(m, region, dbeta, r, {**info, "warmup": 0})
+                                 m[self.load_key], m_prev[self.load_key], dbeta, dtau, ke_dot, dipc)
+        if self.cfg.ipc_max_rad > 0.0:      # dq-moment observation (EMA), from the fresh measurement
+            md, mq = coleman((m["M_oop"], m["M_oop2"], m["M_oop3"]), m["azimuth"])
+            self._dq += self._dq_alpha * (np.array([md, mq]) - self._dq)
+        self._log(m, region, dbeta, r, {**info, "warmup": 0, "dtau": dtau,
+                                        "theta_d": theta_d, "theta_q": theta_q})
         # region for the *next* decision uses the fresh ROSCO command
         self.region = self.router.update(m["beta_native"], m["min_pit"])
         self._m = m

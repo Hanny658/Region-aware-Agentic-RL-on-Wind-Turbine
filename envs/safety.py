@@ -38,12 +38,23 @@ class ResidualSafety:
     """Turns a raw residual into the pitch offset actually sent to ROSCO."""
 
     def __init__(self, dbeta_max, min_pitch: float, max_pitch: float,
-                 damper: SecondOrderDamper | None):
+                 damper: SecondOrderDamper | None, dtau_max_nm: float = 0.0,
+                 tq_min_nm: float = 0.0, tq_max_nm: float = 0.0,
+                 tau_damper: SecondOrderDamper | None = None):
         self.dbeta_max = {R2: float(dbeta_max), R3: float(dbeta_max)} if not isinstance(dbeta_max, dict) \
             else {R2: float(dbeta_max["R2"]), R3: float(dbeta_max["R3"])}
         self.min_pitch = min_pitch
         self.max_pitch = max_pitch
         self.damper = damper
+        # torque residual channel (R2 only, decision 2026-09-02); disabled when dtau_max_nm == 0
+        self.dtau_max = float(dtau_max_nm)
+        self.tq_min, self.tq_max = float(tq_min_nm), float(tq_max_nm)
+        self.tau_damper = tau_damper
+        self.tq_speed_cut = 0.0            # set by the env: 0.98 * rated gen speed [rad/s]
+        # IPC channel (dq-frame cyclic pitch, R3 only; 2026-09-03): amplitude cap + one damper
+        # per axis, all in the quasi-static dq domain (smoothness matters there, not per blade)
+        self.ipc_max = 0.0
+        self.ipc_dampers: tuple | None = None
 
     def set_knobs(self, knobs: dict):
         if "dbeta_max_R2" in knobs:
@@ -57,6 +68,11 @@ class ResidualSafety:
     def reset(self):
         if self.damper is not None:
             self.damper.reset()
+        if self.tau_damper is not None:
+            self.tau_damper.reset()
+        if self.ipc_dampers is not None:
+            for d in self.ipc_dampers:
+                d.reset()
 
     def apply(self, action_unit: float, region: int, beta_native: float, min_pit_now: float) -> float:
         """action_unit: agent output in [-1, 1] (scaled here by the region's dbeta_max).
@@ -70,3 +86,31 @@ class ResidualSafety:
         lo = max(self.min_pitch, min_pit_now)
         total = float(np.clip(beta_native + d, lo, self.max_pitch))
         return total - beta_native
+
+    def apply_tau(self, action_unit: float, region: int, tq_native: float,
+                  gen_speed: float = 0.0) -> float:
+        """Torque residual [Nm]: R2 only AND truly below rated speed, +-dtau_max, smoothed,
+        total clamped to the hard torque limits (ROSCO saturates again Fortran-side).
+        The speed gate (< tq_speed_cut) breaks the overspeed reward exploit found 2026-09-03:
+        negative dtau accelerates the rotor past rated while the oracle label can stay R2."""
+        if self.dtau_max <= 0.0:
+            return 0.0
+        gate = region == R2 and (self.tq_speed_cut <= 0.0 or gen_speed < self.tq_speed_cut)
+        d = float(np.clip(action_unit, -1.0, 1.0)) * self.dtau_max if gate else 0.0
+        if self.tau_damper is not None:
+            d = self.tau_damper.step(d)
+        total = float(np.clip(tq_native + d, self.tq_min, self.tq_max))
+        return total - tq_native
+
+    def apply_ipc(self, ud: float, uq: float, region: int) -> tuple[float, float]:
+        """dq-frame cyclic-pitch amplitudes [rad]: R3 only, each axis clipped to +-ipc_max and
+        smoothed; ROSCO rate-limits and saturates the total per-blade command Fortran-side."""
+        if self.ipc_max <= 0.0:
+            return 0.0, 0.0
+        gate = region == R3
+        td = float(np.clip(ud, -1.0, 1.0)) * self.ipc_max if gate else 0.0
+        tq = float(np.clip(uq, -1.0, 1.0)) * self.ipc_max if gate else 0.0
+        if self.ipc_dampers is not None:
+            td = self.ipc_dampers[0].step(td)
+            tq = self.ipc_dampers[1].step(tq)
+        return td, tq

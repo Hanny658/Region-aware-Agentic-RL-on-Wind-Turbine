@@ -112,8 +112,9 @@ class OpenFASTEnv(ResidualPitchEnv):
             raise ValueError(f"expected {N_MEAS} measurements, got {len(vals)}: {msg[:80]}")
         return vals
 
-    def _send(self, pitch_offset: float):
-        sp = [0.0, 0.0, pitch_offset, pitch_offset, pitch_offset, 0.0, 0.0, 0.0]
+    def _send(self, pitch_offset: float, tq_offset: float = 0.0, ipc3=None):
+        p = [pitch_offset] * 3 if ipc3 is None else [pitch_offset + float(x) for x in ipc3]
+        sp = [tq_offset, 0.0, p[0], p[1], p[2], 0.0, 0.0, 0.0]
         self.sock.send(", ".join(f"{s:.8e}" for s in sp).encode())
 
     def _to_meas(self, v: np.ndarray, offset: float) -> dict:
@@ -121,6 +122,7 @@ class OpenFASTEnv(ResidualPitchEnv):
             "t": float(v[M_TIME]), "P": float(v[M_GEN_PWR]), "gen_speed": float(v[M_GEN_SPD]),
             "rot_speed": float(v[M_ROT_SPD]), "gen_torque": float(v[M_GEN_TQ]),
             "v_hub": float(v[M_WIND]), "v_est": float(v[M_WE_VW]), "M_oop": float(v[M_OOP1]),
+            "M_oop2": float(v[M_OOP2]), "M_oop3": float(v[M_OOP3]),
             "beta_meas": float(v[M_BLPITCH]), "beta_native": float(v[M_PC_PITCOMT]),
             "min_pit": float(v[M_PC_MINPIT]), "beta_applied": float(v[M_PITCOM1]), "offset": offset,
             "fa_acc": float(v[M_FA_ACC]), "azimuth": float(v[M_AZI]),
@@ -142,9 +144,9 @@ class OpenFASTEnv(ResidualPitchEnv):
         self._last_t = float(v[M_TIME])
         return self._to_meas(v, 0.0)
 
-    def _sim_step(self, pitch_offset: float) -> dict:
-        # answer the pending request with this step's offset, then wait for the next measurement.
-        self._send(pitch_offset)
+    def _sim_step(self, pitch_offset: float, tq_offset: float = 0.0, ipc3=None) -> dict:
+        # answer the pending request with this step's offsets, then wait for the next measurement.
+        self._send(pitch_offset, tq_offset, ipc3)
         while True:
             v = self._recv()
             t = float(v[M_TIME])
@@ -153,11 +155,11 @@ class OpenFASTEnv(ResidualPitchEnv):
                 self._finish()
                 return self._to_meas(v, pitch_offset)
             if self._last_t is not None and t <= self._last_t + 1e-9:
-                self._send(pitch_offset)       # repeated call at the same time (corrector)
+                self._send(pitch_offset, tq_offset, ipc3)   # repeated call at the same time (corrector)
                 continue
             self._last_t = t
             if t >= self._tmax - 1e-6:         # last regular step: drain the final exchange now
-                self._send(pitch_offset)
+                self._send(pitch_offset, tq_offset, ipc3)
                 try:
                     vf = self._recv()
                     self._send(0.0)
