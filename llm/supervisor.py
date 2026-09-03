@@ -232,3 +232,46 @@ class ScheduleSupervisor:
         if chosen is None:
             return {"knobs": dict(summary["current_knobs"]), "rationale": "schedule: no change"}
         return {"knobs": dict(chosen["knobs"]), "rationale": f"schedule entry @ep {chosen['episode']}"}
+
+
+class CompetenceScheduleSupervisor:
+    """Replay the same distilled schedule, but indexed on competence instead of episode count
+    (litreview 2026-09-01: episode-indexed replay is gain scheduling on a variable that can
+    decouple from the policy's state; P5 showed the timing matters). Entry i is applied at the
+    first decision point where the training-eval F has reached the donor's F at the decision
+    that produced entry i (its `F_gate`), advancing at most one entry per decision. As an
+    open-loop fallback an entry is applied unconditionally `max_wait` episodes after the
+    donor's own episode index, so the schedule cannot stall forever."""
+    name = "schedule_comp"
+
+    def __init__(self, path: str, max_wait: float = 60.0):
+        import os
+        self.items = sorted(json.load(open(os.path.expanduser(path))), key=lambda x: x["episode"])
+        missing = [it["episode"] for it in self.items if "F_gate" not in it]
+        if missing:
+            raise ValueError(f"schedule entries without F_gate (re-run scripts/dev/extract_schedule.py "
+                             f"on the donor run): episodes {missing}")
+        self.max_wait = float(max_wait)
+        self.i = 0
+
+    def propose(self, summary: dict) -> dict:
+        n = len(self.items)
+        if self.i >= n:
+            return {"knobs": dict(summary["current_knobs"]), "rationale": "schedule_comp: exhausted"}
+        ep = summary["episodes_done"]
+        # after a rollback the guardrail masks F with the historical best (train.py); the gate
+        # must see the *measured* competence or it re-applies aggressive entries into the crash
+        # (observed sched2_comp_s2, 2026-09-02: 4 entries applied inside rollback decisions)
+        ev = summary["evaluation_now"]
+        F = float(ev.get("F_measured", ev["F"]))
+        it = self.items[self.i]
+        gate, deadline = float(it["F_gate"]), it["episode"] + self.max_wait
+        if F >= gate or ep >= deadline:
+            self.i += 1
+            why = "gate" if F >= gate else "max_wait"
+            return {"knobs": dict(it["knobs"]),
+                    "rationale": f"schedule_comp entry {self.i}/{n} via {why} "
+                                 f"(F {F:.1f} vs gate {gate:.1f}, ep {ep} vs donor {it['episode']})"}
+        return {"knobs": dict(summary["current_knobs"]),
+                "rationale": f"schedule_comp: waiting for entry {self.i + 1}/{n} "
+                             f"(F {F:.1f} < gate {gate:.1f}, fallback @ep {deadline:g})"}

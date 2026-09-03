@@ -9,14 +9,17 @@ out = os.path.expanduser(sys.argv[2])
 sched = []
 for ln in open(os.path.join(run, "decisions.jsonl"), encoding="utf-8"):
     d = json.loads(ln)
+    gate = {}  # donor's pre-decision evaluation: the competence at which it made this change
+    if isinstance(d.get("fit"), dict) and "F" in d["fit"]:
+        gate = {"F_gate": d["fit"]["F"], "tier_gate": d["fit"].get("tier")}
     if d.get("accepted") and d.get("changed"):
         knobs = dict(d["knobs"])
         for kk, (a, b) in d["changed"].items():
             knobs[kk] = b
-        sched.append({"episode": d["episode"], "knobs": knobs})
+        sched.append({"episode": d["episode"], "knobs": knobs, **gate})
     if "fork" in d:
         c = d["fork"]["candidates"][d["fork"]["chosen"]]
-        sched.append({"episode": d["episode"], "knobs": c["knobs"]})
+        sched.append({"episode": d["episode"], "knobs": c["knobs"], **gate})
 json.dump(sched, open(out, "w"), indent=1)
 print(f"{len(sched)} schedule entries -> {out}")
 for e in sched:
