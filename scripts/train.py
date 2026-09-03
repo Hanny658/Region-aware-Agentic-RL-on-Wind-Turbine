@@ -38,9 +38,9 @@ from controllers.router import R2, R3
 from envs.base_env import PROJ, default_config
 from envs.factory import baseline_dir, episode_list
 from eval.fitness import baseline_metrics, fitness
-from llm.supervisor import (KNOBS, ROLLBACK_DROP, LLMCandidateSupervisor, LLMSupervisor, NoneSupervisor,
-                            RandomCandidateSupervisor, RandomSupervisor, ScheduleSupervisor, build_summary,
-                            clamp_proposal)
+from llm.supervisor import (KNOBS, ROLLBACK_DROP, CompetenceScheduleSupervisor, LLMCandidateSupervisor,
+                            LLMSupervisor, NoneSupervisor, RandomCandidateSupervisor, RandomSupervisor,
+                            ScheduleSupervisor, build_summary, clamp_proposal)
 
 
 def main():
@@ -69,7 +69,7 @@ def main():
     ap.add_argument("--min_batch", type=int, default=2048, help="skip an update with fewer samples")
     # supervisor
     ap.add_argument("--supervisor", default="none",
-                    choices=["none", "guard", "random", "llm", "llm_fork", "random_fork", "schedule"],
+                    choices=["none", "guard", "random", "llm", "llm_fork", "random_fork", "schedule", "schedule_comp"],
                     help="none: fixed knobs, no rollback | guard: fixed knobs + rollback-to-best guardrail | "
                          "random / llm: proposals + guardrail")
     ap.add_argument("--supervise_every", type=int, default=30, help="episodes between evaluations/decisions")
@@ -83,8 +83,14 @@ def main():
     ap.add_argument("--n_candidates", type=int, default=3, help="llm_fork / random_fork: candidates per decision")
     ap.add_argument("--fork_waves", type=int, default=1, help="training waves per fork before its evaluation")
     ap.add_argument("--knob_schedule", default=None, help="schedule supervisor: JSON [{episode, knobs}]")
+    ap.add_argument("--sched_max_wait", type=float, default=60.0,
+                    help="schedule_comp: apply an entry unconditionally this many episodes after its donor episode")
     ap.add_argument("--log_std_init", type=float, default=None, help="initial policy log-std (default from PPOConfig, -1.0)")
     ap.add_argument("--dbeta_max", type=float, default=None, help="override residual bound [rad] for both regions")
+    ap.add_argument("--dtau_max", type=float, default=0.0,
+                    help="R2 torque residual bound [Nm]; > 0 enables the 2nd action dim (needs the Controllers.f90 patch)")
+    ap.add_argument("--ipc_max", type=float, default=0.0,
+                    help="R3 dq-frame cyclic-pitch bound [rad]; > 0 adds 2 action dims + (Md,Mq) obs (OpenFAST only)")
     ap.add_argument("--dbeta_max_R3", type=float, default=None, help="override residual bound [rad] for R3 only")
     ap.add_argument("--load_signal", default=None, choices=["M_oop", "fa_acc"], help="reward load signal (default from reward.yaml)")
     ap.add_argument("--fitness_target", default=None, choices=["blade", "tower"], help="fitness objective (default from reward.yaml)")
@@ -130,8 +136,22 @@ def main():
     if args.obs_fa_acc:
         cfg.obs_fa_acc = True
         cfg_over["obs_fa_acc"] = True
+    if args.dtau_max > 0.0:
+        cfg.dtau_max_nm = args.dtau_max
+        cfg_over["dtau_max_nm"] = args.dtau_max
+        cfg.reward.setdefault("kappa_tau_nm", 2.0 * args.dtau_max)
+    if args.ipc_max > 0.0:
+        if args.backend == "toy":
+            raise SystemExit("--ipc_max requires the openfast backend (1-DOF toy has no per-blade pitch)")
+        if args.supervisor in ("random", "llm") and not args.no_dry_run:
+            raise SystemExit("--ipc_max with a proposing supervisor needs --no_dry_run (toy twin has no IPC)")
+        cfg.ipc_max_rad = args.ipc_max
+        cfg_over["ipc_max_rad"] = args.ipc_max
+        cfg.reward.setdefault("kappa_ipc_rad", 2.0 * args.ipc_max)
     cfg_over["reward"] = cfg.reward
-    obs_dim = 5 + (2 if cfg.region_flag_in_obs else 0) + (1 if cfg.obs_fa_acc else 0)
+    obs_dim = (5 + (2 if cfg.region_flag_in_obs else 0) + (1 if cfg.obs_fa_acc else 0)
+               + (2 if args.ipc_max > 0.0 else 0))
+    act_dim = 1 + (1 if args.dtau_max > 0.0 else 0) + (2 if args.ipc_max > 0.0 else 0)
     dt, wg_rated = float(cfg.turbine["dt_ctrl_s"]), float(cfg.turbine["rated_gen_speed_rads"])
 
     episodes = episode_list(args.means, args.seeds, episode_s=args.episode_s, warmup_s=args.warmup_s)
@@ -149,15 +169,16 @@ def main():
 
     # ---------------------------------------------------------------- learners per method
     if args.method in ("mono", "mono_flag"):
-        shared = PPOLearner(obs_dim, pcfg, "mono")
+        shared = PPOLearner(obs_dim, pcfg, "mono", act_dim=act_dim)
         learners = {R2: shared, R3: shared}
     elif args.method == "spec":
-        learners = {R2: PPOLearner(obs_dim, pcfg, "R2"), R3: PPOLearner(obs_dim, pcfg, "R3")}
+        learners = {R2: PPOLearner(obs_dim, pcfg, "R2", act_dim=act_dim),
+                    R3: PPOLearner(obs_dim, pcfg, "R3", act_dim=act_dim)}
     elif args.method == "spec_sc":
-        sc = SharedCriticPPO(obs_dim, pcfg, regions=(R2, R3), names=("R2", "R3"))
+        sc = SharedCriticPPO(obs_dim, pcfg, regions=(R2, R3), names=("R2", "R3"), act_dim=act_dim)
         learners = {R2: sc.view(R2), R3: sc.view(R3)}
     else:  # r3only
-        learners = {R2: None, R3: PPOLearner(obs_dim, pcfg, "R3")}
+        learners = {R2: None, R3: PPOLearner(obs_dim, pcfg, "R3", act_dim=act_dim)}
     sc = sc if args.method == "spec_sc" else None
     unique_learners = list({id(l): l for l in learners.values() if l is not None}.values())
 
@@ -204,10 +225,10 @@ def main():
     pool = WorkerPool(args.workers, args.backend, episodes + eval_episodes, cfg_over, hidden=pcfg.hidden,
                       port0=args.port0, tag=f"wk_{run_tag}")
     base = baseline_metrics(baseline_dir(args.backend), eval_episodes, dt, wg_rated)
-    proposes = args.supervisor in ("random", "llm", "schedule")
+    proposes = args.supervisor in ("random", "llm", "schedule", "schedule_comp")
     forks = args.supervisor in ("llm_fork", "random_fork")
     use_rollback = args.supervisor != "none"
-    use_twin = proposes and args.supervisor != "schedule" and not args.no_dry_run
+    use_twin = proposes and args.supervisor not in ("schedule", "schedule_comp") and not args.no_dry_run
     if use_twin and args.backend != "toy":
         # the toy twin has no tower signal: dry runs use the blade-moment reward (F is reward-independent)
         twin_pool = WorkerPool(min(3, len(eval_episodes)), "toy", eval_episodes,
@@ -233,6 +254,8 @@ def main():
         sup = RandomCandidateSupervisor(seed=args.seed, n_candidates=args.n_candidates)
     elif args.supervisor == "schedule":
         sup = ScheduleSupervisor(args.knob_schedule)
+    elif args.supervisor == "schedule_comp":
+        sup = CompetenceScheduleSupervisor(args.knob_schedule, max_wait=args.sched_max_wait)
     else:
         sup = NoneSupervisor()
 

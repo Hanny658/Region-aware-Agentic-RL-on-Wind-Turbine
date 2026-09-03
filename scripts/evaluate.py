@@ -46,7 +46,9 @@ def main():
     hidden = tuple(ppo_yaml["hidden"])
     flag = cfg_run["method"] == "mono_flag"
     cfg_over = {"baseline_dir": baseline_dir(args.backend), "region_flag_in_obs": flag, "reward": cfg_run["reward"],
-                "obs_fa_acc": bool(cfg_run.get("obs_fa_acc", False))}
+                "obs_fa_acc": bool(cfg_run.get("obs_fa_acc", False)),
+                "dtau_max_nm": float(cfg_run.get("dtau_max", 0.0) or 0.0),
+                "ipc_max_rad": float(cfg_run.get("ipc_max", 0.0) or 0.0)}
 
     if args.gspi:
         ps = {R2: None, R3: None}
