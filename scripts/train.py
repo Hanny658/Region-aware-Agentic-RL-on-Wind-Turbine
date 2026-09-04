@@ -91,6 +91,10 @@ def main():
                     help="R2 torque residual bound [Nm]; > 0 enables the 2nd action dim (needs the Controllers.f90 patch)")
     ap.add_argument("--ipc_max", type=float, default=0.0,
                     help="R3 dq-frame cyclic-pitch bound [rad]; > 0 adds 2 action dims + (Md,Mq) obs (OpenFAST only)")
+    ap.add_argument("--ipc_hold", type=float, default=0.0,
+                    help="rotation-held IPC [s]: dq action decided by a separate slow learner every this many "
+                         "seconds and held (Coquelet-style train-slow); requires --ipc_max > 0")
+    ap.add_argument("--ipc_min_batch", type=int, default=64, help="min macro-samples for a slow-IPC update")
     ap.add_argument("--dbeta_max_R3", type=float, default=None, help="override residual bound [rad] for R3 only")
     ap.add_argument("--load_signal", default=None, choices=["M_oop", "fa_acc"], help="reward load signal (default from reward.yaml)")
     ap.add_argument("--fitness_target", default=None, choices=["blade", "tower"], help="fitness objective (default from reward.yaml)")
@@ -148,10 +152,18 @@ def main():
         cfg.ipc_max_rad = args.ipc_max
         cfg_over["ipc_max_rad"] = args.ipc_max
         cfg.reward.setdefault("kappa_ipc_rad", 2.0 * args.ipc_max)
+    if args.ipc_hold > 0.0:
+        if args.ipc_max <= 0.0:
+            raise SystemExit("--ipc_hold requires --ipc_max > 0")
+        if args.method == "spec_sc":
+            raise SystemExit("--ipc_hold is not wired into the shared-critic method")
+        cfg.ipc_hold_s = args.ipc_hold
+        cfg_over["ipc_hold_s"] = args.ipc_hold
     cfg_over["reward"] = cfg.reward
     obs_dim = (5 + (2 if cfg.region_flag_in_obs else 0) + (1 if cfg.obs_fa_acc else 0)
                + (2 if args.ipc_max > 0.0 else 0))
-    act_dim = 1 + (1 if args.dtau_max > 0.0 else 0) + (2 if args.ipc_max > 0.0 else 0)
+    # with rotation-held IPC the dq dims move to a separate slow learner
+    act_dim = 1 + (1 if args.dtau_max > 0.0 else 0) + (2 if args.ipc_max > 0.0 and args.ipc_hold <= 0.0 else 0)
     dt, wg_rated = float(cfg.turbine["dt_ctrl_s"]), float(cfg.turbine["rated_gen_speed_rads"])
 
     episodes = episode_list(args.means, args.seeds, episode_s=args.episode_s, warmup_s=args.warmup_s)
@@ -180,15 +192,30 @@ def main():
     else:  # r3only
         learners = {R2: None, R3: PPOLearner(obs_dim, pcfg, "R3", act_dim=act_dim)}
     sc = sc if args.method == "spec_sc" else None
+    ipc_learner = None
+    if args.ipc_hold > 0.0:
+        # slow learner: one decision per hold window; discount/GAE act on the macro chain
+        K = int(round(args.ipc_hold / float(cfg.turbine["dt_ctrl_s"])))
+        pcfg_ipc = copy.deepcopy(pcfg)
+        pcfg_ipc.gamma = pcfg.gamma ** K
+        pcfg_ipc.gae_lambda = 0.95
+        pcfg_ipc.batch_size = 256
+        ipc_learner = PPOLearner(obs_dim, pcfg_ipc, "IPC", act_dim=2)
     unique_learners = list({id(l): l for l in learners.values() if l is not None}.values())
 
     def policy_set():
-        return {r: (None if l is None else l.snapshot()) for r, l in learners.items()}
+        ps = {r: (None if l is None else l.snapshot()) for r, l in learners.items()}
+        if ipc_learner is not None:
+            ps["IPC"] = ipc_learner.snapshot()
+        return ps
 
     def learners_state():
         if sc is not None:
             return {"shared": copy.deepcopy(sc.state_dict())}
-        return {r: (None if l is None else copy.deepcopy(l.state_dict())) for r, l in learners.items()}
+        st = {r: (None if l is None else copy.deepcopy(l.state_dict())) for r, l in learners.items()}
+        if ipc_learner is not None:
+            st["IPC"] = copy.deepcopy(ipc_learner.state_dict())
+        return st
 
     def learners_load(state):
         if sc is not None:
@@ -197,6 +224,8 @@ def main():
         for r, l in learners.items():
             if l is not None:
                 l.load_state_dict(state[r])
+        if ipc_learner is not None and "IPC" in state:
+            ipc_learner.load_state_dict(state["IPC"])
 
     def split_segments(traj: dict) -> dict:
         """Cut a trajectory into contiguous same-region segments and route them to learners.
@@ -367,6 +396,25 @@ def main():
                     upd.update(l.update(l.prepare(segs)))
                 else:
                     upd[f"{l.name}/skipped_n"] = n
+            if ipc_learner is not None:
+                segs = []
+                for r in results:
+                    ip = r.get("ipc")
+                    if not ip or not len(ip["obs"]):
+                        continue
+                    # discounted window sum scaled by 1/K: keeps the macro-critic's targets at
+                    # per-step magnitude (advantage normalisation makes the policy gradient
+                    # invariant to the constant factor)
+                    K_ = max(1, int(round(args.ipc_hold / dt)))
+                    disc = np.array([np.sum(w * pcfg.gamma ** np.arange(len(w))) / K_ for w in ip["rew_win"]],
+                                    np.float32)
+                    segs.append({"obs": ip["obs"], "act": ip["act"], "logp": ip["logp"],
+                                 "rew": disc, "terminal": ip["terminal"], "last_obs": ip["last_obs"]})
+                n = sum(len(s["rew"]) for s in segs)
+                if n >= args.ipc_min_batch:
+                    upd.update(ipc_learner.update(ipc_learner.prepare(segs)))
+                else:
+                    upd["IPC/skipped_n"] = n
         t_upd = time.time() - t0
         for i, r in enumerate(results):
             rows.append({"episode": k + i, "fork": fork, "wall_rollout_s": t_roll, "wall_update_s": t_upd,

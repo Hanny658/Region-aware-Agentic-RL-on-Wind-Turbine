@@ -52,6 +52,8 @@ class EnvConfig:
     obs_fa_acc: bool = False             # append tower-top fore-aft acceleration to the observation
     dtau_max_nm: float = 0.0             # R2 torque residual bound [Nm]; 0 disables (action stays 1-D)
     ipc_max_rad: float = 0.0             # R3 dq-frame cyclic-pitch bound [rad]; 0 disables (+2 act, +2 obs)
+    ipc_hold_s: float = 0.0              # >0: rotation-held IPC (rollout samples the dq action every
+                                         # ipc_hold_s from a separate slow actor; Coquelet-style)
     obs_scales: dict = field(default_factory=lambda: {
         "dwg_dot": 0.05,     # normalised gen accel scale [1/s]
         "v": 25.0,

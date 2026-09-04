@@ -48,7 +48,8 @@ def main():
     cfg_over = {"baseline_dir": baseline_dir(args.backend), "region_flag_in_obs": flag, "reward": cfg_run["reward"],
                 "obs_fa_acc": bool(cfg_run.get("obs_fa_acc", False)),
                 "dtau_max_nm": float(cfg_run.get("dtau_max", 0.0) or 0.0),
-                "ipc_max_rad": float(cfg_run.get("ipc_max", 0.0) or 0.0)}
+                "ipc_max_rad": float(cfg_run.get("ipc_max", 0.0) or 0.0),
+                "ipc_hold_s": float(cfg_run.get("ipc_hold", 0.0) or 0.0)}
 
     if args.gspi:
         ps = {R2: None, R3: None}
@@ -63,6 +64,8 @@ def main():
             ps = {r: {"actor": sh["actors"][r], "obs_rms": sh["obs_rms"]} for r in (R2, R3)}
         else:
             ps = {r: (None if st[r] is None else {"actor": st[r]["actor"], "obs_rms": st[r]["obs_rms"]}) for r in (R2, R3)}
+            if "IPC" in st:      # rotation-held IPC: separate slow actor rides along
+                ps["IPC"] = {"actor": st["IPC"]["actor"], "obs_rms": st["IPC"]["obs_rms"]}
 
     episodes = episode_list(args.means, args.seeds, episode_s=args.episode_s)
     tb = yaml.safe_load(open(PROJ / "configs" / "turbine" / "nrel5mw.yaml"))

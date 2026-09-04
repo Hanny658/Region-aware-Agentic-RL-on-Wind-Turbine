@@ -83,7 +83,9 @@ def _build_actors(policy_set: dict, obs_dim: int, hidden, act_dim: int = 1) -> d
         if snap is None:
             actors[reg] = None
             continue
-        a = Actor(obs_dim, act_dim, hidden)
+        # act_dim per snapshot from its own weights: regional and slow-IPC actors differ
+        ad = int(snap["actor"]["log_std"].shape[0])
+        a = Actor(obs_dim, ad, hidden)
         a.load_state_dict(snap["actor"])
         a.eval()
         rms = RunningMeanStd((obs_dim,))
@@ -103,6 +105,14 @@ def run_episode(env, policy_set: dict, hidden, episode_index: int, deterministic
         torch.manual_seed(seed)
     obs, info = env.reset(options={"episode_index": episode_index})
     O, A, LP, RW, RG = [], [], [], [], []
+    # rotation-held IPC (Coquelet-style train-slow): a separate slow actor decides (theta_d,
+    # theta_q) once per `ipc_hold_s` and the value is held; its macro-transitions are returned
+    # under "ipc" for a dedicated slow learner. Without an "IPC" snapshot behaviour is unchanged.
+    slow = actors.get("IPC")
+    hold = int(round(float(getattr(env.cfg, "ipc_hold_s", 0.0)) / env.dt)) if slow else 0
+    iO, iA, iLP, iRW = [], [], [], []
+    held = np.zeros(2, np.float32)
+    step_i = 0
     done, terminated = False, False
     while not done:
         region = env.region
@@ -112,13 +122,22 @@ def run_episode(env, policy_set: dict, hidden, episode_index: int, deterministic
         else:
             actor, rms = pol
             a, lp = actor.act(rms.normalize(obs).astype(np.float32), deterministic)
+        if hold:
+            if step_i % hold == 0:
+                s_actor, s_rms = slow
+                held, slp = s_actor.act(s_rms.normalize(obs).astype(np.float32), deterministic)
+                iO.append(obs); iA.append(held); iLP.append(slp); iRW.append([])
+            a = np.concatenate([np.asarray(a, np.float32).reshape(-1)[:act_dim - 2], held])
         nobs, r, terminated, truncated, info = env.step(a)
-        O.append(obs); A.append(a); LP.append(lp); RW.append(r); RG.append(region)
+        if hold:
+            iRW[-1].append(r)
+        O.append(obs); A.append(a[:act_dim - 2] if hold else a); LP.append(lp); RW.append(r); RG.append(region)
         obs = nobs
+        step_i += 1
         done = terminated or truncated
     L = env.log_arrays()
     metrics = episode_metrics(L, env.dt, env.wg_rated, env.spec_ep.warmup_s, getattr(env, "outb", None))
-    return {
+    out = {
         "obs": np.asarray(O, np.float32), "act": np.asarray(A, np.float32).reshape(len(A), -1),
         "logp": np.asarray(LP, np.float32), "rew": np.asarray(RW, np.float32),
         "region": np.asarray(RG, np.int8), "last_obs": obs.astype(np.float32),
@@ -126,6 +145,12 @@ def run_episode(env, policy_set: dict, hidden, episode_index: int, deterministic
         "mean_wind": env.spec_ep.mean_wind, "wind_file": env.spec_ep.wind_file,
         "metrics": metrics, "knobs": env.knobs(), "log": L if keep_log else None,
     }
+    if hold:
+        out["ipc"] = {"obs": np.asarray(iO, np.float32), "act": np.asarray(iA, np.float32),
+                      "logp": np.asarray(iLP, np.float32),
+                      "rew_win": [np.asarray(w, np.float32) for w in iRW],
+                      "last_obs": obs.astype(np.float32), "terminal": bool(terminated)}
+    return out
 
 
 def _worker(idx, backend, episodes, cfg_over, port, conn, hidden, tag: str = "work", max_retries: int = 2):
