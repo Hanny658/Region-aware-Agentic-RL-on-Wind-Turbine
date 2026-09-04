@@ -26,6 +26,8 @@ BOUNDS = {
     "lambda_load_R2": (0.0, 50.0), "lambda_load_R3": (0.0, 50.0),
     "w_power": (1.0, 1000.0), "w_speed": (1.0, 1000.0),
     "dbeta_max_R2": (0.005, 0.10), "dbeta_max_R3": (0.005, 0.10),
+    # optional 7th knob (present only in IPC experiments): dq cyclic-pitch authority [rad/axis]
+    "ipc_max": (0.002, 0.035),
 }
 MAX_RATIO = 3.0          # a single decision may change a knob by at most x3 / /3
 ROLLBACK_DROP = 5.0      # points of F (== percentage points of DEL reduction)
@@ -47,6 +49,15 @@ its peak-to-peak range over a trailing 10 s window, normalised so it averages ~1
 so the load term averages about -lambda_load under the baseline.
 Action bounds: |dbeta| <= dbeta_max_R2 (R2, non-negative only) / dbeta_max_R3 (R3), radians.
 
+If `ipc_max` appears in current_knobs, the experiment also has an individual-pitch (IPC) channel:
+a separate slow agent sets a dq-frame (Coleman) cyclic-pitch amplitude pair once per rotor
+rotation, bounded by +-ipc_max [rad] per axis (Region 3 only). Cyclic pitch cancels the
+once-per-revolution blade-load variation from wind shear; a well-used channel cuts blade-root DEL
+substantially at the cost of pitch travel. Diagnostic `ipc_amp_deg` in training_last_window is the
+mean dq amplitude the policy actually uses, in degrees: if it stays far below ipc_max (channel
+unused) consider whether the load weight or the authority should change; if pitch travel grows
+with little DEL gain, shrink ipc_max. ipc_max is a knob like the others (bounds, x3 step rule).
+
 Ground-truth fitness F (you cannot change it, it is measured on deterministic evaluation episodes
 against the paired ROSCO baseline on identical wind):
   maximise blade-root DEL reduction [%], subject to energy loss <= 1 % and Region-3
@@ -63,16 +74,17 @@ load-feedback pitching that later collapses F; act before the evaluation shows i
 Guidelines: reason about which region/term is limiting F, change few knobs at a time, never move a
 knob by more than a factor of 3 per decision, respect the bounds, prefer conservative steps when the
 policy is still improving, and use the decision history to avoid repeating failed moves.
-Respond with ONE JSON object only:
-{"knobs": {"lambda_load_R2": x, "lambda_load_R3": x, "w_power": x, "w_speed": x, "dbeta_max_R2": x, "dbeta_max_R3": x},
+Respond with ONE JSON object only (include every knob present in current_knobs):
+{"knobs": {"lambda_load_R2": x, "lambda_load_R3": x, "w_power": x, "w_speed": x, "dbeta_max_R2": x, "dbeta_max_R3": x, ...},
  "rationale": "<= 3 sentences", "expected_effect": "<= 2 sentences", "confidence": 0-1}
 """
 
 
 def clamp_proposal(proposal: dict, current: dict) -> tuple[dict, list[str]]:
-    """Bounds + max-ratio validation. Returns (accepted knobs, notes)."""
+    """Bounds + max-ratio validation. Returns (accepted knobs, notes). The knob set is whatever
+    `current` carries (the base six, plus e.g. ipc_max in IPC experiments)."""
     out, notes = {}, []
-    for k in KNOBS:
+    for k in (kk for kk in current if kk in BOUNDS):
         lo, hi = BOUNDS[k]
         cur = float(current[k])
         v = proposal.get(k, cur)
@@ -113,7 +125,7 @@ class RandomSupervisor:
     def propose(self, summary: dict) -> dict:
         cur = summary["current_knobs"]
         k = int(self.rng.integers(self.n_change[0], self.n_change[1] + 1))
-        names = self.rng.choice(KNOBS, size=k, replace=False)
+        names = self.rng.choice([kk for kk in cur if kk in BOUNDS], size=k, replace=False)
         new = dict(cur)
         for n in names:
             f = float(np.exp(self.rng.uniform(-np.log(MAX_RATIO), np.log(MAX_RATIO))))

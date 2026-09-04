@@ -247,7 +247,8 @@ class ResidualPitchEnv(gym.Env):
         self._sim_close()
 
     # ------------------------------------------------------------------ supervisor knobs
-    KNOB_NAMES = ("lambda_load_R2", "lambda_load_R3", "w_power", "w_speed", "dbeta_max_R2", "dbeta_max_R3")
+    KNOB_NAMES = ("lambda_load_R2", "lambda_load_R3", "w_power", "w_speed", "dbeta_max_R2",
+                  "dbeta_max_R3", "ipc_max")
 
     def set_knobs(self, knobs: dict):
         self.reward_fn.set_knobs(knobs)

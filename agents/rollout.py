@@ -49,6 +49,8 @@ def episode_metrics(L: dict, dt: float, wg_rated: float, warmup_s: float, outb: 
         "M_oop_mean_MNm": float(L["M_oop"][act].mean() / 1e6),
         "RootMoop_DEL_MNm": float(del_rainflow(L["M_oop"][act], dt, 10) / 1e6),
     }
+    if "theta_d" in L:      # IPC telemetry: mean dq amplitude actually used (supervisor diagnostic)
+        out["ipc_amp_deg"] = float(np.rad2deg(np.hypot(L["theta_d"], L["theta_q"])[act].mean()))
     # spectral side-information for the supervisor (optimize_anything: actionable feedback beats score-only):
     # share of pitch-rate power in the tower fore-aft band (0.25-0.40 Hz, 5 MW ~0.32 Hz) and tower-top accel RMS
     try:

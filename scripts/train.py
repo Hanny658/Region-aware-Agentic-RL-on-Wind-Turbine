@@ -175,6 +175,8 @@ def main():
              "w_power": float(cfg.reward["w_power"]), "w_speed": float(cfg.reward["w_speed"]),
              "dbeta_max_R2": float(cfg.dbeta_max),
              "dbeta_max_R3": float(args.dbeta_max_R3 if args.dbeta_max_R3 is not None else cfg.dbeta_max)}
+    if args.ipc_max > 0.0:
+        knobs["ipc_max"] = float(args.ipc_max)     # 7th knob: dq cyclic-pitch authority [rad/axis]
     json.dump({**vars(args), "reward": cfg.reward, "ppo": ppo_yaml, "obs_dim": obs_dim, "knobs0": knobs,
                "episodes": [e.__dict__ for e in episodes], "eval_episodes": [e.__dict__ for e in eval_episodes]},
               open(out / "config.json", "w"), indent=1)
@@ -332,6 +334,7 @@ def main():
               "dbeta_abs_mean_deg": m("dbeta_abs_mean_deg"), "pitch_travel_deg": m("pitch_travel_deg"),
               "pitch_rate_power_tower_band_frac": m("pitch_rate_power_tower_band_frac"),
               "pitch_rate_power_3P_band_frac": m("pitch_rate_power_3P_band_frac"), "fa_acc_rms": m("fa_acc_rms"),
+              "ipc_amp_deg": m("ipc_amp_deg"),
               "RootMoop_DEL_MNm": m("RootMoop_DEL_MNm"), "energy_MWh": m("energy_MWh")}
         for u in sorted({r["mean_wind"] for r in w}):
             st["reward_mean_by_wind"][f"U{u:g}"] = float(np.mean([r["reward_mean"] for r in w if r["mean_wind"] == u]))
@@ -529,7 +532,8 @@ def main():
                     rec["proposal"] = {kk: v for kk, v in proposal.items() if kk != "knobs"}
                     rec["proposed_knobs_raw"] = proposal.get("knobs")
                     rec["validation_notes"] = notes
-                    changed = {kk: (knobs[kk], new_knobs[kk]) for kk in KNOBS if abs(new_knobs[kk] - knobs[kk]) > 1e-12}
+                    changed = {kk: (knobs[kk], new_knobs[kk]) for kk in knobs if kk in new_knobs
+                               and abs(new_knobs[kk] - knobs[kk]) > 1e-12}
                     accepted = bool(changed)
                     if changed and use_twin:
                         ps = policy_set()

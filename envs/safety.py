@@ -61,9 +61,14 @@ class ResidualSafety:
             self.dbeta_max[R2] = float(knobs["dbeta_max_R2"])
         if "dbeta_max_R3" in knobs:
             self.dbeta_max[R3] = float(knobs["dbeta_max_R3"])
+        if "ipc_max" in knobs and self.ipc_max > 0.0:
+            self.ipc_max = float(knobs["ipc_max"])
 
     def knobs(self) -> dict:
-        return {"dbeta_max_R2": self.dbeta_max[R2], "dbeta_max_R3": self.dbeta_max[R3]}
+        out = {"dbeta_max_R2": self.dbeta_max[R2], "dbeta_max_R3": self.dbeta_max[R3]}
+        if self.ipc_max > 0.0:
+            out["ipc_max"] = self.ipc_max
+        return out
 
     def reset(self):
         if self.damper is not None:
