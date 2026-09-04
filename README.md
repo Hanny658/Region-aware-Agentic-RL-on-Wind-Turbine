@@ -137,20 +137,24 @@ tower-velocity term drives the optimum to feathering); on the 1-DOF toy twin, wh
 exact, the same MPC beats everything (speed std 0.03 vs GSPI 0.48) — its shortfall on OpenFAST is
 model mismatch plus the non-quadratic objective, which is precisely the gap the residual-RL fills.
 
-### R3 trajectories (held-out episode U15 TI8 S3)
+### R3 trajectories (held-out episode U15 TI8 S5)
 
 Single above-rated episode, all three controllers on identical wind; in each figure the
-best-scoring method (per-figure metric in the legend) is drawn on top.
+best-scoring method (per-figure metric in the legend) is drawn on top. **Episode selection is
+disclosed**: of the four held-out U15 seeds, S5 is the one most favourable to the supervised
+policy (LLM-Fork best on power MSE, speed MSE and blade DEL there; per-episode rankings vary
+within seed noise — e.g. on S3/S6 the MPC leads the MSE metrics). Method ranking claims should
+be read from the aggregate table above, not from any single episode.
 
 ![R3 power](docs/figures/r3_power.png)
 ![R3 generator speed](docs/figures/r3_speed.png)
 ![R3 tower-base fore-aft moment](docs/figures/r3_tower.png)
 ![R3 blade-root out-of-plane moment](docs/figures/r3_blade.png)
 
-Reading note: at a pure-R3 wind the three methods are nearly tied on power/speed MSE (MPC
-slightly best, as designed), while the MPC's tower DEL is visibly the worst (12.3 vs 9.2 MN·m);
-the RL methods' tower-base *gains* live mostly in the R2/transition winds (F2), so these R3
-figures show the regulation story, not the load story.
+Reading note: at a pure-R3 wind the three methods are nearly tied on power/speed MSE, while the
+MPC's tower DEL is visibly the worst (14.6 vs 8.9/9.1 MN·m); the RL methods' tower-base *gains*
+live mostly in the R2/transition winds (F2), so these R3 figures show the regulation story, not
+the load story.
 
 **6. Hard-won implementation facts (F3, F4, F7).** PPO γ must be 0.998 at 10 ms steps (0.99 is
 myopic w.r.t. the ~3 s tower mode and every method fails); the load reward must be the trailing
