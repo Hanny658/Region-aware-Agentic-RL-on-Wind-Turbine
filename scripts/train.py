@@ -95,6 +95,10 @@ def main():
                     help="rotation-held IPC [s]: dq action decided by a separate slow learner every this many "
                          "seconds and held (Coquelet-style train-slow); requires --ipc_max > 0")
     ap.add_argument("--ipc_min_batch", type=int, default=64, help="min macro-samples for a slow-IPC update")
+    ap.add_argument("--curriculum_ti", type=float, default=0.0,
+                    help="wind curriculum: train on this TI bank first (e.g. 2), then the main bank")
+    ap.add_argument("--curriculum_until", type=int, default=150,
+                    help="episode at which the curriculum switches to the main (TI8) bank")
     ap.add_argument("--dbeta_max_R3", type=float, default=None, help="override residual bound [rad] for R3 only")
     ap.add_argument("--load_signal", default=None, choices=["M_oop", "fa_acc"], help="reward load signal (default from reward.yaml)")
     ap.add_argument("--fitness_target", default=None, choices=["blade", "tower"], help="fitness objective (default from reward.yaml)")
@@ -169,6 +173,18 @@ def main():
     episodes = episode_list(args.means, args.seeds, episode_s=args.episode_s, warmup_s=args.warmup_s)
     eval_episodes = episode_list(args.eval_means or args.means, args.eval_seeds or args.seeds,
                                  episode_s=args.episode_s, warmup_s=args.warmup_s)
+    # wind curriculum (Coquelet's implicit condition, roadmap 19): first `curriculum_until`
+    # episodes on a clean low-TI bank, then the main bank; supervisor eval / fitness stay on the
+    # main-bank eval winds throughout, so F always measures the real objective
+    cur_episodes = []
+    if args.curriculum_ti > 0.0:
+        cur_episodes = episode_list(args.means, args.seeds, ti=args.curriculum_ti,
+                                    episode_s=args.episode_s, warmup_s=args.warmup_s)
+
+    def train_ep_index(kk: int) -> int:
+        if cur_episodes and kk < args.curriculum_until:
+            return kk % len(cur_episodes)
+        return len(cur_episodes) + (kk % len(episodes))
     lam = cfg.reward["lambda_load"]
     knobs = {"lambda_load_R2": float(lam["R2"] if isinstance(lam, dict) else lam),
              "lambda_load_R3": float(lam["R3"] if isinstance(lam, dict) else lam),
@@ -178,7 +194,8 @@ def main():
     if args.ipc_max > 0.0:
         knobs["ipc_max"] = float(args.ipc_max)     # 7th knob: dq cyclic-pitch authority [rad/axis]
     json.dump({**vars(args), "reward": cfg.reward, "ppo": ppo_yaml, "obs_dim": obs_dim, "knobs0": knobs,
-               "episodes": [e.__dict__ for e in episodes], "eval_episodes": [e.__dict__ for e in eval_episodes]},
+               "episodes": [e.__dict__ for e in episodes], "eval_episodes": [e.__dict__ for e in eval_episodes],
+               "curriculum_episodes": [e.__dict__ for e in cur_episodes]},
               open(out / "config.json", "w"), indent=1)
 
     # ---------------------------------------------------------------- learners per method
@@ -253,8 +270,8 @@ def main():
     # ---------------------------------------------------------------- pools, baselines, supervisor
     # worker envs carry the training episodes followed by the evaluation episodes (indices offset by len(episodes))
     run_tag = re.sub(r"[^A-Za-z0-9_.-]", "_", out.name)[:40]
-    pool = WorkerPool(args.workers, args.backend, episodes + eval_episodes, cfg_over, hidden=pcfg.hidden,
-                      port0=args.port0, tag=f"wk_{run_tag}")
+    pool = WorkerPool(args.workers, args.backend, cur_episodes + episodes + eval_episodes, cfg_over,
+                      hidden=pcfg.hidden, port0=args.port0, tag=f"wk_{run_tag}")
     base = baseline_metrics(baseline_dir(args.backend), eval_episodes, dt, wg_rated)
     proposes = args.supervisor in ("random", "llm", "schedule", "schedule_comp")
     forks = args.supervisor in ("llm_fork", "random_fork")
@@ -292,7 +309,7 @@ def main():
 
     def evaluate(pool_, base_, knobs_, ps=None) -> dict:
         ps = ps or policy_set()
-        off = len(episodes) if pool_ is pool else 0
+        off = (len(cur_episodes) + len(episodes)) if pool_ is pool else 0
         jobs = [{"policy_set": ps, "episode_index": off + i, "deterministic": True, "seed": 12345, "knobs": knobs_}
                 for i in range(len(eval_episodes))]
         return fitness(pool_.run(jobs), base_, target=(fitness_target if pool_ is pool else "blade"))
@@ -378,7 +395,7 @@ def main():
         """One wave of training episodes with the given knobs (rollout + PPO update + logging)."""
         nonlocal k
         wave = min(args.workers, args.episodes - k)
-        jobs = [{"policy_set": policy_set(), "episode_index": (k + i) % len(episodes), "deterministic": False,
+        jobs = [{"policy_set": policy_set(), "episode_index": train_ep_index(k + i), "deterministic": False,
                  "seed": args.seed * 100003 + k + i, "knobs": knobs_} for i in range(wave)]
         t0 = time.time()
         results = pool.run(jobs)
