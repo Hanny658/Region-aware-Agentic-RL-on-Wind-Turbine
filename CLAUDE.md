@@ -5,19 +5,22 @@ PPO residual agents (R2/R3 split by an oracle rule), with an LLM supervisor tuni
 knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TSTE 2026 (`RelatedWorks/`, not in git).
 
 ## Read these first
-- `docs/REPORT_2026-09-01.md` — consolidated, verified findings F1–F7 + open items (**start here**).
-- `docs/roadmap_2026-08-30.md` — day-by-day experiment log, all intermediate tables (sections 1–12).
+- `docs/REPORT_2026-09-01.md` — consolidated, verified findings F1–F7 + final disposition (**start here**).
+- `docs/roadmap_2026-08-30.md` — day-by-day experiment log, all intermediate tables (sections 1–20).
 - Design decisions history: the user's explicit answers are recorded in the report; do not re-ask them.
 
-## State at last session (2026-09-01)
-- All local campaigns finished. Headline: 9/9 supervised spec runs beat GSPI on all four paper metrics
-  on held-out wind (strict tier); mono 0/9; the three supervised variants (llm_fork / random_fork /
-  schedule) are statistically tied at 3 RL seeds. No MPC baseline exists.
-- Raw results live on the Windows laptop in WSL `~/wtrl/exp/*` (not in git; ~GBs). Wind bank
-  `~/wtrl/wind` is the canonical one — copy it when migrating, or regenerate (then old comparisons
-  are not seed-paired).
-- Next steps (priority): ≥5–8 seeds to separate the supervised variants (Slurm/cloud); MPC baseline;
-  R2 torque residual (1-line ROSCO patch); Eureka-style reward-code route; learned router.
+## Final state (project concluded 2026-09-05)
+- Headline: 9/9 supervised spec runs beat GSPI on all four paper metrics on held-out wind (strict
+  tier); mono 0/9; the supervised variants (llm_fork / random_fork / schedule) are statistically
+  tied at 5 RL seeds (roadmap §13).
+- MPC baseline done (roadmap §16): wins speed regulation, loses tower DEL (−17.6 %); every
+  supervised spec variant Pareto-dominates it on F. R2 torque residual: clear seed-paired
+  negative (§15). IPC chapter closed (§17–§20): channel physically worth −14…−22 % (probes) but
+  RL exploitation ≤ 11 % utilisation across six mechanism variants; LLM supervision on IPC a
+  four-time non-win with a documented failure attractor; durable positive: rotation-held + guard
+  beats CPC in every seed (~+1 pp).
+- Raw results live outside git in `~/wtrl/exp/*` (~GBs). Wind bank `~/wtrl/wind` is canonical —
+  copy it when migrating, or regenerate (then old comparisons are not seed-paired).
 
 ## Environment / how to run
 - Linux/WSL: `bash scripts/wsl/bootstrap.sh` from the repo root inside WSL Ubuntu-24.04 — builds the
@@ -25,8 +28,8 @@ knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TSTE 2026 (`Rela
   ROSCO (`controllers/rosco_patch/` → 22-channel ZMQ), makes the toy DISCON + OpenFAST case template,
   generates wind S1–S6 + GSPI baselines, and writes `~/wtrl/run.sh` for the current repo path.
   Everything then runs as `~/wtrl/run.sh python scripts/...`.
-- macOS: untested; the same conda-forge packages exist — follow bootstrap.sh step by step, expect to
-  adjust the ROSCO build (gfortran via conda) and skip WSL-specific notes.
+- macOS: works with the same conda-forge stack — see `scripts/mac/finish_bootstrap.sh` (gfortran
+  via conda, `.dylib`→`.so` symlink for the DISCON, BSD sed differences).
 - LLM credentials: `.env` at repo root with `LLM_BASE_URL / LLM_API_KEY / LLM_MODEL` — **never commit
   it, never print the key**. Model gpt-5.6-luna: use `max_completion_tokens`, `reasoning_effort`,
   JSON mode; `max_tokens` and `temperature≠1` are rejected.

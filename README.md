@@ -8,7 +8,7 @@ reward/action knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TS
 constraint-tiered evaluation, and the agentic supervision layer.
 
 Detailed, dated records: `docs/REPORT_2026-09-01.md` (verified findings F1–F7),
-`docs/roadmap_2026-08-30.md` (day-by-day experiment log, §1–15),
+`docs/roadmap_2026-08-30.md` (day-by-day experiment log, §1–20),
 `docs/litreview_schedule_paradigm_2026-09-01.md` (supervision-paradigm literature review).
 
 ## System
@@ -165,19 +165,26 @@ rewards but its policies do not transfer zero-shot.
 
 **Boundaries.** Numbers are not directly comparable to the Wang et al. 15 MW results (different
 plant and objective weights: we prioritise loads); their paper serves as method reference, not a
-numeric baseline, until IPC lands. Wind bank was regenerated on migration (2026-09-01);
+numeric baseline. Wind bank was regenerated on migration (2026-09-01);
 cross-machine F values are not seed-paired. MPC rows use wind-relabeled pairing (both sides),
 since the oracle region label keys off ROSCO's native command.
 
-## Status / ongoing
+## Status
 
-- CPC + agentic supervision is concluded at the 3–5-seed statistical budget (variants tied).
-- **IPC (dq-frame cyclic-pitch residual for R3)** in progress: Coleman-transform channel validated
-  physically (a hand-tuned I-controller already gives blade-root DEL −22 % at 15 m/s; ±1°/axis,
-  R3-gated); ipc_on vs ipc_off campaign (blade objective, 5 + 5 seeds) running.
-- MPC baseline: done (see above); IPC campaign paused for it, resumable.
-- Queued: robustness evaluation (higher TI / ETM wind classes on existing checkpoints),
-  learned router, 15 MW extension.
+The project is concluded. Final scope and verdicts:
+
+- **CPC + agentic supervision**: concluded at the 5-seed statistical budget — all supervised spec
+  variants beat GSPI on held-out wind (strict tier), and the variants (llm_fork / random_fork /
+  schedule) are statistically tied (roadmap §13–§14).
+- **IPC (dq-frame cyclic-pitch residual for R3)**: concluded with an honest negative (roadmap
+  §17–§20). The channel is physically worth −14…−22 % blade DEL (hand-tuned probes), but RL
+  exploitation stayed ≤ 11 % utilisation across six mechanism variants (per-step, rotation-held,
+  low-TI curriculum × guard, LLM supervision). LLM supervision on IPC was a four-time non-win
+  with a reproducible failure attractor (documented in §20). The single durable positive:
+  rotation-held IPC + guard beats CPC in every seed tested (~+1 pp, §19).
+- **R2 torque residual**: clear seed-paired negative (roadmap §15).
+- **MPC baseline**: done (see above) — MPC wins speed regulation, loses tower loads; all
+  supervised spec variants Pareto-dominate it on F.
 
 ## How to run
 
