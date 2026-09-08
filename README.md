@@ -184,7 +184,14 @@ over `FA_KI` ∈ [0.001, 0.3] with the same model-selection rule as the MPC: **n
 reaches the strict tier**. +0.6 % tower DEL already costs 0.2 % speed std, +4.9 % costs 3.1 %, and
 beyond `FA_KI` = 0.1 the loop destabilises (speed std 2.2× GSPI). ROSCO's damper sits on the same
 Pareto trade-off as the MPC — buy tower fatigue with speed regulation — while the region-aware
-residual moves both (13.9 % tower DEL *at* speed std 0.968).
+residual moves both. Held-out, all three reference controllers side by side:
+
+| controller (held-out S3–S6) | F | tower DEL ↓% | speed-std ratio | tier |
+|---|---|---|---|---|
+| GSPI (reference) | 0 | 0 | 1.000 | — |
+| GSPI + ROSCO tower damper (F-optimal) | −4.5 | +0.7 | 1.003 | tol2 |
+| LPV-MPC (tuned) | −17.6 | −17.6 | 0.912 | strict |
+| **spec + guard residual (5 seeds)** | **+13.9 ± 2.3** | **+13.9** | **0.968** | **5/5 strict** |
 
 **8. Hard-won implementation facts (F3, F4, F7).** PPO γ must be 0.998 at 10 ms steps (0.99 is
 myopic w.r.t. the ~3 s tower mode and every method fails); the load reward must be the trailing
