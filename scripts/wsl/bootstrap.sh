@@ -49,11 +49,18 @@ sed -i 's/^1                   ! VS_ConstPower/0                   ! VS_ConstPow
    --dst ~/wtrl/runs/template_5mw --lib ~/wtrl/rosco_install/lib/libdiscon.so
 
 # 6. wind bank + baselines (skips existing .bts / overwrites baselines; ~40 min total)
-#    NOTE: to continue comparisons started on another machine, COPY its ~/wtrl/wind instead
-#    (TurbSim seeds are reproducible in principle, but keep one canonical bank).
-~/wtrl/run.sh python scripts/gen_wind.py --means 8 12.5 15 --seeds 1 2 3 4 5 6 --ti 8 --time 200 --out ~/wtrl/wind --jobs 4
-~/wtrl/run.sh python scripts/make_baselines.py --backend toy --means 8 12.5 15 --seeds 1 2 3 4 5 6
-~/wtrl/run.sh python scripts/make_baselines.py --backend openfast --means 8 12.5 15 --seeds 1 2 3 4 5 6 --jobs 6 --port0 5700
+#    WTRL_SKIP_WIND=1 skips this step: use it whenever a canonical bank is being MIGRATED from
+#    another machine. A regenerated bank has different .bts realisations, so F values computed
+#    against it are no longer seed-paired with the historical ones (this happened once, see
+#    docs/REPORT §4 / the migration caveat C1). Copy ~/wtrl/wind and ~/wtrl/baselines instead,
+#    then run `scripts/make_baselines.py --backend toy` if the toy twin is needed.
+if [ "${WTRL_SKIP_WIND:-0}" = "1" ]; then
+  echo "== step 6 skipped (WTRL_SKIP_WIND=1): copy ~/wtrl/wind + ~/wtrl/baselines from the old machine =="
+else
+  ~/wtrl/run.sh python scripts/gen_wind.py --means 8 12.5 15 --seeds 1 2 3 4 5 6 --ti 8 --time 200 --out ~/wtrl/wind --jobs 4
+  ~/wtrl/run.sh python scripts/make_baselines.py --backend toy --means 8 12.5 15 --seeds 1 2 3 4 5 6
+  ~/wtrl/run.sh python scripts/make_baselines.py --backend openfast --means 8 12.5 15 --seeds 1 2 3 4 5 6 --jobs 6 --port0 5700
+fi
 
 # 7. smoke tests
 ~/wtrl/run.sh python scripts/dev/smoke_modules.py

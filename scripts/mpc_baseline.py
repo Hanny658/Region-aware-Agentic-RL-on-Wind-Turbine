@@ -75,6 +75,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--means", nargs="+", type=float, default=[8, 12.5, 15])
     ap.add_argument("--seeds", nargs="+", type=int, default=[1])
+    ap.add_argument("--ti", type=float, default=8.0, help="turbulence intensity [%] of the wind bank")
     ap.add_argument("--episode_s", type=float, default=150.0)
     ap.add_argument("--horizon", type=int, default=20)
     ap.add_argument("--ts", type=float, default=0.1)
@@ -93,7 +94,7 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     tb = yaml.safe_load(open(PROJ / "configs" / "turbine" / "nrel5mw.yaml"))
     cp_path = os.path.expanduser("~/wtrl/runs/toy_discon/Cp_Ct_Cq.NREL5MW.txt")
-    episodes = episode_list(args.means, args.seeds, episode_s=args.episode_s)
+    episodes = episode_list(args.means, args.seeds, ti=args.ti, episode_s=args.episode_s)
     # pair against GSPI baselines RELABELED by wind (v_hub > rated), matching the MPC's labels —
     # oracle-labeled baseline R3 subsets differ at 12.5 m/s and corrupt the R3 MSE/std ratios
     base = {}

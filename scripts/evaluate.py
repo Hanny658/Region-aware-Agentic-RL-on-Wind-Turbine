@@ -30,6 +30,9 @@ def main():
     ap.add_argument("--backend", default="toy", choices=["toy", "openfast"])
     ap.add_argument("--means", nargs="+", type=float, default=[8, 12.5, 15])
     ap.add_argument("--seeds", nargs="+", type=int, default=[1])
+    ap.add_argument("--ti", type=float, default=8.0,
+                    help="turbulence intensity [%] selecting the wind bank / baseline files "
+                         "(U<mean>_TI<ti>_S<seed>); the stress classes use 14 and 22")
     ap.add_argument("--episode_s", type=float, default=150.0)
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--port0", type=int, default=5900)
@@ -67,7 +70,7 @@ def main():
             if "IPC" in st:      # rotation-held IPC: separate slow actor rides along
                 ps["IPC"] = {"actor": st["IPC"]["actor"], "obs_rms": st["IPC"]["obs_rms"]}
 
-    episodes = episode_list(args.means, args.seeds, episode_s=args.episode_s)
+    episodes = episode_list(args.means, args.seeds, ti=args.ti, episode_s=args.episode_s)
     tb = yaml.safe_load(open(PROJ / "configs" / "turbine" / "nrel5mw.yaml"))
     base = baseline_metrics(baseline_dir(args.backend), episodes, float(tb["dt_ctrl_s"]), float(tb["rated_gen_speed_rads"]))
     import re as _re
@@ -80,7 +83,10 @@ def main():
         pool.close()
     tgt = args.fitness_target or cfg_run.get("reward", {}).get("fitness_target", "blade")
     fit = fitness(res, base, target=tgt)
-    tag = args.tag or f"{args.backend}_s{'-'.join(map(str, args.seeds))}" + ("_gspi" if args.gspi else "")
+    # default tag unchanged at TI 8 (the historical bank) so old campaign scripts keep their filenames
+    ti_tag = "" if args.ti == 8.0 else f"_ti{args.ti:g}"
+    tag = args.tag or (f"{args.backend}{ti_tag}_s{'-'.join(map(str, args.seeds))}"
+                       + ("_gspi" if args.gspi else ""))
     with open(run / f"eval_{tag}.csv", "w", newline="") as f:
         keys = ["mean_wind", "wind_file", "terminated"]
         for r in res:

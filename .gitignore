@@ -219,3 +219,6 @@ __marimo__/
 
 # Reference files
 RelatedWorks/
+
+# Migrated experiment data (wind bank, GSPI baselines, frozen run artifacts) — GBs, never commit
+wtrl-migration/

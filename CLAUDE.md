@@ -6,27 +6,37 @@ knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TSTE 2026 (`Rela
 
 ## Read these first
 - `docs/REPORT_2026-09-01.md` — consolidated, verified findings F1–F7 + final disposition (**start here**).
-- `docs/roadmap_2026-08-30.md` — day-by-day experiment log, all intermediate tables (sections 1–20).
+- `docs/roadmap_2026-08-30.md` — day-by-day experiment log, all intermediate tables (sections 1–17).
 - Design decisions history: the user's explicit answers are recorded in the report; do not re-ask them.
 
-## Final state (project concluded 2026-09-05)
+## Scope (narrowed 2026-09-08)
+This repository is the **collective-pitch half**: region-aware residual RL + agentic (LLM)
+supervision + the GSPI and LPV-MPC baselines (roadmap §1–17). The follow-up research — IPC,
+trajectory auditor, LLM-evolved symbolic laws, law+RL composition, IEA 15 MW — moved to its own
+repository; the removed roadmap sections are kept at
+`wtrl-migration/_second_paper_moved/roadmap_sections_17-25.md`. The IPC/torque code paths stay in
+the tree (inert at `--ipc_max 0` / `--dtau_max 0`) because the migrated run configs reference them.
+
+## Final state (campaigns complete; manuscript in preparation)
 - Headline: 9/9 supervised spec runs beat GSPI on all four paper metrics on held-out wind (strict
   tier); mono 0/9; the supervised variants (llm_fork / random_fork / schedule) are statistically
-  tied at 5 RL seeds (roadmap §13).
+  tied at 5 RL seeds (roadmap §13) — supervision helps, the supervisor's identity does not, and
+  what guarantees constraint compliance is the fork/guardrail verification, not the proposer.
 - MPC baseline done (roadmap §16): wins speed regulation, loses tower DEL (−17.6 %); every
-  supervised spec variant Pareto-dominates it on F. R2 torque residual: clear seed-paired
-  negative (§15). IPC chapter closed (§17–§20): channel physically worth −14…−22 % (probes) but
-  RL exploitation ≤ 11 % utilisation across six mechanism variants; LLM supervision on IPC a
-  four-time non-win with a documented failure attractor; durable positive: rotation-held + guard
-  beats CPC in every seed (~+1 pp).
-- Raw results live outside git in `~/wtrl/exp/*` (~GBs). Wind bank `~/wtrl/wind` is canonical —
-  copy it when migrating, or regenerate (then old comparisons are not seed-paired).
+  supervised spec variant Pareto-dominates it on F, and the gap widens with turbulence (§17
+  robustness sweep). R2 torque residual: clear seed-paired negative (§15).
+- Data on this machine: `wtrl-migration/cpc-result/` (38 runs, MPC grid, aggregate rebuild script,
+  caveats C1–C10) + `wtrl-migration/{wind,openfast}` (canonical wind bank + paired GSPI baselines).
+  These are copied into `~/wtrl/{wind,baselines/openfast,exp}` inside WSL by the migration step —
+  **never regenerate the wind bank**, or historical F values stop being seed-paired (caveat C1).
 
 ## Environment / how to run
-- Linux/WSL: `bash scripts/wsl/bootstrap.sh` from the repo root inside WSL Ubuntu-24.04 — builds the
+- Linux/WSL: `WTRL_SKIP_WIND=1 bash scripts/wsl/bootstrap.sh` from the repo root inside WSL
+  Ubuntu-24.04 (the flag skips wind/baseline generation when a canonical bank is being migrated) — builds the
   micromamba env `wtrl` (openfast 4.2 conda-forge, torch-cpu, sb3, fatpack), compiles the patched
   ROSCO (`controllers/rosco_patch/` → 22-channel ZMQ), makes the toy DISCON + OpenFAST case template,
-  generates wind S1–S6 + GSPI baselines, and writes `~/wtrl/run.sh` for the current repo path.
+  generates wind S1–S6 + GSPI baselines (skipped by `WTRL_SKIP_WIND=1`), and writes `~/wtrl/run.sh`
+  for the current repo path.
   Everything then runs as `~/wtrl/run.sh python scripts/...`.
 - macOS: works with the same conda-forge stack — see `scripts/mac/finish_bootstrap.sh` (gfortran
   via conda, `.dylib`→`.so` symlink for the DISCON, BSD sed differences).

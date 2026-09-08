@@ -7,8 +7,12 @@ reward/action knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TS
 (Region-III-only residual RL on the IEA 15 MW); our extensions are the region split, the
 constraint-tiered evaluation, and the agentic supervision layer.
 
+**Scope**: this repository is the *collective-pitch* half — region-aware residual RL, agentic
+(LLM) supervision, and the GSPI / LPV-MPC baselines. The follow-up research (individual pitch,
+LLM-evolved symbolic control laws, law+RL composition, IEA 15 MW) lives in its own repository.
+
 Detailed, dated records: `docs/REPORT_2026-09-01.md` (verified findings F1–F7),
-`docs/roadmap_2026-08-30.md` (day-by-day experiment log, §1–20),
+`docs/roadmap_2026-08-30.md` (day-by-day experiment log, §1–17),
 `docs/litreview_schedule_paradigm_2026-09-01.md` (supervision-paradigm literature review).
 
 ## System
@@ -116,7 +120,7 @@ region label; kinetic-energy draining), plus one critical infrastructure bug
 (action-buffer misalignment for multi-dim actions) — see roadmap §15 for the honest chronicle.
 
 **5. LPV-MPC baseline (roadmap §16).** Comparison baselines are **GSPI + MPC** (decision
-2026-09-03; the Wang et al. paper numbers return as a reference once IPC lands). The MPC is a
+2026-09-03; the Wang et al. paper numbers stay a method reference, not a numeric baseline). The MPC is a
 3-state LPV controller (rotor + first tower fore-aft mode, Cp/Ct-table linearisation each 0.1 s,
 OSQP, live peak-shaving floor, no preview), tuned on the supervisor winds by F — the same model
 selection every method gets. Held-out S3–S6:
@@ -156,7 +160,23 @@ MPC's tower DEL is visibly the worst (14.6 vs 8.9/9.1 MN·m); the RL methods' to
 live mostly in the R2/transition winds (F2), so these R3 figures show the regulation story, not
 the load story.
 
-**6. Hard-won implementation facts (F3, F4, F7).** PPO γ must be 0.998 at 10 ms steps (0.99 is
+**6. Robustness under stress classes (roadmap §17, evaluation only).** Existing artifacts
+re-evaluated on TI14 @ {8, 12.5, 15}, TI22 @ 15 and U18 @ TI8 (out-of-distribution deep R3),
+seeds 3–4, paired GSPI baselines per class; RL = `spec + guard`, 5 seeds, best checkpoint:
+
+| class | RL tower DEL ↓% | RL blade DEL ↓% | MPC tower ↓% | RL spd ratio | RL tier |
+|---|---|---|---|---|---|
+| TI8 (held-out reference) | 11.6 ± 3.2 | 9.3 ± 1.9 | −17.6 | 0.920 | 5/5 strict |
+| TI14 | **16.3 ± 2.8** | 12.0 ± 3.2 | −8.9 | 0.929 | 5/5 strict |
+| TI22 @ 15 | **22.2 ± 5.8** | 5.6 ± 2.0 | −27.2 | 0.872 | 5/5 strict |
+| U18 @ TI8 (OOD) | **−3.5 ± 4.0** | 4.2 ± 2.1 | −56.1 | 0.914 | 5/5 strict |
+
+The RL tower gain *grows* with turbulence and stays strict in all 20 stress evaluations while the
+MPC degrades monotonically; at U18 the RL tower gain vanishes, exactly as F2 predicts (no R2 to
+peak-shave in deep R3). Caveat: these runs were trained on the *blade* objective, so their tower
+column is a by-product — the sweep must be repeated on the tower-objective arms before publication.
+
+**7. Hard-won implementation facts (F3, F4, F7).** PPO γ must be 0.998 at 10 ms steps (0.99 is
 myopic w.r.t. the ~3 s tower mode and every method fails); the load reward must be the trailing
 peak-to-peak increment (`range_inc`) — |M| and |ΔM| both destabilise; λ_L has a cliff (start ≤ 1,
 raise only after competence — the curriculum effect, first found by the LLM); `ckpt_last` is
@@ -171,20 +191,21 @@ since the oracle region label keys off ROSCO's native command.
 
 ## Status
 
-The project is concluded. Final scope and verdicts:
+Experiment campaigns are complete; the repository is in **manuscript preparation**. Verdicts:
 
 - **CPC + agentic supervision**: concluded at the 5-seed statistical budget — all supervised spec
   variants beat GSPI on held-out wind (strict tier), and the variants (llm_fork / random_fork /
-  schedule) are statistically tied (roadmap §13–§14).
-- **IPC (dq-frame cyclic-pitch residual for R3)**: concluded with an honest negative (roadmap
-  §17–§20). The channel is physically worth −14…−22 % blade DEL (hand-tuned probes), but RL
-  exploitation stayed ≤ 11 % utilisation across six mechanism variants (per-step, rotation-held,
-  low-TI curriculum × guard, LLM supervision). LLM supervision on IPC was a four-time non-win
-  with a reproducible failure attractor (documented in §20). The single durable positive:
-  rotation-held IPC + guard beats CPC in every seed tested (~+1 pp, §19).
+  schedule) are statistically tied (roadmap §13–§14). Supervision helps; the supervisor's identity
+  does not, and the verification machinery (not the proposer) is what guarantees compliance.
 - **R2 torque residual**: clear seed-paired negative (roadmap §15).
 - **MPC baseline**: done (see above) — MPC wins speed regulation, loses tower loads; all
-  supervised spec variants Pareto-dominate it on F.
+  supervised spec variants Pareto-dominate it on F, and the gap widens with turbulence (§17).
+- **Data**: the frozen, self-contained data package for this half (38 runs + MPC grid + aggregate
+  rebuild script + caveats C1–C10) is `wtrl-migration/cpc-result/`; the wind bank and paired GSPI
+  baselines it needs are `wtrl-migration/{wind,openfast}` — copy them, never regenerate them.
+- **Open before submission**: see the continuation list in `wtrl-migration/cpc-result/README.md` §7
+  (tower-objective stress sweep, GSPI+tower-damper baseline, 600 s re-evaluation, the three lost
+  night1 seeds, clean `schedule_comp` rerun).
 
 ## How to run
 

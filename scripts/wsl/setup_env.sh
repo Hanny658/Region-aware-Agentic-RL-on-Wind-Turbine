@@ -22,11 +22,11 @@ if [ ! -d "$WTRL/mamba/envs/wtrl" ]; then
     compilers gfortran cmake make pkg-config zeromq pyzmq \
     numpy scipy pandas matplotlib pyyaml \
     pytorch-cpu gymnasium stable-baselines3 tensorboard \
-    fatpack tqdm
+    fatpack tqdm openai osqp
 fi
 micromamba activate wtrl
 echo "== versions =="
-python -c "import torch, gymnasium, stable_baselines3, fatpack, zmq; print('torch', torch.__version__, 'gym', gymnasium.__version__, 'sb3', stable_baselines3.__version__, 'zmq', zmq.zmq_version())"
+python -c "import torch, gymnasium, stable_baselines3, fatpack, zmq, openai, osqp; print('torch', torch.__version__, 'gym', gymnasium.__version__, 'sb3', stable_baselines3.__version__, 'zmq', zmq.zmq_version())"
 for b in openfast turbsim gfortran cmake pkg-config; do printf "%-10s %s\n" "$b" "$(command -v $b || echo MISSING)"; done
 openfast -v 2>&1 | grep -i "openfast-v\|compiled" | head -3 || true
 pkg-config --modversion libzmq || echo "libzmq pkg-config MISSING"
