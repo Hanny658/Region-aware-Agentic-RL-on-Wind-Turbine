@@ -119,7 +119,8 @@ real reward loopholes were identified and guarded on the way (overspeed farming 
 region label; kinetic-energy draining), plus one critical infrastructure bug
 (action-buffer misalignment for multi-dim actions) — see roadmap §15 for the honest chronicle.
 
-**5. LPV-MPC baseline (roadmap §16).** Comparison baselines are **GSPI + MPC** (decision
+**5. LPV-MPC baseline (roadmap §16).** Comparison baselines are **GSPI + MPC**, joined by
+ROSCO's own tower damper in item 7 (decision
 2026-09-03; the Wang et al. paper numbers stay a method reference, not a numeric baseline). The MPC is a
 3-state LPV controller (rotor + first tower fore-aft mode, Cp/Ct-table linearisation each 0.1 s,
 OSQP, live peak-shaving floor, no preview), tuned on the supervisor winds by F — the same model
@@ -160,23 +161,32 @@ MPC's tower DEL is visibly the worst (14.6 vs 8.9/9.1 MN·m); the RL methods' to
 live mostly in the R2/transition winds (F2), so these R3 figures show the regulation story, not
 the load story.
 
-**6. Robustness under stress classes (roadmap §17, evaluation only).** Existing artifacts
-re-evaluated on TI14 @ {8, 12.5, 15}, TI22 @ 15 and U18 @ TI8 (out-of-distribution deep R3),
-seeds 3–4, paired GSPI baselines per class; RL = `spec + guard`, 5 seeds, best checkpoint:
+**6. Robustness under stress classes (roadmap §17, evaluation only).** The trained policies
+re-evaluated on wind never seen in training — TI14 @ {8, 12.5, 15}, TI22 @ 15 and U18 @ TI8
+(out-of-distribution deep Region 3), seeds 3–4, paired GSPI baselines per class, best checkpoint.
+Tower-base DEL reduction, mean ± std over RL seeds:
 
-| class | RL tower DEL ↓% | RL blade DEL ↓% | MPC tower ↓% | RL spd ratio | RL tier |
-|---|---|---|---|---|---|
-| TI8 (held-out reference) | 11.6 ± 3.2 | 9.3 ± 1.9 | −17.6 | 0.920 | 5/5 strict |
-| TI14 | **16.3 ± 2.8** | 12.0 ± 3.2 | −8.9 | 0.929 | 5/5 strict |
-| TI22 @ 15 | **22.2 ± 5.8** | 5.6 ± 2.0 | −27.2 | 0.872 | 5/5 strict |
-| U18 @ TI8 (OOD) | **−3.5 ± 4.0** | 4.2 ± 2.1 | −56.1 | 0.914 | 5/5 strict |
+| class | spec + guard (5 seeds) | schedule replay (5 seeds) | LPV-MPC |
+|---|---|---|---|
+| TI8 (held-out reference) | 13.93 ± 2.29 | 15.61 ± 3.68 | −17.6 |
+| TI14 | 14.12 ± 2.42 | 15.23 ± 4.03 | −8.9 |
+| TI22 @ 15 | 14.87 ± 4.42 | 17.81 ± 6.39 | −27.2 |
+| U18 @ TI8 (OOD) | 3.86 ± 1.73 | 3.12 ± 2.42 | −56.1 |
 
-The RL tower gain *grows* with turbulence and stays strict in all 20 stress evaluations while the
-MPC degrades monotonically; at U18 the RL tower gain vanishes, exactly as F2 predicts (no R2 to
-peak-shave in deep R3). Caveat: these runs were trained on the *blade* objective, so their tower
-column is a by-product — the sweep must be repeated on the tower-objective arms before publication.
+The residual's gain is **invariant** under stress (differences inside the seed spread) and **41 of
+42 stress evaluations stay strict** — speed std remains below GSPI in every class. The MPC is
+negative in all four classes and worst out of distribution. At U18 the residual keeps only 3–4 %:
+the tower gain is R2/transition peak-shaving (F2) and deep-R3 wind has no R2 to shave — a boundary
+the manuscript states rather than hides.
 
-**7. Hard-won implementation facts (F3, F4, F7).** PPO γ must be 0.998 at 10 ms steps (0.99 is
+**7. ROSCO's own tower damper is not a stronger baseline (roadmap §18).** Sweeping `TD_Mode=1`
+over `FA_KI` ∈ [0.001, 0.3] with the same model-selection rule as the MPC: **no configuration
+reaches the strict tier**. +0.6 % tower DEL already costs 0.2 % speed std, +4.9 % costs 3.1 %, and
+beyond `FA_KI` = 0.1 the loop destabilises (speed std 2.2× GSPI). ROSCO's damper sits on the same
+Pareto trade-off as the MPC — buy tower fatigue with speed regulation — while the region-aware
+residual moves both (13.9 % tower DEL *at* speed std 0.968).
+
+**8. Hard-won implementation facts (F3, F4, F7).** PPO γ must be 0.998 at 10 ms steps (0.99 is
 myopic w.r.t. the ~3 s tower mode and every method fails); the load reward must be the trailing
 peak-to-peak increment (`range_inc`) — |M| and |ΔM| both destabilise; λ_L has a cliff (start ≤ 1,
 raise only after competence — the curriculum effect, first found by the LLM); `ckpt_last` is

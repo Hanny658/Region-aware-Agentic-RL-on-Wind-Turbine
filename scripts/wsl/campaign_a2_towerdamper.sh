@@ -33,7 +33,7 @@ ev() {  # tag means... -- extra
   local tag=$1; shift
   [ -f "$RUN/eval_${tag}.json" ] && { echo "skip $tag"; return; }
   python scripts/evaluate.py --run "$RUN" --gspi --relabel_wind --backend openfast \
-     --workers 8 --port0 6600 --tag "$tag" "$@" 2>&1 | grep "F_strict\|Traceback\|Error"
+     --workers "${WTRL_EVAL_WORKERS:-8}" --port0 6600 --tag "$tag" "$@" 2>&1 | grep "F_strict\|Traceback\|Error"
 }
 
 pick_best() {   # prints "KI HPF" of the best strict config (best F overall if none is strict)
@@ -42,7 +42,7 @@ import glob, json, os, re
 best_strict, best_any = None, None
 for f in sorted(glob.glob(os.path.expanduser("~/wtrl/exp/gspi_td/eval_tune_*.json"))):
     j = json.load(open(f))
-    m = re.search(r"tune_ki([0-9.]+)_hpf([0-9.]+)", os.path.basename(f))
+    m = re.search(r"tune_ki([0-9.]+)_hpf([0-9.]+)\.json$", os.path.basename(f))
     if not m:
         continue
     cand = (j["F"], m.group(1), m.group(2))
@@ -66,7 +66,7 @@ auto)
 sweep)
   echo "=== A2 sweep on S1+S2 (model selection by F, same rule as the MPC baseline) $(date) ==="
   SAT=0.0873          # 5 deg integrator saturation
-  for KI in 0.01 0.03 0.10 0.30; do
+  for KI in 0.001 0.003 0.01 0.03 0.10 0.30; do
     for HPF in 0.172 0.500; do
       tag="tune_ki${KI}_hpf${HPF}"
       [ -f "$RUN/eval_${tag}.json" ] && { echo "skip $tag"; continue; }
