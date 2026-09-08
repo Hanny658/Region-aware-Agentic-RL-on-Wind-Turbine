@@ -28,13 +28,19 @@ SPEED_TOL_RATIO = 1.0
 PENALTY = 20.0
 
 
-def baseline_metrics(baseline_dir: str, episodes: list[EpisodeSpec], dt: float, wg_rated: float) -> dict:
-    """{wind_file: metrics} computed from the zero-residual npz logs with the same code path."""
+def baseline_metrics(baseline_dir: str, episodes: list[EpisodeSpec], dt: float, wg_rated: float,
+                     relabel_wind: float | None = None) -> dict:
+    """{wind_file: metrics} computed from the zero-residual npz logs with the same code path.
+    `relabel_wind` (rated wind speed) relabels R3 by v_hub instead of the oracle rule — pass it
+    whenever the evaluated controller is scored with the same relabeling, so both sides of the
+    ratio use the same R3 subset (roadmap 16, finding 4)."""
     out = {}
     for ep in episodes:
         p = Path(os.path.expanduser(baseline_dir)) / f"{Path(ep.wind_file).stem}.npz"
         d = np.load(p)
         L = {k: d[k] for k in d.files if not k.startswith("outb_")}
+        if relabel_wind is not None:
+            L["region"] = (L["v_hub"] > float(relabel_wind)).astype(np.int8)
         outb = {k[5:]: d[k] for k in d.files if k.startswith("outb_")} or None
         out[ep.wind_file] = episode_metrics(L, dt, wg_rated, ep.warmup_s, outb)
     return out

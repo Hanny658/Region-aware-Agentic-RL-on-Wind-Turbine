@@ -54,6 +54,11 @@ class EnvConfig:
     ipc_max_rad: float = 0.0             # R3 dq-frame cyclic-pitch bound [rad]; 0 disables (+2 act, +2 obs)
     ipc_hold_s: float = 0.0              # >0: rotation-held IPC (rollout samples the dq action every
                                          # ipc_hold_s from a separate slow actor; Coquelet-style)
+    region_label_by_wind: bool = False    # metrics only: label R3 by v_hub > rated instead of the
+                                         # oracle rule. Needed whenever a *non-residual* controller
+                                         # changes ROSCO's own pitch command (MPC override, ROSCO's
+                                         # tower damper), which would otherwise move the R3 subset
+                                         # and blind the speed constraint (roadmap 16, finding 4)
     obs_scales: dict = field(default_factory=lambda: {
         "dwg_dot": 0.05,     # normalised gen accel scale [1/s]
         "v": 25.0,

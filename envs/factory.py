@@ -8,6 +8,9 @@ from envs.base_env import EnvConfig, EpisodeSpec, default_config
 
 WIND_DIR = os.path.expanduser(os.environ.get("WTRL_WIND", "~/wtrl/wind"))
 WTRL = os.path.expanduser(os.environ.get("WTRL_HOME", "~/wtrl"))
+# OpenFAST case template; override to evaluate a differently configured ROSCO (e.g. the
+# tower-damper baseline template_5mw_td) without touching the canonical one
+TEMPLATE = os.path.expanduser(os.environ.get("WTRL_TEMPLATE", f"{WTRL}/runs/template_5mw"))
 
 
 def wind_path(mean: float, ti: float = 8.0, seed: int = 1) -> str:
@@ -34,7 +37,7 @@ def make_env(backend: str, episodes: list[EpisodeSpec], cfg: EnvConfig | None = 
                              f"{WTRL}/runs/toy_discon", seed=seed)
     if backend == "openfast":
         from envs.openfast_env import OpenFASTEnv
-        return OpenFASTEnv(cfg, episodes, f"{WTRL}/runs/template_5mw", f"{WTRL}/runs/{work_tag}",
+        return OpenFASTEnv(cfg, episodes, TEMPLATE, f"{WTRL}/runs/{work_tag}",
                            port=port, seed=seed, keep_outputs=keep_outputs)
     raise ValueError(backend)
 

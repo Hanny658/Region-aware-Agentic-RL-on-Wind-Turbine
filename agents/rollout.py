@@ -138,6 +138,8 @@ def run_episode(env, policy_set: dict, hidden, episode_index: int, deterministic
         step_i += 1
         done = terminated or truncated
     L = env.log_arrays()
+    if getattr(env.cfg, "region_label_by_wind", False):
+        L["region"] = (L["v_hub"] > float(env.tb["rated_wind_ms"])).astype(np.int8)
     metrics = episode_metrics(L, env.dt, env.wg_rated, env.spec_ep.warmup_s, getattr(env, "outb", None))
     out = {
         "obs": np.asarray(O, np.float32), "act": np.asarray(A, np.float32).reshape(len(A), -1),

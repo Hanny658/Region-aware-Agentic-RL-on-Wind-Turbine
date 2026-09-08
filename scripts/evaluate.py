@@ -37,6 +37,9 @@ def main():
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--port0", type=int, default=5900)
     ap.add_argument("--gspi", action="store_true", help="evaluate the zero-residual GSPI instead of the checkpoint")
+    ap.add_argument("--relabel_wind", action="store_true",
+                    help="score R3 by v_hub > rated on BOTH sides instead of the oracle rule; use it for "
+                         "reference controllers that alter ROSCO's own pitch command (tower damper, MPC)")
     ap.add_argument("--tag", default=None)
     ap.add_argument("--fitness_target", default=None, choices=["blade", "tower"])
     args = ap.parse_args()
@@ -52,7 +55,8 @@ def main():
                 "obs_fa_acc": bool(cfg_run.get("obs_fa_acc", False)),
                 "dtau_max_nm": float(cfg_run.get("dtau_max", 0.0) or 0.0),
                 "ipc_max_rad": float(cfg_run.get("ipc_max", 0.0) or 0.0),
-                "ipc_hold_s": float(cfg_run.get("ipc_hold", 0.0) or 0.0)}
+                "ipc_hold_s": float(cfg_run.get("ipc_hold", 0.0) or 0.0),
+                "region_label_by_wind": bool(args.relabel_wind)}
 
     if args.gspi:
         ps = {R2: None, R3: None}
@@ -72,7 +76,9 @@ def main():
 
     episodes = episode_list(args.means, args.seeds, ti=args.ti, episode_s=args.episode_s)
     tb = yaml.safe_load(open(PROJ / "configs" / "turbine" / "nrel5mw.yaml"))
-    base = baseline_metrics(baseline_dir(args.backend), episodes, float(tb["dt_ctrl_s"]), float(tb["rated_gen_speed_rads"]))
+    base = baseline_metrics(baseline_dir(args.backend), episodes, float(tb["dt_ctrl_s"]),
+                            float(tb["rated_gen_speed_rads"]),
+                            relabel_wind=float(tb["rated_wind_ms"]) if args.relabel_wind else None)
     import re as _re
     pool = WorkerPool(min(args.workers, len(episodes)), args.backend, episodes, cfg_over, hidden=hidden,
                       port0=args.port0, tag="ev_" + _re.sub(r"[^A-Za-z0-9_.-]", "_", run.name)[:40])
