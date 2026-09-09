@@ -20,7 +20,10 @@ cat > ~/wtrl/run.sh <<EOF
 #!/bin/bash
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export MAMBA_ROOT_PREFIX="\$HOME/wtrl/mamba"
-export WTRL_HOME="\$HOME/wtrl"
+# do NOT clobber an explicitly set WTRL_HOME/WTRL_WIND: campaigns that evaluate on a second
+# wind bank (e.g. the 600 s one) set them before calling run.sh, and silently overriding them
+# writes their baselines into the canonical directory (happened 2026-09-09)
+export WTRL_HOME="\${WTRL_HOME:-\$HOME/wtrl}"
 export PROJ=$PROJ
 export PYTHONPATH="\$PROJ"
 export PYTHONUNBUFFERED=1

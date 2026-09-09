@@ -47,13 +47,27 @@ if __name__ == "__main__":
     ap.add_argument("--warmup_s", type=float, default=20.0)
     ap.add_argument("--jobs", type=int, default=1)
     ap.add_argument("--port0", type=int, default=5700)
+    ap.add_argument("--force", action="store_true",
+                    help="overwrite baselines that already exist (default: skip them). Baselines are "
+                         "the denominator of every reported number, so silently replacing them with a "
+                         "different wind realisation or episode length invalidates all history.")
     args = ap.parse_args()
 
     eps = episode_list(args.means, args.seeds, ti=args.ti, episode_s=args.episode_s, warmup_s=args.warmup_s)
     out_dir = Path(baseline_dir(args.backend))
     out_dir.mkdir(parents=True, exist_ok=True)
+    print(f"wind bank : {Path(eps[0].wind_file).parent}")
+    print(f"baselines : {out_dir}   (episode {args.episode_s:g} s, warmup {args.warmup_s:g} s)")
     jobs = [(args.backend, ep, str(out_dir / f"{Path(ep.wind_file).stem}.npz"), args.port0 + i)
             for i, ep in enumerate(eps)]
+    if not args.force:
+        keep = [j for j in jobs if not Path(j[2]).exists()]
+        if len(keep) != len(jobs):
+            print(f"skipping {len(jobs) - len(keep)} existing baseline(s); pass --force to overwrite")
+        jobs = keep
+    if not jobs:
+        print("nothing to do")
+        raise SystemExit(0)
     if args.jobs > 1:
         with ProcessPoolExecutor(args.jobs) as ex:
             for line in ex.map(run_one, jobs):

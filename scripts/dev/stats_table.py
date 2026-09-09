@@ -27,7 +27,10 @@ EVALS = ("eval_heldout_s3456_ckpt_best.json", "eval_paper_s3456.json")
 
 DEFAULT_COMPARISONS = [
     ("spec+guard vs mono (F1: does region specialisation win?)", "~/wtrl/exp/tq_off_s*", "~/wtrl/exp/n1_mono_s*"),
+    ("llm_fork vs guard (does supervision beat fixed weights?)", "~/wtrl/exp/n1_llmfork_s*", "~/wtrl/exp/tq_off_s*"),
     ("llm_fork vs random_fork (F5: does the proposer matter?)", "~/wtrl/exp/n1_llmfork_s*", "~/wtrl/exp/n1_randfork_s*"),
+    ("llm_fork vs schedule replay (is the curriculum enough?)", "~/wtrl/exp/n1_llmfork_s*", "~/wtrl/exp/sched2_ep_s*"),
+    ("random_fork vs guard (does the fork machinery alone help?)", "~/wtrl/exp/n1_randfork_s*", "~/wtrl/exp/tq_off_s*"),
     ("llm_fork vs llm single-proposal (B1: does verification matter?)", "~/wtrl/exp/n1_llmfork_s*", "~/wtrl/exp/n1_llmsingle_s*"),
     ("schedule replay vs guard (does supervision help at all?)", "~/wtrl/exp/sched2_ep_s*", "~/wtrl/exp/tq_off_s*"),
     ("pitch only vs +torque residual (roadmap 15)", "~/wtrl/exp/tq_off_s*", "~/wtrl/exp/tq_on3_s*"),
