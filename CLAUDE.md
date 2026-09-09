@@ -6,12 +6,12 @@ knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TSTE 2026 (`Rela
 
 ## Read these first
 - `docs/REPORT_2026-09-01.md` — consolidated, verified findings F1–F7 + final disposition (**start here**).
-- `docs/roadmap_2026-08-30.md` — day-by-day experiment log, all intermediate tables (sections 1–21).
+- `docs/roadmap_2026-08-30.md` — day-by-day experiment log, all intermediate tables (sections 1–22).
 - Design decisions history: the user's explicit answers are recorded in the report; do not re-ask them.
 
 ## Scope (narrowed 2026-09-08)
 This repository is the **collective-pitch half**: region-aware residual RL + agentic (LLM)
-supervision + the GSPI, LPV-MPC and ROSCO-tower-damper baselines (roadmap §1–21). The follow-up research — IPC,
+supervision + the GSPI, LPV-MPC and ROSCO-tower-damper baselines (roadmap §1–22). The follow-up research — IPC,
 trajectory auditor, LLM-evolved symbolic laws, law+RL composition, IEA 15 MW — moved to its own
 repository; the removed roadmap sections are kept at
 `wtrl-migration/_second_paper_moved/roadmap_sections_17-25.md`. The IPC/torque code paths stay in
@@ -24,8 +24,12 @@ the tree (inert at `--ipc_max 0` / `--dtau_max 0`) because the migrated run conf
   **Fork verification adds nothing on top of a good proposer** (single-proposal LLM 17.92 ± 1.57,
   p = 0.76 vs llm_fork), and "unverified LLM supervision is harmful" does NOT replicate. The old
   §13 "all supervised variants are tied" came from pairing seeds across two wind banks (caveat C1).
-  mono is 0/5 strict vs spec's 5/5 while matching it on F_tol2 (p = 0.96): F1 is a constraint claim,
-  not a mean claim. Mechanism in §21b (`scripts/dev/fork_analysis.py`).
+  F1 restated (§22): mono matches spec on load (p = 0.96) but runs at **+0.05 speed-std ratio** in
+  10/10 seeds across two disjoint wind sets (p = 0.0202 / 0.0066) — report that paired ratio, NOT
+  the tier count, which flips (mono 0/5 strict on S3-S6, 4/5 on S7-S10) because those realisations
+  shift every controller's ratio by ~0.05. Mechanism in §21b (`scripts/dev/fork_analysis.py`).
+- **All of it replicates on a second disjoint held-out set** (S7-S10, §22): every paired comparison
+  keeps sign, significance and effect size; absolute F drops 1.4-2.2 for every arm.
 - Baselines: LPV-MPC (§16) wins speed regulation at 150 s and loses tower DEL (−17.6 %), but its
   advantage is window-dependent — at 600 s its speed ratio crosses 1.0 (§19) — and it is negative in
   every stress class (§17). ROSCO's own tower damper reaches no strict configuration at any gain

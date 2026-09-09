@@ -60,13 +60,14 @@ paper holds torque constant and does not track it).
 
 ## Headline results (CPC + region-aware, held-out wind S3–S6, best checkpoint)
 
-**1. Region specialisation wins — as a constraint claim, not a mean claim (F1).** On the single
-canonical wind bank, 5 seeds each: `spec + guard` 13.93 ± 2.29 with **5/5 strict**, `mono`
-13.80 ± 2.71 with **0/5 strict** (speed-std ratio 1.008–1.020, and energy occasionally over 1 %).
-The two are indistinguishable on the tolerant tier (paired p = 0.96) — mono buys its load reduction
-with speed regulation, exactly as F1 always stated. Written as "region specialisation reduces more
-load" the claim is false; written as "it is the only architecture that does so without giving up
-non-inferiority to ROSCO" it is exactly reproduced.
+**1. Region specialisation buys speed regulation, not load (F1, restated 2026-09-10).** `spec + guard`
+and `mono` are indistinguishable on load: 13.93 ± 2.29 vs 13.80 ± 2.71 (paired p = 0.96) and
+12.54 ± 1.44 vs 12.25 ± 3.10 on a second, disjoint wind set (p = 0.89). What separates them is the
+constraint they spend: **mono runs at +0.05 generator-speed std relative to spec, in 10/10 seeds
+across both wind sets** (paired t p = 0.0202 and p = 0.0066). The tier count that earlier stated
+this (`mono` 0/5 strict vs 5/5) is *not* a robust statistic — on the second wind set mono is 4/5
+strict, because those realisations lower every controller's speed ratio by ~0.05 and mono sits
+within 2 % of the boundary. Report the paired ratio; let the tier follow from it.
 
 **2. The proposer is what matters — not the verification (F5, revised 2026-09-09).** The earlier
 "the three supervised variants are tied" result paired seeds across two different wind banks
@@ -158,6 +159,12 @@ Reading note: at a pure-R3 wind the three methods are nearly tied on power/speed
 MPC's tower DEL is visibly the worst (14.6 vs 8.9/9.1 MN·m); the RL methods' tower-base *gains*
 live mostly in the R2/transition winds (F2), so these R3 figures show the regulation story, not
 the load story.
+
+**5b. Everything above replicates on a second, disjoint held-out wind set (roadmap §22).** Four
+fresh TurbSim realisations (S7–S10) with their own paired baselines, training untouched, 34 runs
+re-scored: all six paired comparisons keep their sign, significance and effect size
+(llm_fork − random_fork = +4.97, 7/7 seeds, t p = 0.0106, exact p = 0.0156). Absolute F falls
+1.4–2.2 for *every* arm — the level belongs to the wind, the differences belong to the methods.
 
 **6. Robustness under stress classes (roadmap §17, evaluation only).** The trained policies
 re-evaluated on wind never seen in training — TI14 @ {8, 12.5, 15}, TI22 @ 15 and U18 @ TI8
