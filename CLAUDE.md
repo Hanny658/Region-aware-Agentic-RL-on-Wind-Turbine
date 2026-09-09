@@ -11,11 +11,12 @@ knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TSTE 2026 (`Rela
 
 ## Scope (narrowed 2026-09-08)
 This repository is the **collective-pitch half**: region-aware residual RL + agentic (LLM)
-supervision + the GSPI, LPV-MPC and ROSCO-tower-damper baselines (roadmap §1–22). The follow-up research — IPC,
-trajectory auditor, LLM-evolved symbolic laws, law+RL composition, IEA 15 MW — moved to its own
-repository; the removed roadmap sections are kept at
-`wtrl-migration/_second_paper_moved/roadmap_sections_17-25.md`. The IPC/torque code paths stay in
-the tree (inert at `--ipc_max 0` / `--dtau_max 0`) because the migrated run configs reference them.
+supervision + the GSPI, LPV-MPC and ROSCO-tower-damper baselines (roadmap §1–23). Anything outside
+that scope stays outside it: **do not describe other research directions** in this repo's docs,
+commits or manuscripts. The one exception, agreed 2026-09-10, is the already-completed
+individual-pitch (IPC) negative result, cited as the boundary of the supervision claim (roadmap §23).
+The IPC/torque code paths stay in the tree (inert at `--ipc_max 0` / `--dtau_max 0`) because the
+migrated run configs reference them.
 
 ## Final state (campaigns complete; manuscript in preparation)
 - Headline (revised 2026-09-09 after redoing everything on ONE wind bank, roadmap §21): the

@@ -50,9 +50,8 @@ vs Mac 的 11.7640。历史数字与本机数字在同一口径上。
 **包含**：toy 筛选阶段的结论、OpenFAST campaign 1 / E1–E5′ / P / P5、night1+night2 监督者消融、
 sched2 课程回放、R2 扭矩残差（负结果）、LPV-MPC 基线、鲁棒性 stress 扫（roadmap §1–17）。
 
-**不包含**（属于后半段，另一篇，已移出本仓库）：IPC、trajectory auditor 与 LLM 符号律进化、
-law+RL 三层组合、IEA-15 MW。被移出的 roadmap 章节与那半段的两份文档留档于
-`wtrl-migration/_second_paper_moved/`；仓库侧的 roadmap 现在到 §17（鲁棒性）为止。
+**不包含**：范围之外的研究方向不在本包内描述。唯一带回本包口径的是**已完成的 IPC 负结果**
+（仓库 roadmap §23），它只作为监督主张的边界被引用；相关原始 run 产物不在本包内。
 
 一个例外见 **C2**：目前唯一做过 stress 扫的 RL 集合 `ipc_off_s0–4` 虽然出自 IPC campaign，但它
 `ipc_max=0`，是纯 collective-pitch 的 `spec+guard`，因此属于本半段。

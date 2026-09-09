@@ -8,8 +8,7 @@ reward/action knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TS
 constraint-tiered evaluation, and the agentic supervision layer.
 
 **Scope**: this repository is the *collective-pitch* half — region-aware residual RL, agentic
-(LLM) supervision, and the GSPI / LPV-MPC baselines. The follow-up research (individual pitch,
-LLM-evolved symbolic control laws, law+RL composition, IEA 15 MW) lives in its own repository.
+(LLM) supervision, and the GSPI / LPV-MPC / ROSCO-tower-damper baselines.
 
 Detailed, dated records: `docs/REPORT_2026-09-01.md` (verified findings F1–F7),
 `docs/roadmap_2026-08-30.md` (day-by-day experiment log, §1–17),
@@ -87,6 +86,18 @@ llm single-proposal` = −0.52, **p = 0.76**: fork verification adds nothing to 
 the earlier claim that unverified LLM supervision is *harmful* does not replicate. Nor does
 supervision buy compliance — `random_fork` is the most compliant arm (7/7 strict) and the worst on
 load; the guardrail plus best-checkpoint layer, which every arm has, is what delivers tiers.
+
+**2c. Where this stops working (roadmap §23).** The supervisor's advantage is not a general
+property of LLM supervision. On the individual-pitch (dq cyclic) channel the same fork-verified
+supervisor — same prompt, same knobs, same guardrail — lost to fixed weights in three consecutive
+companion campaigns (7.9 ± 2.9 vs 9.2 ± 0.9; 8.7 ± 3.4 vs 11.3 ± 1.3; 7.6 ± 1.2 vs 11.0 ± 1.0), with
+a reproducible failure attractor: λ_load_R3 driven to 18–20 and w_speed to 360–400 while the
+channel's own authority is strangled. Fork verification cannot see it, because every individual step
+stays locally acceptable while the trajectory drifts. The reason is that on that axis the bottleneck
+is discovery, not reward weighting — the channel is physically worth −14…−22 % blade DEL (a static
+1° tilt and a hand-tuned classical controller both show it) yet trained policies used ≤ 11 % of its
+authority across six mechanism variants. **Supervision helps where its knobs are the binding
+constraint, and not elsewhere**; unlocking the cyclic channel is future work.
 
 **2b. Why (mechanism, `scripts/dev/fork_analysis.py`, 35 fork decisions per arm).** The LLM's
 candidate *sets* are good before any verification (mean fork F **+4.93** vs **−26.2** for random;
