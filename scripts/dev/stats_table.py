@@ -104,9 +104,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--a"), ap.add_argument("--b"), ap.add_argument("--label", default="A vs B")
     ap.add_argument("--key", default=KEY, help="field of the eval json (default F_tol2)")
+    ap.add_argument("--eval", default=None,
+                    help="eval json filename to read instead of the default held-out one, e.g. "
+                         "eval_heldout2_s78910.json for the second held-out wind set")
     args = ap.parse_args()
     KEY = args.key
-    print(f"paired statistics on {KEY} of {EVALS[0]} (held-out S3-S6, best checkpoint)")
+    if args.eval:
+        globals()["EVALS"] = (args.eval,)
+    print(f"paired statistics on {KEY} of {EVALS[0]} (best checkpoint)")
     if args.a and args.b:
         report(args.label, args.a, args.b)
     else:
