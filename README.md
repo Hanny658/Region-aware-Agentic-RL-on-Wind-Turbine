@@ -60,43 +60,41 @@ paper holds torque constant and does not track it).
 
 ## Headline results (CPC + region-aware, held-out wind S3–S6, best checkpoint)
 
-**1. Region specialisation wins, and only under constraints (F1).** All nine supervised `spec`
-runs are strict on unseen wind and improve *all four* paper metrics simultaneously vs GSPI
-(power MSE +0.5…+22 %, speed MSE same, tower DEL +10…+23 %, blade DEL +2.8…+8 %, energy cost
-0.07–0.68 %). `mono` is 0/9 strict — it trades speed regulation (worse than GSPI in every seed)
-for load reduction that is *not* larger than spec's. The conclusion is tier-dependent by design.
+**1. Region specialisation wins — as a constraint claim, not a mean claim (F1).** On the single
+canonical wind bank, 5 seeds each: `spec + guard` 13.93 ± 2.29 with **5/5 strict**, `mono`
+13.80 ± 2.71 with **0/5 strict** (speed-std ratio 1.008–1.020, and energy occasionally over 1 %).
+The two are indistinguishable on the tolerant tier (paired p = 0.96) — mono buys its load reduction
+with speed regulation, exactly as F1 always stated. Written as "region specialisation reduces more
+load" the claim is false; written as "it is the only architecture that does so without giving up
+non-inferiority to ROSCO" it is exactly reproduced.
 
-**2. Supervision helps; the supervisor's identity does not (F5, 5 RL seeds).**
+**2. The proposer is what matters — not the verification (F5, revised 2026-09-09).** The earlier
+"the three supervised variants are tied" result paired seeds across two different wind banks
+(caveat C1). Redone on one bank, with 7 seeds for the two fork arms:
 
-| supervisor | F per seed (s0…s4) | mean ± std | strict |
-|---|---|---|---|
-| llm_fork | 17.4, 9.8, 18.8, 18.0, 13.6 | 15.5 ± 3.8 | 5/5 |
-| random_fork | 12.7, 11.0, 23.2, 16.5, 8.1 | 14.3 ± 5.8 | 5/5 |
-| guard (fixed λ=1, 3 seeds) | 11.5, 12.6, 15.6 | 13.2 ± 1.7 | 2/3 |
+| supervisor | n | F per seed | mean ± std | strict |
+|---|---|---|---|---|
+| **llm_fork** | 7 | 18.3, 17.6, 19.4, 18.0, 13.6, 19.7, 18.5 | **17.89 ± 2.02** | 6/7 |
+| llm, single proposal (no fork, no dry run) | 5 | 16.1, 17.0, 17.9, 18.4, 20.3 | **17.92 ± 1.57** | 4/5 |
+| schedule replay | 5 | 14.1, 20.1, 13.8, 18.8, 11.3 | 15.61 ± 3.68 | 5/5 |
+| guard (fixed λ) | 5 | 11.8, 16.0, 13.4, 16.7, 11.9 | 13.93 ± 2.29 | 5/5 |
+| random_fork | 7 | 13.2, 3.1, 18.8, 16.5, 8.1, 12.0, 14.7 | 12.36 ± 5.30 | 7/7 |
 
-Fork-verified LLM vs verified random search: paired p = 0.55 (permutation p = 0.50); the observed
-+1.2 F effect would need ~90 seeds. The LLM's attributable contributions are the λ-curriculum it
-discovered and its diagnostics — not per-decision superiority. Unverified single-proposal LLM
-supervision is actively harmful (strict on training seeds, violated on held-out).
+`llm_fork − random_fork` = **+5.53 ± 4.64, positive in 7/7 seeds, paired t p = 0.0196, exact
+sign-flip permutation p = 0.0156**; `llm_fork − guard` = +3.48, p = 0.041. But `llm_fork −
+llm single-proposal` = −0.52, **p = 0.76**: fork verification adds nothing to a good proposer, and
+the earlier claim that unverified LLM supervision is *harmful* does not replicate. Nor does
+supervision buy compliance — `random_fork` is the most compliant arm (7/7 strict) and the worst on
+load; the guardrail plus best-checkpoint layer, which every arm has, is what delivers tiers.
 
-On the **baseline paper's metric set** (held-out S3–S6, best ckpt, % reduction vs paired GSPI,
-mean ± std over the 3 night1 RL seeds; roadmap §12):
-
-| method | Power MSE ↓% | GenSpd MSE ↓% | TwrBsMyt DEL ↓% | RootMyc1 DEL ↓% | Energy loss % | tiers |
-|---|---|---|---|---|---|---|
-| guard | 7.4 ± 6.7 | 7.4 ± 6.7 | 13.2 ± 1.7 | 3.6 ± 1.2 | 0.23 | s,s,t |
-| llm_fork | 4.2 ± 2.1 | 4.2 ± 2.1 | 15.4 ± 4.0 | 4.5 ± 1.1 | 0.26 | s,s,s |
-| random_fork | 2.6 ± 2.9 | 13.7 ± 9.4 * | 15.7 ± 5.4 | 5.9 ± 2.2 | 0.37 | s,s,s |
-| schedule | 8.2 ± 4.4 | 8.2 ± 4.4 | 15.6 ± 0.3 | 4.6 ± 1.0 | 0.27 | s,s,s |
-| mono | **−3.2 ± 1.1** | **−3.2 ± 1.1** | 14.5 ± 2.2 | 5.2 ± 2.1 | 0.38 | t,t,d |
-
-\* random_fork s0/s1 push some 12.5 m/s episodes above 50 % R3 occupancy, where torque varies below
-rated and power/speed MSE decouple; all other rows operate constant-torque and the two columns are
-identical by construction. R3 speed-**MAE** ratios track the std ratios closely (0.86–1.00 for the
-supervised variants, i.e. the paper's tracking metric improves 1–14 % while tower DEL drops
-10–23 %). Versus the paper's own 15 MW numbers (power/speed MSE −23 %, tower −4.5 %, blade −0.2 %):
-our regulation gains are smaller and our load gains much larger — a consequence of the
-load-prioritising objective and the 5 MW plant; not directly comparable.
+**2b. Why (mechanism, `scripts/dev/fork_analysis.py`, 35 fork decisions per arm).** The LLM's
+candidate *sets* are good before any verification (mean fork F **+4.93** vs **−26.2** for random;
+2.2 of 3 candidates strict vs 1.2), and its accepted moves are 2.3× larger and never a hold
+(0 % vs 29 % for random). Over a run it executes a coherent curriculum — λ_load_R3 **6.5×**,
+w_speed **7.1×**, Δβ_max_R3 **0.20×** relative to the defaults — while random search ends within
+0.94–1.20× of where it started on every knob. Random's verifier spends 29 % of its decisions
+retreating to "change nothing", which is why that arm is simultaneously the most compliant and the
+least effective: **verification substitutes for proposal quality rather than compounding with it.**
 
 **3. Schedule replay is robust — because of the protection layer (roadmap §14).** Replaying a
 distilled knob curriculum on fresh seeds: episode-indexed 15.6 ± 3.7, competence-indexed

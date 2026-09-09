@@ -6,25 +6,32 @@ knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TSTE 2026 (`Rela
 
 ## Read these first
 - `docs/REPORT_2026-09-01.md` — consolidated, verified findings F1–F7 + final disposition (**start here**).
-- `docs/roadmap_2026-08-30.md` — day-by-day experiment log, all intermediate tables (sections 1–17).
+- `docs/roadmap_2026-08-30.md` — day-by-day experiment log, all intermediate tables (sections 1–21).
 - Design decisions history: the user's explicit answers are recorded in the report; do not re-ask them.
 
 ## Scope (narrowed 2026-09-08)
 This repository is the **collective-pitch half**: region-aware residual RL + agentic (LLM)
-supervision + the GSPI and LPV-MPC baselines (roadmap §1–17). The follow-up research — IPC,
+supervision + the GSPI, LPV-MPC and ROSCO-tower-damper baselines (roadmap §1–21). The follow-up research — IPC,
 trajectory auditor, LLM-evolved symbolic laws, law+RL composition, IEA 15 MW — moved to its own
 repository; the removed roadmap sections are kept at
 `wtrl-migration/_second_paper_moved/roadmap_sections_17-25.md`. The IPC/torque code paths stay in
 the tree (inert at `--ipc_max 0` / `--dtau_max 0`) because the migrated run configs reference them.
 
 ## Final state (campaigns complete; manuscript in preparation)
-- Headline: 9/9 supervised spec runs beat GSPI on all four paper metrics on held-out wind (strict
-  tier); mono 0/9; the supervised variants (llm_fork / random_fork / schedule) are statistically
-  tied at 5 RL seeds (roadmap §13) — supervision helps, the supervisor's identity does not, and
-  what guarantees constraint compliance is the fork/guardrail verification, not the proposer.
-- MPC baseline done (roadmap §16): wins speed regulation, loses tower DEL (−17.6 %); every
-  supervised spec variant Pareto-dominates it on F, and the gap widens with turbulence (§17
-  robustness sweep). R2 torque residual: clear seed-paired negative (§15).
+- Headline (revised 2026-09-09 after redoing everything on ONE wind bank, roadmap §21): the
+  **proposer** is what matters — llm_fork 17.89 ± 2.02 (7 seeds) beats random_fork 12.36 ± 5.30 in
+  7/7 seeds (paired t p = 0.0196, exact permutation p = 0.0156) and guard 13.93 ± 2.29 (p = 0.041).
+  **Fork verification adds nothing on top of a good proposer** (single-proposal LLM 17.92 ± 1.57,
+  p = 0.76 vs llm_fork), and "unverified LLM supervision is harmful" does NOT replicate. The old
+  §13 "all supervised variants are tied" came from pairing seeds across two wind banks (caveat C1).
+  mono is 0/5 strict vs spec's 5/5 while matching it on F_tol2 (p = 0.96): F1 is a constraint claim,
+  not a mean claim. Mechanism in §21b (`scripts/dev/fork_analysis.py`).
+- Baselines: LPV-MPC (§16) wins speed regulation at 150 s and loses tower DEL (−17.6 %), but its
+  advantage is window-dependent — at 600 s its speed ratio crosses 1.0 (§19) — and it is negative in
+  every stress class (§17). ROSCO's own tower damper reaches no strict configuration at any gain
+  (§18). Every supervised spec variant Pareto-dominates both. R2 torque residual: clear seed-paired
+  negative (§15). Robustness: the residual's tower gain is invariant TI8→TI22 and 41/42 stress
+  evaluations stay strict, but it vanishes at U18 (no R2 to peak-shave) (§17).
 - Data on this machine: `wtrl-migration/cpc-result/` (38 runs, MPC grid, aggregate rebuild script,
   caveats C1–C10) + `wtrl-migration/{wind,openfast}` (canonical wind bank + paired GSPI baselines).
   These are copied into `~/wtrl/{wind,baselines/openfast,exp}` inside WSL by the migration step —
