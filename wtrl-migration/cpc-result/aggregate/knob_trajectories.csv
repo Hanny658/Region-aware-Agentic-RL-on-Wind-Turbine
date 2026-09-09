@@ -1,0 +1,543 @@
+run,arm,type,episode,F,tier,lambda_load_R2,lambda_load_R3,w_power,w_speed,dbeta_max_R2,dbeta_max_R3
+ipc_off_s0,guard (blade obj),init,0,-1.08,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s0,guard (blade obj),eval,32,5.42,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s0,guard (blade obj),eval,64,7.39,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s0,guard (blade obj),eval,96,8.21,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s0,guard (blade obj),eval,120,8.16,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s0,guard (blade obj),eval,152,9.41,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s0,guard (blade obj),eval,184,-42.31,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s0,guard (blade obj),eval,216,9.41,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s0,guard (blade obj),eval,240,-29.02,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s0,guard (blade obj),eval,272,8.24,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s0,guard (blade obj),eval,300,9.74,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s1,guard (blade obj),init,0,0.0,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s1,guard (blade obj),eval,32,5.05,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s1,guard (blade obj),eval,64,4.69,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s1,guard (blade obj),eval,96,-92.78,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s1,guard (blade obj),eval,120,2.28,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s1,guard (blade obj),eval,152,7.59,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s1,guard (blade obj),eval,184,9.5,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s1,guard (blade obj),eval,216,-105.85,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s1,guard (blade obj),eval,240,-29.89,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s1,guard (blade obj),eval,272,9.93,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s1,guard (blade obj),eval,300,11.84,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s2,guard (blade obj),init,0,0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s2,guard (blade obj),eval,32,6.32,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s2,guard (blade obj),eval,64,8.54,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s2,guard (blade obj),eval,96,10.87,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s2,guard (blade obj),eval,120,10.6,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s2,guard (blade obj),eval,152,-1.45,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s2,guard (blade obj),eval,184,-169.01,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s2,guard (blade obj),eval,216,-32.9,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s2,guard (blade obj),eval,240,10.19,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s2,guard (blade obj),eval,272,-123.41,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s2,guard (blade obj),eval,300,10.87,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s3,guard (blade obj),init,0,-0.21,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s3,guard (blade obj),eval,32,-52.3,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s3,guard (blade obj),eval,64,-58.27,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s3,guard (blade obj),eval,96,3.84,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s3,guard (blade obj),eval,120,-31.3,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s3,guard (blade obj),eval,152,-348.26,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s3,guard (blade obj),eval,184,5.46,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s3,guard (blade obj),eval,216,-27.88,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s3,guard (blade obj),eval,240,-63.67,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s3,guard (blade obj),eval,272,-129.41,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s3,guard (blade obj),eval,300,-81.28,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s4,guard (blade obj),init,0,0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s4,guard (blade obj),eval,32,7.88,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s4,guard (blade obj),eval,64,-59.23,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s4,guard (blade obj),eval,96,5.03,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s4,guard (blade obj),eval,120,8.12,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s4,guard (blade obj),eval,152,-97.38,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s4,guard (blade obj),eval,184,-81.85,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s4,guard (blade obj),eval,216,-76.88,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s4,guard (blade obj),eval,240,9.29,strict,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s4,guard (blade obj),eval,272,-24.39,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+ipc_off_s4,guard (blade obj),eval,300,-147.4,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s0,llm_fork,init,0,0.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s0,llm_fork,eval,32,-69.61,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s0,llm_fork,eval,88,20.31,strict,1.0,3.0,220.0,60.0,0.05,0.02
+n1_llmfork_s0,llm_fork,eval,144,22.49,strict,1.0,7.0,220.0,120.0,0.05,0.01
+n1_llmfork_s0,llm_fork,eval,200,24.22,strict,1.0,14.0,220.0,240.0,0.05,0.005
+n1_llmfork_s0,llm_fork,eval,256,23.71,strict,2.5,14.0,330.0,240.0,0.035,0.005
+n1_llmfork_s0,llm_fork,eval,300,24.3,strict,2.5,18.0,330.0,280.0,0.035,0.005
+n1_llmfork_s1,llm_fork,init,0,-0.57,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s1,llm_fork,eval,32,-108.42,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s1,llm_fork,eval,88,-129.89,degraded,1.0,3.0,220.0,60.0,0.05,0.025
+n1_llmfork_s1,llm_fork,eval,144,-37.77,degraded,1.0,3.0,220.0,60.0,0.05,0.02
+n1_llmfork_s1,llm_fork,eval,200,13.45,tol2,1.0,4.0,220.0,90.0,0.05,0.018
+n1_llmfork_s1,llm_fork,eval,256,16.47,strict,1.0,8.0,220.0,180.0,0.05,0.01
+n1_llmfork_s1,llm_fork,eval,300,20.64,strict,1.0,9.0,220.0,200.0,0.05,0.01
+n1_llmfork_s2,llm_fork,init,0,-0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s2,llm_fork,eval,32,19.59,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s2,llm_fork,eval,88,-70.02,degraded,1.5,3.0,220.0,50.0,0.04,0.025
+n1_llmfork_s2,llm_fork,eval,144,24.29,strict,2.0,1.5,150.0,40.0,0.07,0.03
+n1_llmfork_s2,llm_fork,eval,200,25.17,strict,2.0,1.5,150.0,80.0,0.07,0.015
+n1_llmfork_s2,llm_fork,eval,256,-10.07,tol2,2.1,1.6,155.0,85.0,0.065,0.013
+n1_llmfork_s2,llm_fork,eval,300,-0.43,tol2,2.5,3.0,130.0,140.0,0.05,0.007
+n1_llmfork_s3,llm_fork,init,0,0.11,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s3,llm_fork,eval,32,-131.15,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s3,llm_fork,eval,88,-148.08,degraded,1.0,1.0,220.0,20.0,0.025,0.02
+n1_llmfork_s3,llm_fork,eval,144,17.49,strict,1.0,1.3,220.0,25.0,0.05,0.04
+n1_llmfork_s3,llm_fork,eval,200,19.03,strict,1.5,2.6,200.0,50.0,0.045,0.028
+n1_llmfork_s3,llm_fork,eval,256,-1.42,tol2,3.0,2.6,150.0,50.0,0.06,0.028
+n1_llmfork_s3,llm_fork,eval,300,-27.18,degraded,2.0,3.0,150.0,80.0,0.06,0.02
+n1_llmfork_s4,llm_fork,init,0,-0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s4,llm_fork,eval,32,-2.77,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s4,llm_fork,eval,88,9.21,tol2,1.0,3.0,220.0,60.0,0.05,0.02
+n1_llmfork_s4,llm_fork,eval,144,-15.16,tol2,3.0,3.0,180.0,60.0,0.025,0.02
+n1_llmfork_s4,llm_fork,eval,200,-61.29,degraded,3.0,9.0,180.0,180.0,0.025,0.008
+n1_llmfork_s4,llm_fork,eval,256,19.98,strict,3.5,4.5,180.0,90.0,0.025,0.015
+n1_llmfork_s4,llm_fork,eval,300,18.51,strict,3.5,5.5,180.0,105.0,0.025,0.0135
+n1_llmfork_s5,llm_fork,init,0,0.05,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s5,llm_fork,eval,32,-70.82,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s5,llm_fork,eval,88,16.64,strict,2.0,3.0,220.0,60.0,0.03,0.02
+n1_llmfork_s5,llm_fork,eval,144,22.99,strict,5.0,3.0,180.0,60.0,0.045,0.02
+n1_llmfork_s5,llm_fork,eval,200,-1.0,tol2,8.0,2.5,180.0,60.0,0.06,0.02
+n1_llmfork_s5,llm_fork,eval,256,19.7,strict,7.0,6.0,200.0,120.0,0.05,0.012
+n1_llmfork_s5,llm_fork,eval,300,-11.66,tol2,8.5,4.0,190.0,100.0,0.055,0.015
+n1_llmfork_s6,llm_fork,init,0,-0.06,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s6,llm_fork,eval,32,-1.75,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmfork_s6,llm_fork,eval,88,13.19,strict,2.0,3.0,220.0,50.0,0.035,0.025
+n1_llmfork_s6,llm_fork,eval,144,18.66,strict,2.5,8.0,220.0,100.0,0.03,0.0125
+n1_llmfork_s6,llm_fork,eval,200,21.95,strict,2.5,10.0,220.0,120.0,0.03,0.011
+n1_llmfork_s6,llm_fork,eval,256,21.85,strict,2.5,11.5,220.0,135.0,0.03,0.0105
+n1_llmfork_s6,llm_fork,eval,300,24.77,strict,2.5,16.0,220.0,180.0,0.03,0.008
+n1_llmsingle_s0,llm_single,init,0,0.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmsingle_s0,llm_single,eval,32,-69.61,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmsingle_s0,llm_single,eval,64,17.16,strict,1.0,1.5,220.0,40.0,0.05,0.04
+n1_llmsingle_s0,llm_single,eval,96,17.58,strict,1.0,1.8,220.0,40.0,0.05,0.035
+n1_llmsingle_s0,llm_single,eval,120,19.54,strict,1.0,2.2,220.0,40.0,0.05,0.03
+n1_llmsingle_s0,llm_single,eval,152,22.16,strict,1.0,2.6,220.0,40.0,0.05,0.03
+n1_llmsingle_s0,llm_single,eval,184,-61.31,degraded,1.0,3.0,220.0,40.0,0.05,0.03
+n1_llmsingle_s0,llm_single,eval,216,19.26,strict,1.0,2.6,220.0,60.0,0.05,0.025
+n1_llmsingle_s0,llm_single,eval,240,14.58,strict,1.5,2.6,220.0,60.0,0.05,0.025
+n1_llmsingle_s0,llm_single,eval,272,18.26,strict,1.0,2.6,220.0,60.0,0.05,0.025
+n1_llmsingle_s0,llm_single,eval,300,-86.6,degraded,1.0,2.6,250.0,60.0,0.04,0.025
+n1_llmsingle_s1,llm_single,init,0,-0.57,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmsingle_s1,llm_single,eval,32,-108.42,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmsingle_s1,llm_single,eval,64,-56.86,degraded,1.0,1.0,220.0,50.0,0.05,0.03
+n1_llmsingle_s1,llm_single,eval,96,-38.56,degraded,1.0,2.0,220.0,40.0,0.05,0.03
+n1_llmsingle_s1,llm_single,eval,120,-30.98,tol2,1.0,1.0,220.0,30.0,0.05,0.04
+n1_llmsingle_s1,llm_single,eval,152,16.67,strict,1.0,1.0,220.0,40.0,0.05,0.035
+n1_llmsingle_s1,llm_single,eval,184,20.41,strict,1.0,1.25,220.0,40.0,0.05,0.035
+n1_llmsingle_s1,llm_single,eval,216,18.96,tol2,1.0,1.75,220.0,40.0,0.05,0.035
+n1_llmsingle_s1,llm_single,eval,240,20.37,strict,1.0,1.25,220.0,45.0,0.05,0.035
+n1_llmsingle_s1,llm_single,eval,272,23.06,strict,1.0,1.25,220.0,50.0,0.05,0.035
+n1_llmsingle_s1,llm_single,eval,300,21.28,strict,1.25,1.25,220.0,50.0,0.05,0.035
+n1_llmsingle_s2,llm_single,init,0,-0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmsingle_s2,llm_single,eval,32,19.59,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmsingle_s2,llm_single,eval,64,-599.23,degraded,1.0,1.5,220.0,20.0,0.05,0.05
+n1_llmsingle_s2,llm_single,eval,96,20.57,strict,1.0,1.0,220.0,40.0,0.05,0.025
+n1_llmsingle_s2,llm_single,eval,120,20.68,strict,1.0,1.0,220.0,50.0,0.05,0.02
+n1_llmsingle_s2,llm_single,eval,152,23.17,strict,1.0,1.0,220.0,60.0,0.05,0.02
+n1_llmsingle_s2,llm_single,eval,184,21.09,strict,1.0,1.0,220.0,70.0,0.05,0.0175
+n1_llmsingle_s2,llm_single,eval,216,21.96,strict,1.0,1.25,220.0,70.0,0.05,0.0175
+n1_llmsingle_s2,llm_single,eval,240,22.58,strict,1.25,1.25,220.0,70.0,0.05,0.0175
+n1_llmsingle_s2,llm_single,eval,272,-44.67,degraded,1.25,1.5,220.0,70.0,0.05,0.0175
+n1_llmsingle_s2,llm_single,eval,300,23.23,strict,1.25,1.25,220.0,90.0,0.05,0.0175
+n1_llmsingle_s3,llm_single,init,0,0.11,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmsingle_s3,llm_single,eval,32,-127.71,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmsingle_s3,llm_single,eval,64,-72.12,degraded,1.0,1.0,220.0,50.0,0.05,0.025
+n1_llmsingle_s3,llm_single,eval,96,18.02,strict,1.0,2.0,220.0,35.0,0.05,0.04
+n1_llmsingle_s3,llm_single,eval,120,-9.12,tol2,1.0,3.0,220.0,40.0,0.05,0.04
+n1_llmsingle_s3,llm_single,eval,152,-9.09,tol2,1.0,2.0,220.0,35.0,0.05,0.04
+n1_llmsingle_s3,llm_single,eval,184,24.1,strict,1.0,2.0,220.0,40.0,0.05,0.03
+n1_llmsingle_s3,llm_single,eval,216,19.25,tol2,1.0,2.0,220.0,40.0,0.05,0.03
+n1_llmsingle_s3,llm_single,eval,240,24.08,strict,1.0,2.0,220.0,45.0,0.05,0.03
+n1_llmsingle_s3,llm_single,eval,272,22.63,strict,1.0,2.2,220.0,45.0,0.05,0.03
+n1_llmsingle_s3,llm_single,eval,300,-131.36,degraded,1.0,2.0,220.0,45.0,0.05,0.03
+n1_llmsingle_s4,llm_single,init,0,-0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmsingle_s4,llm_single,eval,32,-6.98,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_llmsingle_s4,llm_single,eval,64,-15.25,tol2,1.0,1.0,220.0,50.0,0.05,0.04
+n1_llmsingle_s4,llm_single,eval,96,5.95,tol2,1.0,1.0,220.0,100.0,0.05,0.02
+n1_llmsingle_s4,llm_single,eval,120,1.37,tol2,1.0,1.0,220.0,150.0,0.05,0.015
+n1_llmsingle_s4,llm_single,eval,152,-53.78,degraded,1.0,1.0,220.0,200.0,0.05,0.012
+n1_llmsingle_s4,llm_single,eval,184,24.06,strict,1.0,1.0,220.0,150.0,0.05,0.015
+n1_llmsingle_s4,llm_single,eval,216,25.66,strict,1.0,1.5,220.0,150.0,0.05,0.015
+n1_llmsingle_s4,llm_single,eval,240,24.75,strict,1.0,1.5,220.0,150.0,0.05,0.015
+n1_llmsingle_s4,llm_single,eval,272,26.63,degraded,1.0,1.5,220.0,150.0,0.05,0.015
+n1_llmsingle_s4,llm_single,eval,300,24.59,strict,1.0,1.5,280.0,150.0,0.05,0.015
+n1_mono_s0,mono,init,0,-0.29,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s0,mono,eval,32,9.68,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s0,mono,eval,64,-17.97,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s0,mono,eval,96,-96.44,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s0,mono,eval,120,-25.14,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s0,mono,eval,152,-18.19,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s0,mono,eval,184,-7.17,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s0,mono,eval,216,17.78,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s0,mono,eval,240,19.08,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s0,mono,eval,272,-29.79,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s0,mono,eval,300,22.63,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s1,mono,init,0,-0.21,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s1,mono,eval,32,-293.01,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s1,mono,eval,64,-274.96,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s1,mono,eval,96,5.56,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s1,mono,eval,120,9.35,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s1,mono,eval,152,13.31,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s1,mono,eval,184,17.45,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s1,mono,eval,216,-7.18,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s1,mono,eval,240,-52.43,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s1,mono,eval,272,-1.34,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s1,mono,eval,300,-14.67,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s2,mono,init,0,-0.59,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s2,mono,eval,32,-27.35,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s2,mono,eval,64,13.66,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s2,mono,eval,96,12.69,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s2,mono,eval,120,15.5,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s2,mono,eval,152,19.38,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s2,mono,eval,184,7.73,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s2,mono,eval,216,-3.59,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s2,mono,eval,240,2.16,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s2,mono,eval,272,-40.34,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s2,mono,eval,300,-0.5,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s3,mono,init,0,0.1,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s3,mono,eval,32,5.95,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s3,mono,eval,64,15.93,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s3,mono,eval,96,2.5,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s3,mono,eval,120,-22.25,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s3,mono,eval,152,-76.36,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s3,mono,eval,184,14.88,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s3,mono,eval,216,-51.08,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s3,mono,eval,240,-19.56,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s3,mono,eval,272,-43.45,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s3,mono,eval,300,12.96,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s4,mono,init,0,0.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s4,mono,eval,32,10.35,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s4,mono,eval,64,11.61,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s4,mono,eval,96,10.51,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s4,mono,eval,120,-12.44,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s4,mono,eval,152,-112.49,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s4,mono,eval,184,-75.61,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s4,mono,eval,216,10.99,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s4,mono,eval,240,-7.82,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s4,mono,eval,272,18.66,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_mono_s4,mono,eval,300,17.58,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s0,random_fork,init,0,0.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s0,random_fork,eval,32,-69.61,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s0,random_fork,eval,88,17.99,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s0,random_fork,eval,144,16.87,strict,1.0,1.0,220.0,33.1266,0.0245,0.05
+n1_randfork_s0,random_fork,eval,200,14.65,strict,1.0,0.8438,220.0,33.1266,0.0245,0.05
+n1_randfork_s0,random_fork,eval,256,13.19,strict,1.0,0.8438,220.0,33.1266,0.0245,0.05
+n1_randfork_s0,random_fork,eval,300,15.61,strict,1.0,0.8438,232.6038,53.8928,0.0245,0.033
+n1_randfork_s1,random_fork,init,0,-0.57,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s1,random_fork,eval,32,-108.42,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s1,random_fork,eval,88,-198.59,degraded,1.0,1.0,100.6618,20.0,0.1,0.05
+n1_randfork_s1,random_fork,eval,144,-41.19,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s1,random_fork,eval,200,-28.68,tol2,1.0,0.8083,198.6316,20.0,0.0224,0.05
+n1_randfork_s1,random_fork,eval,256,5.68,strict,0.4744,0.8083,198.6316,56.1633,0.0137,0.05
+n1_randfork_s1,random_fork,eval,300,10.1,strict,0.4744,0.8083,198.6316,20.4227,0.0146,0.05
+n1_randfork_s2,random_fork,init,0,-0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s2,random_fork,eval,32,19.59,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s2,random_fork,eval,88,-137.49,degraded,1.1466,1.0,220.0,20.0,0.0232,0.0707
+n1_randfork_s2,random_fork,eval,144,-4.34,tol2,1.0,2.7928,220.0,26.7991,0.0748,0.05
+n1_randfork_s2,random_fork,eval,200,-169.65,degraded,1.0,2.7928,220.0,26.7991,0.0748,0.05
+n1_randfork_s2,random_fork,eval,256,-304.41,degraded,1.0,2.7928,228.1615,32.907,0.0748,0.05
+n1_randfork_s2,random_fork,eval,300,-326.52,degraded,1.0,2.7928,220.0,26.7991,0.0744,0.05
+n1_randfork_s3,random_fork,init,0,0.11,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s3,random_fork,eval,32,-131.15,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s3,random_fork,eval,88,-337.44,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s3,random_fork,eval,144,16.16,strict,1.0,1.0,220.0,20.0,0.1,0.05
+n1_randfork_s3,random_fork,eval,200,-216.22,degraded,1.0,1.0,220.0,20.0,0.1,0.05
+n1_randfork_s3,random_fork,eval,256,19.61,strict,0.7586,0.407,220.0,20.0,0.1,0.05
+n1_randfork_s3,random_fork,eval,300,-160.77,degraded,0.7586,0.6923,220.0,20.0,0.1,0.05
+n1_randfork_s4,random_fork,init,0,-0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s4,random_fork,eval,32,-2.77,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s4,random_fork,eval,88,-383.67,degraded,1.0,1.0,220.0,7.9624,0.0633,0.0381
+n1_randfork_s4,random_fork,eval,144,-201.66,degraded,0.8584,1.0,220.0,20.0,0.0943,0.05
+n1_randfork_s4,random_fork,eval,200,-8.14,tol2,0.8584,1.0,220.0,20.0,0.1,0.05
+n1_randfork_s4,random_fork,eval,256,-59.98,degraded,0.8584,1.0,602.5893,20.0,0.1,0.05
+n1_randfork_s4,random_fork,eval,300,14.46,strict,0.8584,1.0,323.7273,20.0,0.0943,0.05
+n1_randfork_s5,random_fork,init,0,0.05,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s5,random_fork,eval,32,-70.82,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s5,random_fork,eval,88,-64.42,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s5,random_fork,eval,144,-10.66,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s5,random_fork,eval,200,-202.77,degraded,1.0,1.0,216.6531,20.0,0.05,0.05
+n1_randfork_s5,random_fork,eval,256,-189.26,degraded,1.0,1.4825,220.0,20.0,0.1,0.05
+n1_randfork_s5,random_fork,eval,300,-114.08,degraded,1.0,1.4825,220.0,20.0,0.1,0.05
+n1_randfork_s6,random_fork,init,0,-0.06,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s6,random_fork,eval,32,-1.75,strict,1.0,1.0,220.0,20.0,0.05,0.05
+n1_randfork_s6,random_fork,eval,88,-111.06,degraded,1.0,0.6882,220.0,20.0,0.0733,0.05
+n1_randfork_s6,random_fork,eval,144,0.43,tol2,2.1586,0.6882,74.7808,20.0,0.1,0.05
+n1_randfork_s6,random_fork,eval,200,-99.18,degraded,2.1586,0.6882,74.7808,20.0,0.1,0.05
+n1_randfork_s6,random_fork,eval,256,-141.07,degraded,2.1586,0.6882,74.7808,20.0,0.1,0.05
+n1_randfork_s6,random_fork,eval,300,-297.02,degraded,2.1586,1.6386,74.7808,20.0,0.0738,0.05
+sched2_comp_s0,schedule_comp,init,0,0.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s0,schedule_comp,eval,32,-71.56,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s0,schedule_comp,eval,64,9.02,strict,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_comp_s0,schedule_comp,eval,96,17.5,strict,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_comp_s0,schedule_comp,eval,120,17.84,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_comp_s0,schedule_comp,eval,152,19.59,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_comp_s0,schedule_comp,eval,184,17.56,strict,3.0,2.6,150.0,50.0,0.06,0.028
+sched2_comp_s0,schedule_comp,eval,216,17.04,degraded,2.0,3.0,150.0,80.0,0.06,0.02
+sched2_comp_s0,schedule_comp,eval,240,16.54,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_comp_s0,schedule_comp,eval,272,18.38,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_comp_s0,schedule_comp,eval,300,16.84,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_comp_s1,schedule_comp,init,0,-0.57,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s1,schedule_comp,eval,32,-109.32,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s1,schedule_comp,eval,64,-2.11,tol2,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_comp_s1,schedule_comp,eval,96,-169.94,degraded,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_comp_s1,schedule_comp,eval,120,-75.02,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s1,schedule_comp,eval,152,11.59,strict,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s1,schedule_comp,eval,184,18.73,strict,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s1,schedule_comp,eval,216,19.75,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_comp_s1,schedule_comp,eval,240,13.59,tol2,3.0,2.6,150.0,50.0,0.06,0.028
+sched2_comp_s1,schedule_comp,eval,272,26.16,strict,2.0,3.0,150.0,80.0,0.06,0.02
+sched2_comp_s1,schedule_comp,eval,300,25.04,strict,2.0,3.0,150.0,80.0,0.06,0.02
+sched2_comp_s2,schedule_comp,init,0,-0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s2,schedule_comp,eval,32,19.87,strict,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s2,schedule_comp,eval,64,-34.11,degraded,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_comp_s2,schedule_comp,eval,96,-3.56,tol2,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_comp_s2,schedule_comp,eval,120,-93.3,degraded,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_comp_s2,schedule_comp,eval,152,-9.79,tol2,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_comp_s2,schedule_comp,eval,184,-0.49,tol2,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_comp_s2,schedule_comp,eval,216,-28.04,degraded,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_comp_s2,schedule_comp,eval,240,-37.98,degraded,3.0,2.6,150.0,50.0,0.06,0.028
+sched2_comp_s2,schedule_comp,eval,272,-59.08,degraded,2.0,3.0,150.0,60.0,0.06,0.02
+sched2_comp_s2,schedule_comp,eval,300,-244.71,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s3,schedule_comp,init,0,0.11,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s3,schedule_comp,eval,32,-131.15,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s3,schedule_comp,eval,64,-91.32,degraded,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_comp_s3,schedule_comp,eval,96,16.99,strict,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_comp_s3,schedule_comp,eval,120,19.02,strict,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_comp_s3,schedule_comp,eval,152,18.68,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_comp_s3,schedule_comp,eval,184,22.11,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_comp_s3,schedule_comp,eval,216,22.08,strict,3.0,2.6,150.0,50.0,0.06,0.028
+sched2_comp_s3,schedule_comp,eval,240,20.94,strict,2.0,3.0,150.0,80.0,0.06,0.02
+sched2_comp_s3,schedule_comp,eval,272,22.4,degraded,2.0,3.0,150.0,80.0,0.06,0.02
+sched2_comp_s3,schedule_comp,eval,300,10.84,tol2,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_comp_s4,schedule_comp,init,0,-0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s4,schedule_comp,eval,32,-2.77,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_comp_s4,schedule_comp,eval,64,15.22,strict,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_comp_s4,schedule_comp,eval,96,-38.19,degraded,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_comp_s4,schedule_comp,eval,120,15.02,strict,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_comp_s4,schedule_comp,eval,152,-42.31,degraded,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_comp_s4,schedule_comp,eval,184,1.15,tol2,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_comp_s4,schedule_comp,eval,216,5.79,tol2,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_comp_s4,schedule_comp,eval,240,-45.73,degraded,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_comp_s4,schedule_comp,eval,272,18.49,strict,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_comp_s4,schedule_comp,eval,300,17.05,strict,3.0,2.6,150.0,50.0,0.06,0.028
+sched2_ep_s0,schedule_ep,init,0,0.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s0,schedule_ep,eval,32,-71.56,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s0,schedule_ep,eval,64,9.02,strict,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_ep_s0,schedule_ep,eval,96,13.44,strict,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_ep_s0,schedule_ep,eval,120,15.68,strict,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_ep_s0,schedule_ep,eval,152,19.43,strict,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_ep_s0,schedule_ep,eval,184,2.36,tol2,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_ep_s0,schedule_ep,eval,216,-34.14,degraded,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_ep_s0,schedule_ep,eval,240,18.13,strict,3.0,2.6,150.0,50.0,0.06,0.028
+sched2_ep_s0,schedule_ep,eval,272,20.55,strict,3.0,2.6,150.0,50.0,0.06,0.028
+sched2_ep_s0,schedule_ep,eval,300,18.05,strict,2.0,3.0,150.0,80.0,0.06,0.02
+sched2_ep_s1,schedule_ep,init,0,-0.57,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s1,schedule_ep,eval,32,-109.32,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s1,schedule_ep,eval,64,-2.11,tol2,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_ep_s1,schedule_ep,eval,96,-6.13,tol2,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_ep_s1,schedule_ep,eval,120,-23.77,degraded,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_ep_s1,schedule_ep,eval,152,11.87,strict,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s1,schedule_ep,eval,184,16.49,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_ep_s1,schedule_ep,eval,216,21.81,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_ep_s1,schedule_ep,eval,240,17.03,strict,3.0,2.6,150.0,50.0,0.06,0.028
+sched2_ep_s1,schedule_ep,eval,272,26.18,strict,3.0,2.6,150.0,50.0,0.06,0.028
+sched2_ep_s1,schedule_ep,eval,300,25.88,strict,2.0,3.0,150.0,80.0,0.06,0.02
+sched2_ep_s2,schedule_ep,init,0,-0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s2,schedule_ep,eval,32,19.87,strict,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s2,schedule_ep,eval,64,-34.11,degraded,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_ep_s2,schedule_ep,eval,96,14.28,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s2,schedule_ep,eval,120,-77.35,degraded,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_ep_s2,schedule_ep,eval,152,2.7,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s2,schedule_ep,eval,184,20.29,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_ep_s2,schedule_ep,eval,216,19.08,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_ep_s2,schedule_ep,eval,240,-91.55,degraded,3.0,2.6,150.0,50.0,0.06,0.028
+sched2_ep_s2,schedule_ep,eval,272,-105.28,degraded,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_ep_s2,schedule_ep,eval,300,19.94,strict,2.0,3.0,150.0,80.0,0.06,0.02
+sched2_ep_s3,schedule_ep,init,0,0.11,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s3,schedule_ep,eval,32,-131.15,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s3,schedule_ep,eval,64,-91.32,degraded,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_ep_s3,schedule_ep,eval,96,15.97,strict,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s3,schedule_ep,eval,120,0.63,tol2,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_ep_s3,schedule_ep,eval,152,-96.56,degraded,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_ep_s3,schedule_ep,eval,184,19.92,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_ep_s3,schedule_ep,eval,216,18.85,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_ep_s3,schedule_ep,eval,240,-78.65,degraded,3.0,2.6,150.0,50.0,0.06,0.028
+sched2_ep_s3,schedule_ep,eval,272,19.1,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_ep_s3,schedule_ep,eval,300,24.14,strict,2.0,3.0,150.0,80.0,0.06,0.02
+sched2_ep_s4,schedule_ep,init,0,-0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s4,schedule_ep,eval,32,-2.77,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+sched2_ep_s4,schedule_ep,eval,64,15.22,strict,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_ep_s4,schedule_ep,eval,96,15.42,strict,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_ep_s4,schedule_ep,eval,120,-14.76,tol2,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_ep_s4,schedule_ep,eval,152,-259.58,degraded,1.0,1.3,220.0,25.0,0.05,0.04
+sched2_ep_s4,schedule_ep,eval,184,-24.6,degraded,1.5,2.6,200.0,50.0,0.045,0.028
+sched2_ep_s4,schedule_ep,eval,216,2.82,tol2,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_ep_s4,schedule_ep,eval,240,-21.5,degraded,3.0,2.6,150.0,50.0,0.06,0.028
+sched2_ep_s4,schedule_ep,eval,272,19.37,strict,1.0,1.0,220.0,20.0,0.025,0.02
+sched2_ep_s4,schedule_ep,eval,300,19.12,strict,2.0,3.0,150.0,60.0,0.06,0.02
+toy_dtau_0,toy torque sweep,init,0,-0.3,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_0,toy torque sweep,eval,30,4.2,strict,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_0,toy torque sweep,eval,60,12.17,strict,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_2000,toy torque sweep,init,0,-0.05,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_2000,toy torque sweep,eval,30,-498.64,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_2000,toy torque sweep,eval,60,-3182.51,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_250,toy torque sweep,init,0,-0.07,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_250,toy torque sweep,eval,30,-164.57,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_250,toy torque sweep,eval,60,-208.56,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_500,toy torque sweep,init,0,-0.06,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_500,toy torque sweep,eval,30,-152.1,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_500,toy torque sweep,eval,60,-240.08,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_fix500,toy torque sweep,init,0,-0.07,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_fix500,toy torque sweep,eval,30,3.99,strict,1.0,1.0,220.0,20.0,0.05,0.05
+toy_dtau_fix500,toy torque sweep,eval,60,5.9,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s0,guard,init,0,0.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s0,guard,eval,32,-71.56,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s0,guard,eval,64,-5.02,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s0,guard,eval,96,-77.68,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s0,guard,eval,120,-0.78,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s0,guard,eval,152,17.89,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s0,guard,eval,184,-31.22,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s0,guard,eval,216,17.26,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s0,guard,eval,240,-14.49,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s0,guard,eval,272,17.39,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s0,guard,eval,300,-113.37,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s1,guard,init,0,-0.57,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s1,guard,eval,32,-109.32,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s1,guard,eval,64,-177.65,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s1,guard,eval,96,-83.72,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s1,guard,eval,120,-80.26,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s1,guard,eval,152,11.15,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s1,guard,eval,184,19.85,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s1,guard,eval,216,-78.17,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s1,guard,eval,240,18.49,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s1,guard,eval,272,23.47,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s1,guard,eval,300,18.92,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s2,guard,init,0,-0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s2,guard,eval,32,19.87,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s2,guard,eval,64,-548.22,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s2,guard,eval,96,19.39,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s2,guard,eval,120,-111.87,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s2,guard,eval,152,-56.24,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s2,guard,eval,184,0.28,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s2,guard,eval,216,16.93,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s2,guard,eval,240,-208.25,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s2,guard,eval,272,-127.01,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s2,guard,eval,300,-235.41,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s3,guard,init,0,0.11,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s3,guard,eval,32,-131.15,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s3,guard,eval,64,-284.79,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s3,guard,eval,96,8.26,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s3,guard,eval,120,-44.78,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s3,guard,eval,152,18.83,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s3,guard,eval,184,21.23,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s3,guard,eval,216,9.79,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s3,guard,eval,240,-6.81,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s3,guard,eval,272,19.04,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s3,guard,eval,300,-102.56,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s4,guard,init,0,-0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s4,guard,eval,32,-2.77,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s4,guard,eval,64,-80.87,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s4,guard,eval,96,-262.52,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s4,guard,eval,120,-57.24,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s4,guard,eval,152,-171.91,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s4,guard,eval,184,-35.09,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s4,guard,eval,216,14.91,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s4,guard,eval,240,-33.6,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s4,guard,eval,272,17.59,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_off_s4,guard,eval,300,-81.71,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2k_s0,guard+torque(debug),init,0,0.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2k_s0,guard+torque(debug),eval,32,-5417.36,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2k_s0,guard+torque(debug),eval,64,-318.8,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2k_s0,guard+torque(debug),eval,96,-10111.01,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2k_s0,guard+torque(debug),eval,120,-92.25,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2k_s0,guard+torque(debug),eval,152,-4737.23,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2k_s0,guard+torque(debug),eval,184,-11257.24,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2k_s0,guard+torque(debug),eval,216,-105.22,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2k_s0,guard+torque(debug),eval,240,-5547.16,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2k_s0,guard+torque(debug),eval,272,-155.86,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2k_s0,guard+torque(debug),eval,300,-218.22,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kg_s0,guard+torque(debug),init,0,0.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kg_s0,guard+torque(debug),eval,32,-209.23,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kg_s0,guard+torque(debug),eval,64,-263.59,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kg_s0,guard+torque(debug),eval,96,-7767.77,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kg_s0,guard+torque(debug),eval,120,-166.83,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kg_s0,guard+torque(debug),eval,152,-164.1,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kg_s0,guard+torque(debug),eval,184,-9719.37,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kg_s0,guard+torque(debug),eval,216,-716.84,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kg_s0,guard+torque(debug),eval,240,-10485.95,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kg_s0,guard+torque(debug),eval,272,-149.83,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kg_s0,guard+torque(debug),eval,300,-6565.04,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kk_s0,guard+torque(debug),init,0,0.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kk_s0,guard+torque(debug),eval,32,-333.06,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kk_s0,guard+torque(debug),eval,64,-362.39,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kk_s0,guard+torque(debug),eval,96,-10363.94,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kk_s0,guard+torque(debug),eval,120,-8.78,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kk_s0,guard+torque(debug),eval,152,-6704.87,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kk_s0,guard+torque(debug),eval,184,-224.43,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kk_s0,guard+torque(debug),eval,216,-8673.06,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kk_s0,guard+torque(debug),eval,240,-10675.93,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kk_s0,guard+torque(debug),eval,272,-182.23,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on2kk_s0,guard+torque(debug),eval,300,-8061.39,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s0,guard+torque,init,0,0.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s0,guard+torque,eval,32,-67.5,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s0,guard+torque,eval,64,-229.16,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s0,guard+torque,eval,96,16.3,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s0,guard+torque,eval,120,7.1,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s0,guard+torque,eval,152,-1.59,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s0,guard+torque,eval,184,-182.25,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s0,guard+torque,eval,216,16.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s0,guard+torque,eval,240,12.08,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s0,guard+torque,eval,272,12.52,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s0,guard+torque,eval,300,16.05,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s1,guard+torque,init,0,0.08,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s1,guard+torque,eval,32,-104.13,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s1,guard+torque,eval,64,-99.89,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s1,guard+torque,eval,96,-41.05,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s1,guard+torque,eval,120,-23.13,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s1,guard+torque,eval,152,-135.77,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s1,guard+torque,eval,184,3.35,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s1,guard+torque,eval,216,-29.11,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s1,guard+torque,eval,240,-166.81,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s1,guard+torque,eval,272,11.14,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s1,guard+torque,eval,300,1.84,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s2,guard+torque,init,0,0.07,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s2,guard+torque,eval,32,-270.02,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s2,guard+torque,eval,64,-545.12,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s2,guard+torque,eval,96,-33.65,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s2,guard+torque,eval,120,-17.81,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s2,guard+torque,eval,152,-165.96,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s2,guard+torque,eval,184,-31.05,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s2,guard+torque,eval,216,-213.18,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s2,guard+torque,eval,240,-6.95,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s2,guard+torque,eval,272,-3.82,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s2,guard+torque,eval,300,10.27,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s3,guard+torque,init,0,-0.69,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s3,guard+torque,eval,32,-109.07,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s3,guard+torque,eval,64,-314.3,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s3,guard+torque,eval,96,1.58,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s3,guard+torque,eval,120,-63.15,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s3,guard+torque,eval,152,5.7,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s3,guard+torque,eval,184,5.25,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s3,guard+torque,eval,216,4.27,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s3,guard+torque,eval,240,-75.67,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s3,guard+torque,eval,272,5.47,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s3,guard+torque,eval,300,2.58,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s4,guard+torque,init,0,0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s4,guard+torque,eval,32,-1.4,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s4,guard+torque,eval,64,1.28,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s4,guard+torque,eval,96,-1.59,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s4,guard+torque,eval,120,-2.58,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s4,guard+torque,eval,152,-25.49,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s4,guard+torque,eval,184,-56.44,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s4,guard+torque,eval,216,-36.62,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s4,guard+torque,eval,240,-0.23,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s4,guard+torque,eval,272,-7.95,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on3_s4,guard+torque,eval,300,-8.63,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on_s0,guard+torque(debug),init,0,0.01,strict,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on_s0,guard+torque(debug),eval,32,-5920.29,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on_s0,guard+torque(debug),eval,64,-300.36,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on_s0,guard+torque(debug),eval,96,-4340.41,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on_s0,guard+torque(debug),eval,120,-170.62,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on_s0,guard+torque(debug),eval,152,-207.21,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on_s0,guard+torque(debug),eval,184,-11093.66,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on_s0,guard+torque(debug),eval,216,-10033.59,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on_s0,guard+torque(debug),eval,240,-8630.02,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on_s0,guard+torque(debug),eval,272,-140.47,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+tq_on_s0,guard+torque(debug),eval,300,-8534.63,degraded,1.0,1.0,220.0,20.0,0.05,0.05

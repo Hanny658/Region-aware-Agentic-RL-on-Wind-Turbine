@@ -1,0 +1,10 @@
+arm,objective,n_seeds,per_seed,mean,std,strict,speed_std_ratio_mean,energy_loss_pct_mean,runs
+guard,tower,5,11.76 15.97 13.37 16.67 11.85,13.93,2.29,5/5,0.968,0.263,tq_off_s0 tq_off_s1 tq_off_s2 tq_off_s3 tq_off_s4
+llm_fork,tower,7,18.33 17.63 19.43 17.99 13.62 19.70 18.54,17.89,2.02,6/7,0.989,0.385,n1_llmfork_s0 n1_llmfork_s1 n1_llmfork_s2 n1_llmfork_s3 n1_llmfork_s4 n1_llmfork_s5 n1_llmfork_s6
+llm_single,tower,5,16.09 16.96 17.92 18.37 20.25,17.92,1.57,4/5,0.985,0.48,n1_llmsingle_s0 n1_llmsingle_s1 n1_llmsingle_s2 n1_llmsingle_s3 n1_llmsingle_s4
+mono,tower,5,17.23 11.42 14.64 10.69 15.04,13.8,2.71,0/5,1.014,0.343,n1_mono_s0 n1_mono_s1 n1_mono_s2 n1_mono_s3 n1_mono_s4
+random_fork,tower,7,13.20 3.13 18.84 16.53 8.12 12.00 14.69,12.36,5.3,7/7,0.97,0.27,n1_randfork_s0 n1_randfork_s1 n1_randfork_s2 n1_randfork_s3 n1_randfork_s4 n1_randfork_s5 n1_randfork_s6
+schedule_ep,tower,5,14.06 20.09 13.80 18.79 11.34,15.61,3.68,5/5,0.968,0.365,sched2_ep_s0 sched2_ep_s1 sched2_ep_s2 sched2_ep_s3 sched2_ep_s4
+schedule_comp,tower,5,14.61 20.03 13.37 17.86 9.69,15.11,4.01,5/5,0.968,0.291,sched2_comp_s0 sched2_comp_s1 sched2_comp_s2 sched2_comp_s3 sched2_comp_s4
+guard+torque,tower,5,7.56 3.27 6.77 2.07 0.90,4.11,2.92,5/5,0.969,0.047,tq_on3_s0 tq_on3_s1 tq_on3_s2 tq_on3_s3 tq_on3_s4
+guard (blade obj),blade,5,9.97 11.09 10.16 5.68 9.51,9.28,2.09,5/5,0.92,0.477,ipc_off_s0 ipc_off_s1 ipc_off_s2 ipc_off_s3 ipc_off_s4

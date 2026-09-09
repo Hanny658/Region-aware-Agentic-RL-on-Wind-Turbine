@@ -1,0 +1,259 @@
+run,arm,objective,campaign,eval_tag,F,F_strict,F_tol2,tier,target,del_red_pct,TwrBsMyt_DEL_red_pct,RootMyc1_DEL_red_pct,speed_std_ratio,speed_mae_ratio_R3,energy_loss_pct,power_mse_red_pct,gen_speed_mse_red_pct,constraints_ok,note
+_migration_check,(migration checks),-,infra,migcheck_gspi,-0.0,-0.0,-0.0,tol2,tower,-0.0,-0.0,0.0,1.0,1.0,-0.0,-0.0,-0.0,False,GSPI identity checks; provenance for the 2026-09-09 baseline restore
+_migration_check,(migration checks),-,infra,relabel_check,-0.0,-0.0,-0.0,strict,tower,-0.0,-0.0,0.0,1.0,1.0,-0.0,-0.0,0.0,True,GSPI identity checks; provenance for the 2026-09-09 baseline restore
+_migration_check,(migration checks),-,infra,restore_check,-0.0,-0.0,-0.0,tol2,tower,-0.0,-0.0,0.0,1.0,1.0,-0.0,-0.0,-0.0,False,GSPI identity checks; provenance for the 2026-09-09 baseline restore
+gspi_td,GSPI+tower damper,tower,A2,heldout_s3456,-4.487,-4.487,0.673,tol2,tower,0.673,0.673,-0.013,1.003,1.003,-0.001,-0.34,-0.541,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,identity_td_off,-0.0,-0.0,-0.0,strict,tower,-0.0,-0.0,0.0,1.0,1.0,0.0,0.0,0.0,True,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,robust_ti14,-3.553,-3.553,0.067,tol2,tower,0.067,0.067,0.084,1.002,1.002,-0.008,-0.128,-0.334,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,robust_ti22,-4.103,-4.103,0.712,tol2,tower,0.712,0.712,0.061,1.002,1.003,0.004,-0.14,-0.48,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,robust_u18,-2.295,-2.295,0.593,tol2,tower,0.593,0.593,0.157,1.001,1.001,-0.0,-0.288,-0.288,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,tune_ki0.001_hpf0.172,-4.211,-4.211,0.615,tol2,tower,0.615,0.615,2.659,1.002,1.004,0.001,-0.441,-0.504,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,tune_ki0.001_hpf0.500,-5.01,-5.01,0.841,tol2,tower,0.841,0.841,2.554,1.003,1.004,-0.004,-0.501,-0.598,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,tune_ki0.003_hpf0.172,-13.464,-13.464,1.587,tol2,tower,1.587,1.587,0.172,1.008,1.012,-0.005,-1.367,-1.597,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,tune_ki0.003_hpf0.500,-17.053,-17.053,1.259,tol2,tower,1.259,1.259,0.026,1.009,1.013,0.005,-1.562,-1.898,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,tune_ki0.01_hpf0.172,-57.688,-57.688,-17.688,degraded,tower,4.929,4.929,2.977,1.031,1.045,0.008,-4.862,-6.616,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,tune_ki0.01_hpf0.500,-71.658,-71.658,-31.658,degraded,tower,3.913,3.913,2.794,1.038,1.051,0.009,-5.807,-7.916,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,tune_ki0.03_hpf0.172,-190.38,-190.38,-150.38,degraded,tower,7.578,7.578,-0.432,1.099,1.108,0.006,-17.581,-21.108,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,tune_ki0.03_hpf0.500,-260.211,-260.211,-220.211,degraded,tower,3.872,3.872,-3.249,1.132,1.138,0.001,-24.675,-28.746,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,tune_ki0.10_hpf0.172,-2448.245,-2448.245,-2408.245,degraded,tower,-25.776,-25.776,-13.859,2.211,2.35,0.06,-523.278,-542.579,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,tune_ki0.10_hpf0.500,-3779.34,-3779.34,-3739.34,degraded,tower,-53.528,-53.528,-18.061,2.863,3.093,0.077,-1010.036,-1031.326,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,tune_ki0.30_hpf0.172,-8758.964,-8758.964,-8718.964,degraded,tower,-76.005,-76.005,-39.576,5.341,5.668,0.381,-4734.438,-4122.46,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+gspi_td,GSPI+tower damper,tower,A2,tune_ki0.30_hpf0.500,-8995.246,-8995.246,-8955.246,degraded,tower,-102.005,-102.005,-39.247,5.447,5.759,0.384,-5140.432,-4419.285,False,"ROSCO TD_Mode=1 reference controller, gain sweep + held-out"
+ipc_off_s0,guard (blade obj),blade,robust,heldout_s3456_ckpt_best,9.971,9.971,9.971,strict,blade,9.971,8.991,9.965,0.853,0.83,0.617,-8.747,26.618,True,RL-alone; the only stress-swept RL set
+ipc_off_s0,guard (blade obj),blade,robust,heldout_s3456_ckpt_last,9.971,9.971,9.971,strict,blade,9.971,8.991,9.965,0.853,0.83,0.617,-8.747,26.618,True,RL-alone; the only stress-swept RL set
+ipc_off_s0,guard (blade obj),blade,robust,robust_ti14,12.51,12.51,12.51,strict,blade,12.51,14.662,12.509,0.878,0.83,0.624,22.528,22.741,True,RL-alone; the only stress-swept RL set
+ipc_off_s0,guard (blade obj),blade,robust,robust_ti22,5.381,5.381,5.381,strict,blade,5.381,17.247,5.382,0.817,0.809,0.406,0.004,32.546,True,RL-alone; the only stress-swept RL set
+ipc_off_s0,guard (blade obj),blade,robust,robust_u18,5.861,5.861,5.861,strict,blade,5.861,-6.718,5.861,0.838,0.824,-0.0,29.653,29.654,True,RL-alone; the only stress-swept RL set
+ipc_off_s1,guard (blade obj),blade,robust,heldout_s3456_ckpt_best,11.088,11.088,11.088,strict,blade,11.088,7.352,11.08,0.91,0.888,0.57,-18.312,17.314,True,RL-alone; the only stress-swept RL set
+ipc_off_s1,guard (blade obj),blade,robust,heldout_s3456_ckpt_last,11.088,11.088,11.088,strict,blade,11.088,7.352,11.08,0.91,0.888,0.57,-18.312,17.314,True,RL-alone; the only stress-swept RL set
+ipc_off_s1,guard (blade obj),blade,robust,robust_ti14,14.63,14.63,14.63,strict,blade,14.63,17.561,14.631,0.893,0.842,0.559,19.576,20.046,True,RL-alone; the only stress-swept RL set
+ipc_off_s1,guard (blade obj),blade,robust,robust_ti22,7.078,7.078,7.078,strict,blade,7.078,21.986,7.079,0.829,0.825,0.394,-6.347,30.388,True,RL-alone; the only stress-swept RL set
+ipc_off_s1,guard (blade obj),blade,robust,robust_u18,7.401,7.401,7.401,strict,blade,7.401,-8.598,7.401,0.867,0.851,0.002,24.862,24.864,True,RL-alone; the only stress-swept RL set
+ipc_off_s2,guard (blade obj),blade,robust,heldout_s3456_ckpt_best,10.159,10.159,10.159,strict,blade,10.159,15.698,10.153,0.921,0.897,0.449,-20.74,14.99,True,RL-alone; the only stress-swept RL set
+ipc_off_s2,guard (blade obj),blade,robust,heldout_s3456_ckpt_last,10.159,10.159,10.159,strict,blade,10.159,15.698,10.153,0.921,0.897,0.449,-20.74,14.99,True,RL-alone; the only stress-swept RL set
+ipc_off_s2,guard (blade obj),blade,robust,robust_ti14,13.049,13.049,13.049,strict,blade,13.049,19.215,13.05,0.95,0.903,0.399,9.564,9.646,True,RL-alone; the only stress-swept RL set
+ipc_off_s2,guard (blade obj),blade,robust,robust_ti22,6.405,6.405,6.405,strict,blade,6.405,28.212,6.405,0.885,0.894,0.336,-21.283,20.944,True,RL-alone; the only stress-swept RL set
+ipc_off_s2,guard (blade obj),blade,robust,robust_u18,3.598,3.598,3.598,strict,blade,3.598,-0.368,3.597,0.939,0.928,-0.004,11.734,11.736,True,RL-alone; the only stress-swept RL set
+ipc_off_s3,guard (blade obj),blade,robust,heldout_s3456_ckpt_best,5.685,5.685,5.685,strict,blade,5.685,11.395,5.685,0.937,0.923,0.171,-3.584,12.115,True,RL-alone; the only stress-swept RL set
+ipc_off_s3,guard (blade obj),blade,robust,heldout_s3456_ckpt_last,-13.315,-13.315,8.832,tol2,blade,8.832,10.7,8.832,1.011,1.004,0.238,-2.287,-2.291,False,RL-alone; the only stress-swept RL set
+ipc_off_s3,guard (blade obj),blade,robust,robust_ti14,5.789,5.789,5.789,strict,blade,5.789,11.654,5.789,0.961,0.95,0.212,7.389,7.397,True,RL-alone; the only stress-swept RL set
+ipc_off_s3,guard (blade obj),blade,robust,robust_ti22,1.813,1.813,1.813,strict,blade,1.813,14.465,1.814,0.935,0.937,0.234,-3.307,12.416,True,RL-alone; the only stress-swept RL set
+ipc_off_s3,guard (blade obj),blade,robust,robust_u18,1.483,1.483,1.483,strict,blade,1.483,2.138,1.482,0.967,0.963,0.005,6.554,6.556,True,RL-alone; the only stress-swept RL set
+ipc_off_s4,guard (blade obj),blade,robust,heldout_s3456_ckpt_best,9.512,9.512,9.512,strict,blade,9.512,14.533,9.51,0.978,0.977,0.578,4.218,4.219,True,RL-alone; the only stress-swept RL set
+ipc_off_s4,guard (blade obj),blade,robust,heldout_s3456_ckpt_last,-36.551,-36.551,3.449,degraded,blade,12.011,7.089,12.005,1.024,1.02,0.709,-5.039,-5.032,False,RL-alone; the only stress-swept RL set
+ipc_off_s4,guard (blade obj),blade,robust,robust_ti14,13.851,13.851,13.851,strict,blade,13.851,18.549,13.851,0.965,0.934,0.632,6.669,6.772,True,RL-alone; the only stress-swept RL set
+ipc_off_s4,guard (blade obj),blade,robust,robust_ti22,7.332,7.332,7.332,strict,blade,7.332,29.165,7.333,0.894,0.913,0.59,-3.702,19.209,True,RL-alone; the only stress-swept RL set
+ipc_off_s4,guard (blade obj),blade,robust,robust_u18,2.867,2.867,2.867,strict,blade,2.867,-3.734,2.868,0.958,0.956,-0.003,8.111,8.112,True,RL-alone; the only stress-swept RL set
+n1_llmfork_s0,llm_fork,tower,n=7 one bank,heldout2_s78910,15.888,15.888,15.888,strict,tower,15.888,15.888,-0.747,0.936,0.929,0.279,-5.95,11.445,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s0,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,4.411,4.411,18.332,tol2,tower,18.332,18.332,4.702,1.007,1.007,0.372,-1.444,-1.447,False,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s0,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,4.411,4.411,18.332,tol2,tower,18.332,18.332,4.702,1.007,1.007,0.372,-1.444,-1.447,False,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s1,llm_fork,tower,n=7 one bank,heldout2_s78910,13.985,13.985,13.985,strict,tower,13.985,13.985,1.612,0.922,0.919,0.242,-3.077,13.761,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s1,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,17.633,17.633,17.633,strict,tower,17.633,17.633,6.05,0.954,0.94,0.34,-27.373,8.139,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s1,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,17.633,17.633,17.633,strict,tower,17.633,17.633,6.05,0.954,0.94,0.34,-27.373,8.139,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s2,llm_fork,tower,n=7 one bank,heldout2_s78910,16.587,16.587,16.587,strict,tower,16.587,16.587,1.821,0.886,0.883,0.259,5.838,19.433,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s2,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,19.43,19.43,19.43,strict,tower,19.43,19.43,6.2,0.985,0.983,0.385,2.872,2.87,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s2,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,-16.67,-16.67,17.139,tol2,tower,17.139,17.139,5.004,1.017,1.016,0.258,-3.458,-3.46,False,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s3,llm_fork,tower,n=7 one bank,heldout2_s78910,15.723,15.723,15.723,strict,tower,15.723,15.723,2.537,0.93,0.926,0.323,0.535,12.623,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s3,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,17.99,17.99,17.99,strict,tower,17.99,17.99,7.533,0.986,0.981,0.454,2.624,2.621,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s3,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,-10.983,-10.983,19.663,tol2,tower,19.663,19.663,8.339,1.015,1.011,0.591,-3.359,-3.362,False,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s3,llm_fork,tower,n=7 one bank,robust_ti14,3.493,3.493,17.77,tol2,tower,17.77,17.77,9.753,1.007,0.961,0.447,-1.551,-1.458,False,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s3,llm_fork,tower,n=7 one bank,robust_ti22,21.905,21.905,21.905,strict,tower,21.905,21.905,4.213,0.945,0.959,0.568,-48.088,10.1,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s3,llm_fork,tower,n=7 one bank,robust_u18,0.413,0.413,0.413,strict,tower,0.413,0.413,1.992,0.958,0.956,0.002,8.315,8.316,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s4,llm_fork,tower,n=7 one bank,heldout2_s78910,13.837,13.837,13.837,strict,tower,13.837,13.837,1.337,0.942,0.942,0.155,2.317,10.111,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s4,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,13.624,13.624,13.624,strict,tower,13.624,13.624,3.28,0.996,0.996,0.206,0.67,0.667,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s4,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,10.836,10.836,10.836,strict,tower,10.836,10.836,2.824,0.977,0.975,0.212,4.484,4.482,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s4,llm_fork,tower,n=7 one bank,robust_ti14,13.64,13.64,13.64,strict,tower,13.64,13.64,4.707,0.993,0.973,0.262,1.209,1.236,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s4,llm_fork,tower,n=7 one bank,robust_ti22,16.064,16.064,16.064,strict,tower,16.064,16.064,0.216,0.979,0.985,0.356,-13.945,3.936,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s4,llm_fork,tower,n=7 one bank,robust_u18,2.493,2.493,2.493,strict,tower,2.493,2.493,0.819,0.992,0.992,-0.0,1.595,1.595,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s5,llm_fork,tower,n=7 one bank,heldout2_s78910,18.646,18.646,18.646,strict,tower,18.646,18.646,5.179,0.923,0.924,0.307,-7.737,13.141,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s5,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,19.698,19.698,19.698,strict,tower,19.698,19.698,7.723,0.997,0.996,0.452,0.426,0.425,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s5,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,-12.74,-12.74,22.999,tol2,tower,22.999,22.999,8.0,1.018,1.017,0.592,-3.715,-3.717,False,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s6,llm_fork,tower,n=7 one bank,heldout2_s78910,16.207,16.207,16.207,strict,tower,16.207,16.207,2.264,0.892,0.889,0.35,0.168,18.546,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s6,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,18.542,18.542,18.542,strict,tower,18.542,18.542,6.185,0.995,0.995,0.488,0.853,0.851,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmfork_s6,llm_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,18.542,18.542,18.542,strict,tower,18.542,18.542,6.185,0.995,0.995,0.488,0.853,0.851,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_llmsingle_s0,llm_single,tower,B1,heldout2_s78910,15.745,15.745,15.745,strict,tower,15.745,15.745,3.706,0.907,0.906,0.323,1.99,17.327,True,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s0,llm_single,tower,B1,heldout_s3456_ckpt_best,16.092,16.092,16.092,strict,tower,16.092,16.092,6.301,0.97,0.964,0.448,5.686,5.684,True,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s0,llm_single,tower,B1,heldout_s3456_ckpt_last,-758.344,-758.344,-718.344,degraded,tower,-13.37,-13.37,-2.871,1.372,1.367,0.811,-89.791,-89.795,False,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s1,llm_single,tower,B1,heldout2_s78910,13.273,13.273,13.273,strict,tower,13.273,13.273,2.599,0.904,0.909,0.402,6.16,17.795,True,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s1,llm_single,tower,B1,heldout_s3456_ckpt_best,16.96,16.96,16.96,strict,tower,16.96,16.96,6.107,0.961,0.943,0.583,7.631,7.632,True,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s1,llm_single,tower,B1,heldout_s3456_ckpt_last,11.158,11.158,11.158,strict,tower,11.158,11.158,5.598,0.995,0.964,0.647,0.984,0.984,True,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s2,llm_single,tower,B1,heldout2_s78910,15.068,15.068,15.068,strict,tower,15.068,15.068,0.509,0.917,0.91,0.267,-1.205,14.444,True,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s2,llm_single,tower,B1,heldout_s3456_ckpt_best,-2.523,-2.523,17.924,tol2,tower,17.924,17.924,5.561,1.01,1.01,0.369,-2.067,-2.069,False,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s2,llm_single,tower,B1,heldout_s3456_ckpt_last,-2.523,-2.523,17.924,tol2,tower,17.924,17.924,5.561,1.01,1.01,0.369,-2.067,-2.069,False,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s3,llm_single,tower,B1,heldout2_s78910,16.604,16.604,16.604,strict,tower,16.604,16.604,4.985,0.91,0.909,0.296,-3.739,15.763,True,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s3,llm_single,tower,B1,heldout_s3456_ckpt_best,18.366,18.366,18.366,strict,tower,18.366,18.366,7.112,0.99,0.986,0.41,1.913,1.911,True,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s3,llm_single,tower,B1,heldout_s3456_ckpt_last,-13.546,-13.546,18.884,tol2,tower,18.884,18.884,9.089,1.016,0.999,0.729,-3.675,-3.677,False,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s4,llm_single,tower,B1,heldout2_s78910,18.05,18.05,18.05,strict,tower,18.05,18.05,2.084,0.893,0.894,0.416,1.343,17.557,True,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s4,llm_single,tower,B1,heldout_s3456_ckpt_best,20.246,20.246,20.246,strict,tower,20.246,20.246,6.841,0.996,0.998,0.592,0.654,0.654,True,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_llmsingle_s4,llm_single,tower,B1,heldout_s3456_ckpt_last,19.571,19.571,19.571,strict,tower,19.571,19.571,7.654,0.974,0.975,0.557,4.888,4.888,True,"single proposal, no fork, no dry run (--no_dry_run)"
+n1_mono_s0,mono,tower,A1,heldout2_s78910,16.611,16.611,16.611,strict,tower,16.611,16.611,4.613,0.943,0.948,0.378,1.482,8.642,True,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s0,mono,tower,A1,heldout600,-18.131,-18.131,19.41,tol2,tower,19.41,19.41,6.682,1.019,1.017,0.433,-3.807,-3.803,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s0,mono,tower,A1,heldout_s3456_ckpt_best,-22.723,-22.723,17.232,tol2,tower,17.232,17.232,8.14,1.02,1.022,0.549,-3.896,-3.897,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s0,mono,tower,A1,heldout_s3456_ckpt_last,-22.723,-22.723,17.232,tol2,tower,17.232,17.232,8.14,1.02,1.022,0.549,-3.896,-3.897,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s1,mono,tower,A1,heldout2_s78910,9.603,9.603,9.603,strict,tower,9.603,9.603,-0.617,0.966,0.953,0.19,-5.366,6.152,True,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s1,mono,tower,A1,heldout600,-6.921,-6.921,11.124,tol2,tower,11.124,11.124,2.246,1.009,1.009,0.216,-1.818,-1.815,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s1,mono,tower,A1,heldout_s3456_ckpt_best,-3.958,-3.958,11.417,tol2,tower,11.417,11.417,3.577,1.008,1.009,0.262,-1.567,-1.569,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s1,mono,tower,A1,heldout_s3456_ckpt_last,-53.058,-53.058,-13.058,degraded,tower,20.414,20.414,6.31,1.037,1.039,0.581,-7.298,-7.296,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s2,mono,tower,A1,heldout2_s78910,11.822,11.822,11.822,strict,tower,11.822,11.822,0.08,0.976,0.966,0.244,-9.956,3.944,True,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s2,mono,tower,A1,heldout600,-29.684,-29.684,10.316,degraded,tower,14.159,14.159,2.429,1.022,1.022,0.281,-4.443,-4.44,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s2,mono,tower,A1,heldout_s3456_ckpt_best,-24.965,-24.965,14.645,tol2,tower,14.645,14.645,3.844,1.02,1.021,0.337,-4.013,-4.014,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s2,mono,tower,A1,heldout_s3456_ckpt_last,-54.144,-54.144,-14.144,degraded,tower,15.602,15.602,3.536,1.035,1.034,0.36,-7.031,-7.036,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s3,mono,tower,A1,heldout2_s78910,9.211,9.211,9.211,strict,tower,9.211,9.211,-0.772,0.994,0.989,0.083,-0.971,1.156,True,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s3,mono,tower,A1,heldout600,-12.91,-12.91,9.335,tol2,tower,9.335,9.335,0.714,1.011,1.012,0.089,-2.235,-2.235,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s3,mono,tower,A1,heldout_s3456_ckpt_best,-15.221,-15.221,10.69,tol2,tower,10.69,10.69,1.481,1.013,1.012,0.108,-2.612,-2.614,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s3,mono,tower,A1,heldout_s3456_ckpt_last,-4.874,-4.874,12.664,tol2,tower,12.664,12.664,2.93,1.009,1.009,0.124,-1.751,-1.752,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s4,mono,tower,A1,heldout2_s78910,6.253,6.253,14.015,tol2,tower,14.015,14.015,4.623,1.004,1.001,0.298,-0.852,-0.859,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s4,mono,tower,A1,heldout600,16.633,16.633,16.691,tol2,tower,16.691,16.691,6.278,1.0,1.0,0.364,-0.013,-0.009,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s4,mono,tower,A1,heldout_s3456_ckpt_best,-7.287,-7.287,15.037,tol2,tower,15.037,15.037,8.087,1.011,1.016,0.457,-2.146,-2.149,False,"monolithic control arm, seed-paired with tq_off"
+n1_mono_s4,mono,tower,A1,heldout_s3456_ckpt_last,-26.503,-26.503,13.497,degraded,tower,17.328,17.328,8.139,1.022,1.026,0.49,-4.283,-4.286,False,"monolithic control arm, seed-paired with tq_off"
+n1_randfork_s0,random_fork,tower,n=7 one bank,heldout2_s78910,12.372,12.372,12.372,strict,tower,12.372,12.372,4.5,0.91,0.9,0.099,5.123,16.534,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s0,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,13.199,13.199,13.199,strict,tower,13.199,13.199,5.196,0.968,0.964,0.133,6.077,6.075,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s0,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,10.536,10.536,10.536,strict,tower,10.536,10.536,2.753,0.888,0.873,0.259,5.626,21.328,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s1,random_fork,tower,n=7 one bank,heldout2_s78910,2.75,2.75,2.75,strict,tower,2.75,2.75,2.543,0.948,0.944,0.036,10.253,10.31,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s1,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,3.134,3.134,3.134,strict,tower,3.134,3.134,2.41,0.945,0.929,0.052,10.477,10.476,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s1,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,3.134,3.134,3.134,strict,tower,3.134,3.134,2.41,0.945,0.929,0.052,10.477,10.476,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s2,random_fork,tower,n=7 one bank,heldout2_s78910,15.678,15.678,15.678,strict,tower,15.678,15.678,2.068,0.929,0.925,0.238,-0.868,12.284,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s2,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,18.841,18.841,18.841,strict,tower,18.841,18.841,5.738,0.993,0.987,0.326,1.32,1.318,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s2,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,-294.084,-294.084,-254.084,degraded,tower,7.785,7.785,0.779,1.151,1.135,0.318,-33.044,-33.045,False,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s3,random_fork,tower,n=7 one bank,heldout2_s78910,12.546,12.546,12.546,strict,tower,12.546,12.546,4.06,0.871,0.872,0.498,22.439,23.155,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s3,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,16.528,16.528,16.528,strict,tower,16.528,16.528,11.372,0.95,0.933,0.7,9.456,9.454,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s3,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,-15.673,-15.673,11.624,degraded,tower,14.627,14.627,8.064,1.014,0.994,1.15,-3.16,-3.152,False,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s3,random_fork,tower,n=7 one bank,robust_ti14,17.519,17.519,17.519,strict,tower,17.519,17.519,13.24,0.934,0.873,0.719,12.551,12.657,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s3,random_fork,tower,n=7 one bank,robust_ti22,27.309,27.309,27.309,strict,tower,27.309,27.309,5.812,0.87,0.871,0.624,-2.608,23.555,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s3,random_fork,tower,n=7 one bank,robust_u18,1.191,1.191,1.191,strict,tower,1.191,1.191,2.868,0.889,0.878,0.007,21.014,21.016,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s4,random_fork,tower,n=7 one bank,heldout2_s78910,6.618,6.618,6.618,strict,tower,6.618,6.618,2.524,0.99,0.996,0.126,0.248,1.629,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s4,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,8.124,8.124,8.124,strict,tower,8.124,8.124,2.789,0.959,0.953,0.161,7.814,7.813,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s4,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,8.124,8.124,8.124,strict,tower,8.124,8.124,2.789,0.959,0.953,0.161,7.814,7.813,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s4,random_fork,tower,n=7 one bank,robust_ti14,6.677,6.677,6.677,strict,tower,6.677,6.677,3.243,0.949,0.94,0.199,9.735,9.736,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s4,random_fork,tower,n=7 one bank,robust_ti22,0.85,0.85,0.85,strict,tower,0.85,0.85,0.385,0.96,0.947,0.17,-2.204,7.632,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s4,random_fork,tower,n=7 one bank,robust_u18,2.267,2.267,2.267,strict,tower,2.267,2.267,1.883,0.939,0.937,-0.001,11.738,11.738,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s5,random_fork,tower,n=7 one bank,heldout2_s78910,11.98,11.98,11.98,strict,tower,11.98,11.98,2.467,0.943,0.94,0.092,4.888,10.144,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s5,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,12.004,12.004,12.004,strict,tower,12.004,12.004,6.726,0.992,0.991,0.125,1.537,1.534,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s5,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,-40.466,-40.466,-0.466,degraded,tower,18.131,18.131,7.479,1.029,1.024,0.308,-5.967,-5.97,False,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s6,random_fork,tower,n=7 one bank,heldout2_s78910,14.137,14.137,14.137,strict,tower,14.137,14.137,3.538,0.927,0.92,0.286,-10.672,13.585,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s6,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_best,14.685,14.685,14.685,strict,tower,14.685,14.685,8.148,0.984,0.98,0.393,2.87,2.87,True,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+n1_randfork_s6,random_fork,tower,n=7 one bank,heldout_s3456_ckpt_last,-175.982,-175.982,-135.982,degraded,tower,12.715,12.715,10.502,1.094,1.09,0.586,-19.831,-19.83,False,"s0-2 re-run 2026-09-09, s5-6 added; s3-4 from the mac"
+sched2_comp_s0,schedule_comp,tower,sched2,heldout_s3456_ckpt_best,14.612,14.612,14.612,strict,tower,14.612,14.612,5.666,0.96,0.954,0.343,7.693,7.692,True,"competence-indexed replay (gate bug, see README)"
+sched2_comp_s0,schedule_comp,tower,sched2,heldout_s3456_ckpt_last,-104.73,-104.73,-64.73,degraded,tower,3.894,3.894,-0.014,1.054,1.037,0.529,-11.236,-11.245,False,"competence-indexed replay (gate bug, see README)"
+sched2_comp_s1,schedule_comp,tower,sched2,heldout_s3456_ckpt_best,20.031,20.031,20.031,strict,tower,20.031,20.031,6.338,0.933,0.907,0.535,-28.621,12.093,True,"competence-indexed replay (gate bug, see README)"
+sched2_comp_s1,schedule_comp,tower,sched2,heldout_s3456_ckpt_last,19.222,19.222,19.222,strict,tower,19.222,19.222,5.958,0.954,0.922,0.612,-30.481,8.149,True,"competence-indexed replay (gate bug, see README)"
+sched2_comp_s2,schedule_comp,tower,sched2,heldout_s3456_ckpt_best,13.368,13.368,13.368,strict,tower,13.368,13.368,2.601,0.997,0.994,0.149,0.553,0.553,True,"competence-indexed replay (gate bug, see README)"
+sched2_comp_s2,schedule_comp,tower,sched2,heldout_s3456_ckpt_last,-222.867,-222.867,-182.867,degraded,tower,5.998,5.998,-2.095,1.114,1.099,0.168,-24.428,-24.429,False,"competence-indexed replay (gate bug, see README)"
+sched2_comp_s3,schedule_comp,tower,sched2,heldout_s3456_ckpt_best,17.855,17.855,17.855,strict,tower,17.855,17.855,6.426,0.965,0.961,0.301,6.79,6.787,True,"competence-indexed replay (gate bug, see README)"
+sched2_comp_s3,schedule_comp,tower,sched2,heldout_s3456_ckpt_last,17.723,17.723,17.723,strict,tower,17.723,17.723,7.817,0.992,0.987,0.364,1.511,1.508,True,"competence-indexed replay (gate bug, see README)"
+sched2_comp_s4,schedule_comp,tower,sched2,heldout_s3456_ckpt_best,9.688,9.688,9.688,strict,tower,9.688,9.688,3.164,0.985,0.984,0.125,2.873,2.871,True,"competence-indexed replay (gate bug, see README)"
+sched2_comp_s4,schedule_comp,tower,sched2,heldout_s3456_ckpt_last,9.899,9.899,9.899,strict,tower,9.899,9.899,4.124,0.953,0.946,0.25,9.105,9.103,True,"competence-indexed replay (gate bug, see README)"
+sched2_ep_s0,schedule_ep,tower,sched2,heldout2_s78910,10.735,10.735,10.735,strict,tower,10.735,10.735,2.089,0.93,0.931,0.45,7.15,13.598,True,episode-indexed replay
+sched2_ep_s0,schedule_ep,tower,sched2,heldout600,12.573,12.573,12.573,strict,tower,12.573,12.573,3.767,0.963,0.963,0.476,7.093,7.107,True,episode-indexed replay
+sched2_ep_s0,schedule_ep,tower,sched2,heldout_s3456_ckpt_best,14.059,14.059,14.059,strict,tower,14.059,14.059,4.736,0.98,0.964,0.629,3.834,3.839,True,episode-indexed replay
+sched2_ep_s0,schedule_ep,tower,sched2,heldout_s3456_ckpt_last,-25.101,-25.101,14.216,tol2,tower,14.216,14.216,3.211,1.02,1.005,0.683,-3.969,-3.97,False,episode-indexed replay
+sched2_ep_s0,schedule_ep,tower,sched2,robust_ti14,12.583,12.583,12.583,strict,tower,12.583,12.583,8.367,0.982,0.914,0.661,3.484,3.587,True,episode-indexed replay
+sched2_ep_s0,schedule_ep,tower,sched2,robust_ti22,18.251,18.251,18.251,strict,tower,18.251,18.251,6.227,0.905,0.9,0.573,-14.319,17.664,True,episode-indexed replay
+sched2_ep_s0,schedule_ep,tower,sched2,robust_u18,4.538,4.538,4.538,strict,tower,4.538,4.538,0.416,0.895,0.891,-0.001,19.865,19.866,True,episode-indexed replay
+sched2_ep_s1,schedule_ep,tower,sched2,heldout2_s78910,15.474,15.474,15.474,strict,tower,15.474,15.474,2.856,0.87,0.873,0.355,13.106,23.7,True,episode-indexed replay
+sched2_ep_s1,schedule_ep,tower,sched2,heldout600,19.813,19.813,19.813,strict,tower,19.813,19.813,4.687,0.933,0.933,0.388,12.895,12.912,True,episode-indexed replay
+sched2_ep_s1,schedule_ep,tower,sched2,heldout_s3456_ckpt_best,20.091,20.091,20.091,strict,tower,20.091,20.091,6.77,0.906,0.875,0.519,-24.477,17.485,True,episode-indexed replay
+sched2_ep_s1,schedule_ep,tower,sched2,heldout_s3456_ckpt_last,20.199,20.199,20.199,strict,tower,20.199,20.199,5.858,0.94,0.909,0.606,-29.425,10.815,True,episode-indexed replay
+sched2_ep_s1,schedule_ep,tower,sched2,robust_ti14,19.993,19.993,19.993,strict,tower,19.993,19.993,10.598,0.956,0.891,0.499,8.436,8.552,True,episode-indexed replay
+sched2_ep_s1,schedule_ep,tower,sched2,robust_ti22,24.906,24.906,24.906,strict,tower,24.906,24.906,3.657,0.892,0.894,0.584,-20.88,19.802,True,episode-indexed replay
+sched2_ep_s1,schedule_ep,tower,sched2,robust_u18,4.962,4.962,4.962,strict,tower,4.962,4.962,0.351,0.885,0.876,0.004,21.714,21.715,True,episode-indexed replay
+sched2_ep_s2,schedule_ep,tower,sched2,heldout2_s78910,12.847,12.847,12.847,strict,tower,12.847,12.847,0.917,0.968,0.965,0.101,-1.263,5.531,True,episode-indexed replay
+sched2_ep_s2,schedule_ep,tower,sched2,heldout600,14.198,14.198,14.198,strict,tower,14.198,14.198,2.366,0.992,0.995,0.113,1.505,1.508,True,episode-indexed replay
+sched2_ep_s2,schedule_ep,tower,sched2,heldout_s3456_ckpt_best,13.802,13.802,13.802,strict,tower,13.802,13.802,2.898,0.993,0.987,0.144,1.367,1.367,True,episode-indexed replay
+sched2_ep_s2,schedule_ep,tower,sched2,heldout_s3456_ckpt_last,13.151,13.151,17.112,tol2,tower,17.112,17.112,4.453,1.002,0.995,0.257,-0.477,-0.477,False,episode-indexed replay
+sched2_ep_s2,schedule_ep,tower,sched2,robust_ti14,14.888,14.888,14.888,strict,tower,14.888,14.888,3.572,0.992,0.972,0.156,1.352,1.364,True,episode-indexed replay
+sched2_ep_s2,schedule_ep,tower,sched2,robust_ti22,14.339,14.339,14.339,strict,tower,14.339,14.339,1.757,0.983,0.985,0.212,-16.8,3.053,True,episode-indexed replay
+sched2_ep_s2,schedule_ep,tower,sched2,robust_u18,5.152,5.152,5.152,strict,tower,5.152,5.152,-0.406,0.971,0.97,-0.002,5.726,5.726,True,episode-indexed replay
+sched2_ep_s3,schedule_ep,tower,sched2,heldout2_s78910,18.275,18.275,18.275,strict,tower,18.275,18.275,3.708,0.915,0.913,0.289,-1.994,15.177,True,episode-indexed replay
+sched2_ep_s3,schedule_ep,tower,sched2,heldout600,19.036,19.036,19.036,strict,tower,19.036,19.036,6.772,0.979,0.978,0.287,4.112,4.123,True,episode-indexed replay
+sched2_ep_s3,schedule_ep,tower,sched2,heldout_s3456_ckpt_best,18.785,18.785,18.785,strict,tower,18.785,18.785,7.552,0.982,0.979,0.385,3.412,3.409,True,episode-indexed replay
+sched2_ep_s3,schedule_ep,tower,sched2,heldout_s3456_ckpt_last,18.785,18.785,18.785,strict,tower,18.785,18.785,7.552,0.982,0.979,0.385,3.412,3.409,True,episode-indexed replay
+sched2_ep_s3,schedule_ep,tower,sched2,robust_ti14,18.43,18.43,18.43,strict,tower,18.43,18.43,9.941,0.977,0.946,0.378,4.339,4.405,True,episode-indexed replay
+sched2_ep_s3,schedule_ep,tower,sched2,robust_ti22,22.576,22.576,22.576,strict,tower,22.576,22.576,4.626,0.927,0.939,0.483,-44.244,13.554,True,episode-indexed replay
+sched2_ep_s3,schedule_ep,tower,sched2,robust_u18,0.616,0.616,0.616,strict,tower,0.616,0.616,4.22,0.968,0.965,0.001,6.228,6.229,True,episode-indexed replay
+sched2_ep_s4,schedule_ep,tower,sched2,heldout2_s78910,11.813,11.813,11.813,strict,tower,11.813,11.813,2.172,0.936,0.934,0.114,7.258,11.581,True,episode-indexed replay
+sched2_ep_s4,schedule_ep,tower,sched2,heldout600,10.359,10.359,10.359,strict,tower,10.359,10.359,2.326,0.977,0.978,0.113,4.528,4.532,True,episode-indexed replay
+sched2_ep_s4,schedule_ep,tower,sched2,heldout_s3456_ckpt_best,11.336,11.336,11.336,strict,tower,11.336,11.336,3.299,0.98,0.979,0.147,3.982,3.98,True,episode-indexed replay
+sched2_ep_s4,schedule_ep,tower,sched2,heldout_s3456_ckpt_last,14.298,14.298,14.298,strict,tower,14.298,14.298,4.242,0.969,0.966,0.33,5.933,5.931,True,episode-indexed replay
+sched2_ep_s4,schedule_ep,tower,sched2,robust_ti14,10.244,10.244,10.244,strict,tower,10.244,10.244,4.012,0.975,0.966,0.196,4.725,4.741,True,episode-indexed replay
+sched2_ep_s4,schedule_ep,tower,sched2,robust_ti22,8.987,8.987,8.987,strict,tower,8.987,8.987,0.167,0.975,0.976,0.274,-9.658,4.753,True,episode-indexed replay
+sched2_ep_s4,schedule_ep,tower,sched2,robust_u18,0.342,0.342,0.342,strict,tower,0.342,0.342,1.621,0.978,0.977,0.0,4.33,4.33,True,episode-indexed replay
+tq_off_s0,guard,tower,torque,heldout2_gspi,0.0,0.0,0.0,strict,tower,0.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0,True,pitch-only control arm = spec+guard main line
+tq_off_s0,guard,tower,torque,heldout2_s78910,11.855,11.855,11.855,strict,tower,11.855,11.855,2.435,0.904,0.902,0.201,7.556,17.681,True,pitch-only control arm = spec+guard main line
+tq_off_s0,guard,tower,torque,heldout600,12.059,12.059,12.059,strict,tower,12.059,12.059,4.406,0.947,0.948,0.207,10.344,10.352,True,pitch-only control arm = spec+guard main line
+tq_off_s0,guard,tower,torque,heldout600_gspi,0.0,0.0,0.0,strict,tower,0.0,0.0,0.0,1.0,1.0,0.0,0.0,0.0,True,pitch-only control arm = spec+guard main line
+tq_off_s0,guard,tower,torque,heldout_s3456_ckpt_best,11.764,11.764,11.764,strict,tower,11.764,11.764,5.501,0.959,0.958,0.261,8.009,8.007,True,pitch-only control arm = spec+guard main line
+tq_off_s0,guard,tower,torque,heldout_s3456_ckpt_last,-469.478,-469.478,-429.478,degraded,tower,-10.125,-10.125,-2.918,1.23,1.21,0.567,-52.164,-52.171,False,pitch-only control arm = spec+guard main line
+tq_off_s0,guard,tower,torque,migcheck_heldout,11.762,11.762,11.762,strict,tower,11.762,11.762,5.501,0.959,0.958,0.261,8.009,8.007,True,pitch-only control arm = spec+guard main line
+tq_off_s0,guard,tower,torque,migcheck_ti14,11.64,11.64,11.64,strict,tower,11.64,11.64,6.3,0.944,0.928,0.339,10.51,10.545,True,pitch-only control arm = spec+guard main line
+tq_off_s0,guard,tower,torque,robust_ti14,11.64,11.64,11.64,strict,tower,11.64,11.64,6.3,0.944,0.928,0.339,10.51,10.545,True,pitch-only control arm = spec+guard main line
+tq_off_s0,guard,tower,torque,robust_ti22,14.47,14.47,14.47,strict,tower,14.47,14.47,1.697,0.923,0.925,0.336,-6.854,14.361,True,pitch-only control arm = spec+guard main line
+tq_off_s0,guard,tower,torque,robust_u18,2.831,2.831,2.831,strict,tower,2.831,2.831,3.727,0.95,0.95,-0.002,9.733,9.734,True,pitch-only control arm = spec+guard main line
+tq_off_s0,guard,tower,torque,win150_on600bank,10.963,10.963,10.963,strict,tower,10.963,10.963,4.346,0.954,0.951,0.179,8.678,8.693,True,pitch-only control arm = spec+guard main line
+tq_off_s1,guard,tower,torque,heldout2_s78910,13.293,13.293,13.293,strict,tower,13.293,13.293,0.664,0.894,0.892,0.249,4.887,19.648,True,pitch-only control arm = spec+guard main line
+tq_off_s1,guard,tower,torque,heldout600,16.003,16.003,16.003,strict,tower,16.003,16.003,2.563,0.915,0.915,0.265,16.168,16.18,True,pitch-only control arm = spec+guard main line
+tq_off_s1,guard,tower,torque,heldout_s3456_ckpt_best,15.975,15.975,15.975,strict,tower,15.975,15.975,4.527,0.919,0.907,0.347,15.255,15.253,True,pitch-only control arm = spec+guard main line
+tq_off_s1,guard,tower,torque,heldout_s3456_ckpt_last,13.598,13.598,13.598,strict,tower,13.598,13.598,5.637,0.969,0.943,0.449,5.824,5.822,True,pitch-only control arm = spec+guard main line
+tq_off_s1,guard,tower,torque,robust_ti14,16.781,16.781,16.781,strict,tower,16.781,16.781,7.893,0.925,0.876,0.342,14.186,14.233,True,pitch-only control arm = spec+guard main line
+tq_off_s1,guard,tower,torque,robust_ti22,15.316,15.316,15.316,strict,tower,15.316,15.316,1.612,0.896,0.889,0.397,-42.363,19.24,True,pitch-only control arm = spec+guard main line
+tq_off_s1,guard,tower,torque,robust_u18,1.378,1.378,1.378,strict,tower,1.378,1.378,-0.165,0.876,0.864,0.0,23.184,23.185,True,pitch-only control arm = spec+guard main line
+tq_off_s2,guard,tower,torque,heldout2_s78910,11.958,11.958,11.958,strict,tower,11.958,11.958,0.88,0.957,0.955,0.112,1.987,7.637,True,pitch-only control arm = spec+guard main line
+tq_off_s2,guard,tower,torque,heldout600,13.976,13.976,13.976,strict,tower,13.976,13.976,2.263,0.993,0.995,0.116,1.319,1.322,True,pitch-only control arm = spec+guard main line
+tq_off_s2,guard,tower,torque,heldout_s3456_ckpt_best,13.368,13.368,13.368,strict,tower,13.368,13.368,2.601,0.997,0.994,0.149,0.553,0.553,True,pitch-only control arm = spec+guard main line
+tq_off_s2,guard,tower,torque,heldout_s3456_ckpt_last,-211.87,-211.87,-171.87,degraded,tower,5.795,5.795,-2.102,1.109,1.093,0.16,-23.155,-23.156,False,pitch-only control arm = spec+guard main line
+tq_off_s2,guard,tower,torque,robust_ti14,12.796,12.796,12.796,strict,tower,12.796,12.796,3.649,0.995,0.984,0.157,0.807,0.811,True,pitch-only control arm = spec+guard main line
+tq_off_s2,guard,tower,torque,robust_ti22,10.071,10.071,10.071,strict,tower,10.071,10.071,0.636,0.992,0.991,0.156,-11.665,1.465,True,pitch-only control arm = spec+guard main line
+tq_off_s2,guard,tower,torque,robust_u18,4.654,4.654,4.654,strict,tower,4.654,4.654,-2.103,0.987,0.987,-0.003,2.574,2.573,True,pitch-only control arm = spec+guard main line
+tq_off_s3,guard,tower,torque,heldout2_s78910,14.652,14.652,14.652,strict,tower,14.652,14.652,3.696,0.931,0.929,0.228,-2.382,12.116,True,pitch-only control arm = spec+guard main line
+tq_off_s3,guard,tower,torque,heldout600,16.182,16.182,16.182,strict,tower,16.182,16.182,5.179,0.992,0.989,0.239,1.661,1.668,True,pitch-only control arm = spec+guard main line
+tq_off_s3,guard,tower,torque,heldout_s3456_ckpt_best,16.668,16.668,16.668,strict,tower,16.668,16.668,6.123,0.989,0.986,0.305,2.218,2.216,True,pitch-only control arm = spec+guard main line
+tq_off_s3,guard,tower,torque,heldout_s3456_ckpt_last,-13.358,-13.358,13.613,tol2,tower,13.613,13.613,6.748,1.013,0.987,0.668,-3.042,-3.032,False,pitch-only control arm = spec+guard main line
+tq_off_s3,guard,tower,torque,robust_ti14,16.665,16.665,16.665,strict,tower,16.665,16.665,7.348,0.977,0.953,0.341,4.405,4.452,True,pitch-only control arm = spec+guard main line
+tq_off_s3,guard,tower,torque,robust_ti22,21.911,21.911,21.911,strict,tower,21.911,21.911,1.833,0.946,0.956,0.395,-19.392,10.026,True,pitch-only control arm = spec+guard main line
+tq_off_s3,guard,tower,torque,robust_u18,4.828,4.828,4.828,strict,tower,4.828,4.828,2.325,0.979,0.976,0.004,4.171,4.173,True,pitch-only control arm = spec+guard main line
+tq_off_s4,guard,tower,torque,heldout2_s78910,10.965,10.965,10.965,strict,tower,10.965,10.965,1.956,0.953,0.957,0.186,-2.384,8.92,True,pitch-only control arm = spec+guard main line
+tq_off_s4,guard,tower,torque,heldout600,11.99,11.99,11.99,strict,tower,11.99,11.99,2.511,0.982,0.982,0.198,3.643,3.652,True,pitch-only control arm = spec+guard main line
+tq_off_s4,guard,tower,torque,heldout_s3456_ckpt_best,11.853,11.853,11.853,strict,tower,11.853,11.853,3.277,0.975,0.962,0.254,4.872,4.87,True,pitch-only control arm = spec+guard main line
+tq_off_s4,guard,tower,torque,heldout_s3456_ckpt_last,3.978,3.978,3.978,strict,tower,3.978,3.978,5.715,0.976,0.955,0.183,4.275,4.275,True,pitch-only control arm = spec+guard main line
+tq_off_s4,guard,tower,torque,robust_ti14,12.702,12.702,12.702,strict,tower,12.702,12.702,3.817,0.955,0.918,0.291,8.574,8.616,True,pitch-only control arm = spec+guard main line
+tq_off_s4,guard,tower,torque,robust_ti22,12.576,12.576,12.576,strict,tower,12.576,12.576,0.127,0.942,0.939,0.366,-11.111,10.872,True,pitch-only control arm = spec+guard main line
+tq_off_s4,guard,tower,torque,robust_u18,5.626,5.626,5.626,strict,tower,5.626,5.626,0.213,0.923,0.919,0.006,14.845,14.846,True,pitch-only control arm = spec+guard main line
+tq_on3_s0,guard+torque,tower,torque,heldout_s3456_ckpt_best,7.561,7.561,7.561,strict,tower,7.561,7.561,2.967,0.975,0.974,0.064,4.985,4.984,True,"R2 torque residual, all guards + reshape fix"
+tq_on3_s0,guard+torque,tower,torque,heldout_s3456_ckpt_last,6.942,6.942,6.942,strict,tower,6.942,6.942,5.297,0.884,0.861,0.074,11.559,21.888,True,"R2 torque residual, all guards + reshape fix"
+tq_on3_s1,guard+torque,tower,torque,heldout_s3456_ckpt_best,3.266,3.266,3.266,strict,tower,3.266,3.266,2.28,0.986,0.984,0.051,2.836,2.835,True,"R2 torque residual, all guards + reshape fix"
+tq_on3_s1,guard+torque,tower,torque,heldout_s3456_ckpt_last,-2.014,-2.014,-2.014,strict,tower,-2.014,-2.014,0.663,0.992,0.983,0.096,-3.341,1.989,True,"R2 torque residual, all guards + reshape fix"
+tq_on3_s2,guard+torque,tower,torque,heldout_s3456_ckpt_best,6.768,6.768,6.768,strict,tower,6.768,6.768,0.986,0.981,0.968,0.066,3.684,3.684,True,"R2 torque residual, all guards + reshape fix"
+tq_on3_s2,guard+torque,tower,torque,heldout_s3456_ckpt_last,6.768,6.768,6.768,strict,tower,6.768,6.768,0.986,0.981,0.968,0.066,3.684,3.684,True,"R2 torque residual, all guards + reshape fix"
+tq_on3_s3,guard+torque,tower,torque,heldout_s3456_ckpt_best,2.074,2.074,2.074,strict,tower,2.074,2.074,2.626,0.963,0.954,0.061,7.125,7.126,True,"R2 torque residual, all guards + reshape fix"
+tq_on3_s3,guard+torque,tower,torque,heldout_s3456_ckpt_last,-94.975,-94.975,-54.975,degraded,tower,-7.661,-7.661,-4.567,1.044,1.026,0.064,-9.23,-9.233,False,"R2 torque residual, all guards + reshape fix"
+tq_on3_s4,guard+torque,tower,torque,heldout_s3456_ckpt_best,0.902,0.902,0.902,strict,tower,0.902,0.902,1.469,0.938,0.927,-0.005,11.848,11.849,True,"R2 torque residual, all guards + reshape fix"
+tq_on3_s4,guard+torque,tower,torque,heldout_s3456_ckpt_last,-10.042,-10.042,-10.042,strict,tower,-10.042,-10.042,-1.442,0.992,0.965,0.041,0.664,0.676,True,"R2 torque residual, all guards + reshape fix"
+mpc,LPV-MPC,tower,mpc,heldout2W_N20q1r0.02qt0w0.35,-22.111,-22.111,-22.111,strict,tower,-22.111,-22.111,-3.105,0.907,1.067,-0.322,3.232,-10.34,True,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,heldout_s3456_N20q1r0.02qt0w0.35,-116.205,-116.205,-76.205,degraded,tower,-17.637,-17.637,-0.707,1.049,1.085,-0.303,-409.43,-34.352,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,heldoutW_N20q1r0.02qt0w0.35,-17.637,-17.637,-17.637,strict,tower,-17.637,-17.637,-0.707,0.912,0.966,-0.303,7.521,4.244,True,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,robust_ti14_N20q1r0.02qt0w0.35,-8.846,-8.846,-8.846,strict,tower,-8.846,-8.846,-0.729,0.905,0.846,-0.333,11.309,20.809,True,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,robust_ti22_N20q1r0.02qt0w0.35,-27.147,-27.147,-27.147,strict,tower,-27.147,-27.147,-1.148,0.853,0.786,-0.279,4.292,28.166,True,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,robust_u18_N20q1r0.02qt0w0.35,-56.082,-56.082,-56.082,strict,tower,-56.082,-56.082,0.945,0.641,0.678,-0.177,51.765,51.759,True,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune2_s12_N20q1r0.01qt0.3,-39485.467,-39485.467,-39445.467,degraded,tower,-114.06,-114.06,-51.121,19.984,119.848,71.14,-1006364.621,-1018153.292,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune2_s12_N20q1r0.01qt0,-1312.773,-1312.773,-1272.773,degraded,tower,-244.811,-244.811,-19.953,1.534,1.513,-0.17,-520.672,-146.5,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune2_s12_N20q1r0.01qt1,-37745.642,-37745.642,-37705.642,degraded,tower,-71.925,-71.925,-21.492,19.124,125.497,72.264,-1012002.521,-1088060.877,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune2_s12_N20q1r0.03qt0.3,-39121.201,-39121.201,-39081.201,degraded,tower,-95.928,-95.928,-61.63,19.81,120.528,71.221,-1007069.547,-1025916.635,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune2_s12_N20q1r0.03qt0,-124.491,-124.491,-84.491,degraded,tower,0.768,0.768,3.039,1.063,1.142,-0.345,-405.083,-35.202,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune2_s12_N20q1r0.03qt1,-37743.057,-37743.057,-37703.057,degraded,tower,-71.28,-71.28,-21.458,19.123,125.497,72.266,-1012025.105,-1088071.601,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune2_s12_N20q1r0.1qt0.3,-38029.242,-38029.242,-37989.242,degraded,tower,-76.381,-76.381,-4.03,19.271,123.491,71.546,-1008510.047,-1061215.09,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune2_s12_N20q1r0.1qt0,-387.881,-387.881,-347.881,degraded,tower,13.437,13.437,9.645,1.201,1.296,-0.393,-438.128,-69.774,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune2_s12_N20q1r0.1qt1,-37737.917,-37737.917,-37697.917,degraded,tower,-72.443,-72.443,-21.451,19.12,125.503,72.274,-1012083.758,-1088152.679,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune3_s12_N20q1r0.02qt0w0.25,-51.719,-51.719,-11.719,degraded,tower,-8.944,-8.944,2.705,1.021,1.088,-0.307,-395.583,-24.381,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune3_s12_N20q1r0.02qt0w0.35,-7.078,-7.078,-7.078,strict,tower,-7.078,-7.078,-1.198,0.988,1.078,-0.306,-392.94,-20.104,True,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune3_s12_N20q1r0.03qt0w0.25,-124.491,-124.491,-84.491,degraded,tower,0.768,0.768,3.039,1.063,1.142,-0.345,-405.083,-35.202,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune3_s12_N20q1r0.03qt0w0.35,-45.872,-45.872,-5.872,degraded,tower,6.244,6.244,1.164,1.026,1.131,-0.343,-402.189,-30.193,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune3_s12_N20q1r0.05qt0w0.25,-224.028,-224.028,-184.028,degraded,tower,8.906,8.906,6.174,1.116,1.209,-0.366,-420.632,-49.705,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune3_s12_N20q1r0.05qt0w0.35,-145.174,-145.174,-105.174,degraded,tower,12.53,12.53,9.083,1.079,1.198,-0.369,-417.257,-44.342,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune_s12_N20q1r0.003,-243.324,-243.324,-243.324,strict,tower,-243.324,-243.324,-45.118,1.0,nan,0.226,nan,nan,True,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune_s12_N20q1r0.01,-3182.769,-3182.769,-3142.769,degraded,tower,-164.835,-164.835,-24.924,2.509,2.823,0.222,-724.109,-728.363,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune_s12_N20q1r0.03,-4153.149,-4153.149,-4113.149,degraded,tower,-134.518,-134.518,-21.885,3.009,3.369,0.273,-1058.421,-1064.293,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune_s12_N20q1r0.1,-5576.064,-5576.064,-5536.064,degraded,tower,-114.336,-114.336,-20.078,3.731,3.966,0.279,-1545.08,-1553.644,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune_s12_N20q1r0.3,-5248.508,-5248.508,-5208.508,degraded,tower,-61.797,-61.797,-19.822,3.593,3.721,0.188,-1373.297,-1377.412,False,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,tune_s12_N20q1r1,-1678.514,-1678.514,-1638.514,degraded,tower,3.559,3.559,-0.108,1.841,1.866,0.137,-243.77,-243.907,False,"deterministic, n=1"
+mpc600,LPV-MPC,tower,mpc600,heldout600W_N20q1r0.02qt0w0.35,-59.061,-59.061,-19.061,degraded,tower,-3.619,-3.619,0.743,1.028,1.019,-0.238,7.697,-2.476,False,600 s window
+mpc600s,LPV-MPC,tower,mpc600s,win150_on600bank_N20q1r0.02qt0w0.35,-12.775,-12.775,-12.775,strict,tower,-12.775,-12.775,0.893,0.927,1.094,-0.36,-2.219,-14.158,True,150 s window on the 600 s bank

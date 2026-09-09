@@ -222,9 +222,12 @@ Experiment campaigns are complete; the repository is in **manuscript preparation
 - **R2 torque residual**: clear seed-paired negative (roadmap §15).
 - **MPC baseline**: done (see above) — MPC wins speed regulation, loses tower loads; all
   supervised spec variants Pareto-dominate it on F, and the gap widens with turbulence (§17).
-- **Data**: the frozen, self-contained data package for this half (38 runs + MPC grid + aggregate
-  rebuild script + caveats C1–C10) is `wtrl-migration/cpc-result/`; the wind bank and paired GSPI
-  baselines it needs are `wtrl-migration/{wind,openfast}` — copy them, never regenerate them.
+- **Data**: the self-contained data package for this half is `wtrl-migration/cpc-result/` —
+  60 runs + 3 MPC directories + the aggregate rebuild script + the caveat list C1–C12. Its *text*
+  (README, `aggregate/*.py`, `aggregate/*.csv`) is version-controlled; the GB-scale payload is not.
+  The wind bank and paired GSPI baselines live in `wtrl-migration/{wind,openfast}` (64 realisations,
+  5.5 GB) — copy them, never regenerate them. `python3 wtrl-migration/cpc-result/aggregate/build_tables.py`
+  rebuilds every table with the standard library alone.
 - **Open before submission**: see the continuation list in `wtrl-migration/cpc-result/README.md` §7
   (tower-objective stress sweep, GSPI+tower-damper baseline, 600 s re-evaluation, the three lost
   night1 seeds, clean `schedule_comp` rerun).
