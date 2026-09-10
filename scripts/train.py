@@ -613,8 +613,8 @@ def main():
                     rec["rollback"] = {"to_episode": best["episode"], "F_now": score(fit), "F_best": best["F"]}
                     if history:
                         history[-1]["rolled_back"] = True
-                    print(f"[sup ] ROLLBACK to best state @ep {best['episode']} (F {fit['F']:.2f} < "
-                          f"{best['F']:.2f} - {args.rollback_drop})", flush=True)
+                    print(f"[sup ] ROLLBACK to best state @ep {best['episode']} ({OBJ} {score(fit):.2f} < "
+                          f"{best['F']:.2f} - {args.rollback_drop}" + ("" if fit.get("energy_ok", True) else ", energy > 1 %") + ")", flush=True)
                     fit = dict(fit, **{OBJ: best["F"], OBJ + "_measured": score(fit), "F_measured": fit["F"]})
                 elif score(fit) > best["F"]:
                     best = {"episode": k, "F": score(fit), "knobs": dict(knobs), "state": learners_state()}
