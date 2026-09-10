@@ -178,3 +178,18 @@ and is paid for with −18 to −22 % tower DEL in both; the damper at its J-bes
 bar for the RL arms in stage 3 is therefore J > 0 on both wind sets with energy ≤ 1 %, not "beat
 the MPC". (MPC held-out rows are the wind-labelled `heldoutW` / `heldout2W` evaluations; the
 oracle-labelled `heldout_s3456` files of the MPC are not comparable under J and are not used.)
+
+### 8b. Stage 2b — the MPC's tower term was a scaling artefact (queued after stage 3)
+
+Under J the regulation-only MPC is a single-objective controller scored on a multi-objective
+metric, and the reason its tower term never worked (§16 of the 08-30 roadmap: any qt > 0
+feathers the rotor, energy −71 %) is the same class of bug as the flat speed reward and the
+unreachable value target: with `q·((ω−ω_r)/ω_r)²` the speed term is O(10⁻⁵) at the typical
+error (|δω|/ω_r ≈ 0.005) while `(ẋ/0.2)²` is O(1), so qt = 0.3 out-weighed regulation by four
+orders of magnitude. `controllers/mpc.py` now takes `err_ref`, `dbeta_ref`, `xd_ref`;
+`mpc_baseline.py --scale v2` sets err_ref = 0.005, dbeta_ref = 0.002 rad/step so all three terms
+are O(1) at typical values (the v1 optimum r = 0.02 maps to r ≈ 0.3 in v2; verified to reproduce
+the same pitch trajectory on a synthetic operating point). `campaign_j_mpc2.sh` sweeps
+N ∈ {20, 40} × r ∈ {0.1, 0.3, 1, 3} × qt ∈ {0, 0.1, 0.3, 1, 3} × wc_v ∈ {0.25, 0.35} on S1+S2 by
+`(energy_ok, J)` and evaluates the winner on both held-out sets (tags `heldoutJ2_*`). No wind
+preview is added (the RL has none either). Results go here when it has run.

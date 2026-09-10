@@ -11,8 +11,14 @@ tower DEL +100..240 %; see roadmap §16):
 Linearised at the CURRENT operating point (w, beta, v_est, tower state estimate) from the ROSCO
 Cp/Ct tables every update (Ts = 0.1 s), discretised exactly (ZOH via expm), condensed QP (OSQP):
 
-    min sum q ((w_k - w_rated)/w_rated)^2 + qt (xd_k / 0.2)^2 + r (dbeta_k / 0.1)^2
+    min sum q ((w_k - w_rated)/(err_ref w_rated))^2 + qt (xd_k / xd_ref)^2 + r (dbeta_k / dbeta_ref)^2
     s.t. beta in [pitch floor (incl. peak shaving), beta_max], |dbeta| <= rate_max * Ts
+
+Cost scaling (2026-09-11): with the original references (err_ref = 1, dbeta_ref = 0.1 rad) the
+speed term is O(1e-5) at the typical error |dw|/w_rated = 0.005 while (xd/0.2)^2 is O(1), so any
+qt > 0 out-weighed regulation by four orders of magnitude and the optimum feathered the rotor
+(roadmap 16, point 3). `--scale v2` in mpc_baseline.py sets err_ref = 0.005 and dbeta_ref = 0.002
+rad per step so that all three terms are O(1) at their typical values and qt trades sensibly.
 
 Tower states are estimated from the measured tower-top acceleration by leaky integration
 (leak 0.03 Hz << the 0.324 Hz mode). Torque stays native ROSCO, so below rated the optimum
@@ -31,7 +37,8 @@ M_MODAL = 4.37e5             # kg: rotor+nacelle (350 t) + 0.25 x tower mass (34
 
 class LPVMPC:
     def __init__(self, tb: dict, cp_table_path: str, horizon: int = 20, ts: float = 0.1,
-                 q: float = 1.0, r: float = 1.0, qt: float = 0.0, wc_v: float = 0.25):
+                 q: float = 1.0, r: float = 1.0, qt: float = 0.0, wc_v: float = 0.25,
+                 err_ref: float = 1.0, dbeta_ref: float = 0.1, xd_ref: float = 0.2):
         import osqp
         import scipy.sparse as sp
         from scipy.linalg import expm
@@ -48,6 +55,7 @@ class LPVMPC:
         self.rate_max = float(tb["max_pitch_rate_rads"])
         self.N, self.Ts = int(horizon), float(ts)
         self.q, self.r, self.qt = float(q), float(r), float(qt)
+        self.err_ref, self.dbeta_ref, self.xd_ref = float(err_ref), float(dbeta_ref), float(xd_ref)
         self.k_t = M_MODAL * (2 * np.pi * F1_TOWER_HZ) ** 2
         self.c_t = 2 * ZETA_STRUCT * M_MODAL * (2 * np.pi * F1_TOWER_HZ)
         # tower state estimator (leaky double integration of measured fa_acc)
@@ -142,11 +150,11 @@ class LPVMPC:
         iw = np.arange(N) * 3
         ix = iw + 2
         Wq = np.zeros(3 * N)
-        Wq[iw] = self.q / self.w_rated ** 2
-        Wq[ix] = self.qt / 0.2 ** 2
+        Wq[iw] = self.q / (self.err_ref * self.w_rated) ** 2
+        Wq[ix] = self.qt / self.xd_ref ** 2
         ref = np.zeros(3 * N)
         ref[iw] = self.w_rated
-        rr = self.r / 0.1 ** 2
+        rr = self.r / self.dbeta_ref ** 2
         D = np.eye(N) - np.eye(N, k=-1)
         d0 = np.zeros(N); d0[0] = beta
         e = Fs0 + h - ref

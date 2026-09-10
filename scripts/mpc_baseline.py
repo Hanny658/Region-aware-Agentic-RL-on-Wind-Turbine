@@ -77,7 +77,10 @@ def main():
     ap.add_argument("--seeds", nargs="+", type=int, default=[1])
     ap.add_argument("--ti", type=float, default=8.0, help="turbulence intensity [%] of the wind bank")
     ap.add_argument("--episode_s", type=float, default=150.0)
-    ap.add_argument("--horizon", type=int, default=20)
+    ap.add_argument("--horizon", nargs="+", type=int, default=[20], help="prediction horizon(s) in steps; >1 value = sweep")
+    ap.add_argument("--scale", default="v1", choices=["v1", "v2"],
+                    help="cost scaling: v1 = original references (err_ref 1, dbeta_ref 0.1 rad); "
+                         "v2 = O(1) terms at typical values (err_ref 0.005, dbeta_ref 0.002 rad) so qt can act")
     ap.add_argument("--ts", type=float, default=0.1)
     ap.add_argument("--q", type=float, default=1.0)
     ap.add_argument("--qt", nargs="+", type=float, default=[0.0], help="tower-velocity weight(s); >1 value = sweep")
@@ -110,9 +113,10 @@ def main():
                   open(out / "config.json", "w"), indent=1)
 
     from itertools import product
-    for r_w, qt_w, wcv in product(args.r, args.qt, args.wc_v):
-        mpc_kw = dict(horizon=args.horizon, ts=args.ts, q=args.q, r=r_w, qt=qt_w, wc_v=wcv)
-        rtag = f"{args.tag}_N{args.horizon}q{args.q:g}r{r_w:g}qt{qt_w:g}w{wcv:g}"
+    scale_kw = dict(err_ref=0.005, dbeta_ref=0.002) if args.scale == "v2" else {}
+    for N_h, r_w, qt_w, wcv in product(args.horizon, args.r, args.qt, args.wc_v):
+        mpc_kw = dict(horizon=N_h, ts=args.ts, q=args.q, r=r_w, qt=qt_w, wc_v=wcv, **scale_kw)
+        rtag = f"{args.tag}_N{N_h}q{args.q:g}r{r_w:g}qt{qt_w:g}w{wcv:g}"
         if (out / f"eval_{rtag}.json").exists():      # grids are resumable: a finished point is kept
             print(f"mpc [{rtag}] skip (exists)", flush=True)
             continue
