@@ -67,12 +67,30 @@ the supervisor improving the *collective* behaviour, not from the cyclic channel
 **The bottleneck is discovery and credit assignment, not reward weighting.** Turning the weights
 harder cannot help a policy that never visits the behaviour.
 
+**Quantified afterwards (2026-09-10).** `scripts/dev/critic_health.py` showed that the R3 critic in
+every run of this project collapses to a constant (its value target is O(1e4) while the critic
+starts at xavier gain 0.1 under grad-norm clipping, so it saturates instead of fitting). With a
+constant baseline the GAE advantage reduces to a discounted reward window of 1/(1 - gamma*lambda) =
+**0.46 s**, while one rotor revolution at rated speed is **4.96 s**. The learning signal is therefore
+an order of magnitude shorter than the physical effect it must credit: a cyclic pitch bias pays off
+over a full revolution and is structurally invisible to it. That is the concrete mechanism behind
+"credit assignment" in the paragraph above — and it means the two per-step arms (§2 and §3 here)
+are **confounded**: they show that RL *in this credit-assignment configuration* does not use the
+channel, not that RL cannot. The load-bearing negative is §4-§5 below, where the design fixes
+exactly this.
+
 ## 4. Correct macro credit assignment: better, but not the fix (§ IPC part 3)
 
 Following Coquelet et al. (2022), who hold the cyclic action for one full rotor rotation per
 training decision precisely so its load effect becomes observable, `--ipc_hold <s>` adds a separate
 slow PPO learner (act_dim 2, γ_macro = γ^K, own minimum batch) that decides (θ_d, θ_q) once per hold
 window; the regional agents stay per-step. Macro reward = discounted window sum / K.
+
+This design happens to remove **both** problems identified above. Its credit window is
+1/(1 - γ_macro·λ_macro) = 1.5 macro steps = **7.7 s**, i.e. longer than one revolution rather than
+ten times shorter; and its value target is r/(1 - γ_macro) ≈ **25**, small enough for the critic to
+reach, so the saturation pathology that flattens the per-step R3 critic does not apply to it. The
+arms below are therefore the ones on which the negative result rests.
 
 3 seeds each, blade objective, same seeds and wind as above:
 
@@ -120,6 +138,13 @@ fitness and held-out evaluation unchanged. Rotation-held throughout, 3 seeds:
 per-step and rotation-held credit assignment, with and without a clean-wind curriculum, with and
 without LLM supervision — six mechanism variants, 24 runs. The single durable positive is that
 rotation-held + fixed weights beats collective-only in every seed tested, at about +1 pp.
+
+Scope of that statement, after the 2026-09-10 critic finding: the **per-step** arms are confounded
+(their advantage window was 11× shorter than a rotor revolution), so they support only the weaker
+reading "not under this credit assignment". The **rotation-held** arms are not confounded — their
+macro learner has both a 7.7 s credit window and a reachable value target — and they are what makes
+the negative result stand: correct macro credit assignment, on its own, still left the channel
+2-4 % utilised.
 
 **The supervision boundary.** Three consecutive campaigns in which the same fork-verified LLM
 supervisor lost to fixed weights:

@@ -48,6 +48,11 @@ def main():
     cfg_run = json.load(open(run / "config.json"))
     summ = json.load(open(run / "summary.json")) if (run / "summary.json").exists() else {}
     knobs = summ.get("final_knobs", cfg_run.get("knobs0"))
+    if cfg_run.get("objective") == "J" and not args.relabel_wind:
+        # J-trained runs were selected with wind-labelled R3 subsets (roadmap v2, D3): score them
+        # the same way so the held-out J is comparable to the training-time J
+        args.relabel_wind = True
+        print("objective J run: R3 subsets labelled by wind on both sides (--relabel_wind)")
     ppo_yaml = yaml.safe_load(open(PROJ / "configs" / "ppo.yaml"))
     hidden = tuple(ppo_yaml["hidden"])
     flag = cfg_run["method"] == "mono_flag"
@@ -64,7 +69,8 @@ def main():
         st = torch.load(run / args.ckpt, weights_only=False)
         if "state" in st:                      # ckpt_best.pt: {"episode","F","knobs","state"}
             knobs = st["knobs"]
-            print(f"using best checkpoint from episode {st['episode']} (toy F={st['F']:.2f}) with its knobs")
+            print(f"using best checkpoint from episode {st['episode']} "
+                  f"(supervisor-wind {st.get('objective', 'F')}={st['F']:.2f}) with its knobs")
             st = st["state"]
         if "shared" in st:                     # spec_sc: {"shared": {"actors": {r: ...}, "obs_rms": ...}}
             sh = st["shared"]
@@ -106,6 +112,10 @@ def main():
     print(f"{run.name} [{tag}] target={fit.get('target')} F_strict={fit['F']:.2f} F_tol2={fit.get('F_tol2', float('nan')):.2f} "
           f"tier={fit.get('tier')}  DELred={fit['del_red_pct']:.2f}%  Eloss={fit['energy_loss_pct']:.2f}%  "
           f"spd_ratio={fit['speed_std_ratio']:.3f}")
+    print(f"   J={fit['J']:.2f} (mean {fit['J_metric_mean']:.2f}, energy pen {fit['J_energy_penalty']:.2f}) "
+          f"powerMSE {fit['J_power_mse_red_pct']:+.1f}%  speedMSE {fit['J_gen_speed_mse_red_pct']:+.1f}%  "
+          f"towerDEL {fit['J_TwrBsMyt_DEL_red_pct']:+.1f}%  bladeDEL {fit['J_RootMyc1_DEL_red_pct']:+.1f}%"
+          + ("" if fit["energy_ok"] else "  [ENERGY > 1 %]"))
     for pe in fit["per_episode"]:
         print(f"   U{pe['mean_wind']:g}: DELred {pe['del_red_pct']:6.2f}%  E {pe['energy_MWh']:.4f}/{pe['energy_base_MWh']:.4f} MWh  "
               f"pitch travel {pe['pitch_travel_deg']:.0f}/{pe['pitch_travel_base_deg']:.0f} deg  |dbeta| {pe['dbeta_abs_mean_deg']:.2f} deg")

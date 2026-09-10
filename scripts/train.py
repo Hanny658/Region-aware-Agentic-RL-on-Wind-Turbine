@@ -37,10 +37,17 @@ from agents.rollout import WorkerPool
 from controllers.router import R2, R3
 from envs.base_env import PROJ, default_config
 from envs.factory import baseline_dir, episode_list
+from envs.reward import compile_reward_code
 from eval.fitness import baseline_metrics, fitness
-from llm.supervisor import (KNOBS, ROLLBACK_DROP, CompetenceScheduleSupervisor, LLMCandidateSupervisor,
+from llm.supervisor import (HPARAM_BOUNDS, KNOBS, ROLLBACK_DROP, CompetenceScheduleSupervisor,
+                            LLMCandidateSupervisor, LLMHparamSupervisor, LLMRewardSupervisor,
                             LLMSupervisor, NoneSupervisor, RandomCandidateSupervisor, RandomSupervisor,
                             ScheduleSupervisor, build_summary, clamp_proposal)
+
+
+def _knob_str(v) -> str:
+    """Knobs are numbers except the LLM-written reward expression, which is a string."""
+    return f"{v:g}" if isinstance(v, (int, float)) and not isinstance(v, bool) else f"{str(v)[:60]!r}"
 
 
 def main():
@@ -69,9 +76,12 @@ def main():
     ap.add_argument("--min_batch", type=int, default=2048, help="skip an update with fewer samples")
     # supervisor
     ap.add_argument("--supervisor", default="none",
-                    choices=["none", "guard", "random", "llm", "llm_fork", "random_fork", "schedule", "schedule_comp"],
+                    choices=["none", "guard", "random", "llm", "llm_fork", "random_fork", "schedule",
+                             "schedule_comp", "llm_hparam", "random_hparam", "llm_reward"],
                     help="none: fixed knobs, no rollback | guard: fixed knobs + rollback-to-best guardrail | "
-                         "random / llm: proposals + guardrail")
+                         "random / llm: proposals + guardrail | llm_fork: fork-verified reward-weight "
+                         "proposals | llm_hparam: fork-verified PPO hyper-parameter proposals | "
+                         "llm_reward: fork-verified LLM-written reward expression")
     ap.add_argument("--supervise_every", type=int, default=30, help="episodes between evaluations/decisions")
     ap.add_argument("--rollback_drop", type=float, default=ROLLBACK_DROP)
     ap.add_argument("--rollback_after", type=int, default=60, help="no rollback before this episode (grace period)")
@@ -86,6 +96,23 @@ def main():
     ap.add_argument("--sched_max_wait", type=float, default=60.0,
                     help="schedule_comp: apply an entry unconditionally this many episodes after its donor episode")
     ap.add_argument("--log_std_init", type=float, default=None, help="initial policy log-std (default from PPOConfig, -1.0)")
+    ap.add_argument("--value_norm", action="store_true",
+                    help="standardise the critic's regression targets. Without it the R3 value target is "
+                         "O(1e4) (reward ~16/step at gamma 0.998) and the critic saturates into a constant "
+                         "— see scripts/dev/critic_health.py. Off by default for reproducibility.")
+    ap.add_argument("--objective", default="F", choices=["F", "J"],
+                    help="F: tower-DEL priority with constraint penalties and tiers (historical) | "
+                         "J: the baseline paper's metric set as one continuous scalar (2026-09-11): "
+                         "mean of the four %% reductions, energy penalised, no tiers; selection, "
+                         "rollback and best-checkpoint all use it")
+    ap.add_argument("--reward", default="v1", choices=["v1", "v2"],
+                    help="v2: quadratic (MSE-matched) speed term + tower AND blade load proxies "
+                         "(configs/reward.yaml); v1 is the historical reward")
+    ap.add_argument("--resume", action="store_true",
+                    help="continue from the newest resume_*.pt in --out (state saved every "
+                         "--resume_every_s seconds, --resume_keep newest kept)")
+    ap.add_argument("--resume_every_s", type=float, default=300.0)
+    ap.add_argument("--resume_keep", type=int, default=5)
     ap.add_argument("--dbeta_max", type=float, default=None, help="override residual bound [rad] for both regions")
     ap.add_argument("--dtau_max", type=float, default=0.0,
                     help="R2 torque residual bound [Nm]; > 0 enables the 2nd action dim (needs the Controllers.f90 patch)")
@@ -117,7 +144,8 @@ def main():
                      clip_range=ppo_yaml["clip_range"],
                      batch_size=ppo_yaml["batch_size"], n_epochs=ppo_yaml["n_epochs"],
                      hidden=tuple(ppo_yaml["hidden"]),
-                     log_std_init=(args.log_std_init if args.log_std_init is not None else -1.0))
+                     log_std_init=(args.log_std_init if args.log_std_init is not None else -1.0),
+                     value_norm=args.value_norm)
 
     cfg_over = {"baseline_dir": baseline_dir(args.backend), "region_flag_in_obs": args.method == "mono_flag"}
     cfg = default_config(**cfg_over)
@@ -163,6 +191,13 @@ def main():
             raise SystemExit("--ipc_hold is not wired into the shared-critic method")
         cfg.ipc_hold_s = args.ipc_hold
         cfg_over["ipc_hold_s"] = args.ipc_hold
+    if args.reward == "v2":
+        cfg.reward["version"] = "v2"
+    OBJ = args.objective
+    if OBJ == "J":
+        # the MSE terms of J are R3-only; label that subset by wind speed (controller-independent)
+        # on every row, RL and reference controllers alike — routing still uses the oracle rule
+        cfg_over["region_label_by_wind"] = True
     cfg_over["reward"] = cfg.reward
     obs_dim = (5 + (2 if cfg.region_flag_in_obs else 0) + (1 if cfg.obs_fa_acc else 0)
                + (2 if args.ipc_max > 0.0 else 0))
@@ -186,13 +221,27 @@ def main():
             return kk % len(cur_episodes)
         return len(cur_episodes) + (kk % len(episodes))
     lam = cfg.reward["lambda_load"]
-    knobs = {"lambda_load_R2": float(lam["R2"] if isinstance(lam, dict) else lam),
-             "lambda_load_R3": float(lam["R3"] if isinstance(lam, dict) else lam),
-             "w_power": float(cfg.reward["w_power"]), "w_speed": float(cfg.reward["w_speed"]),
-             "dbeta_max_R2": float(cfg.dbeta_max),
-             "dbeta_max_R3": float(args.dbeta_max_R3 if args.dbeta_max_R3 is not None else cfg.dbeta_max)}
+    if args.reward == "v2":
+        lam_s = float(lam["R3"] if isinstance(lam, dict) else lam)
+        knobs = {"lambda_tower": lam_s, "lambda_blade": lam_s,
+                 "w_power": float(cfg.reward["w_power"]), "w_speed": float(cfg.reward["w_speed"]),
+                 "dbeta_max_R2": float(cfg.dbeta_max),
+                 "dbeta_max_R3": float(args.dbeta_max_R3 if args.dbeta_max_R3 is not None else cfg.dbeta_max)}
+    else:
+        knobs = {"lambda_load_R2": float(lam["R2"] if isinstance(lam, dict) else lam),
+                 "lambda_load_R3": float(lam["R3"] if isinstance(lam, dict) else lam),
+                 "w_power": float(cfg.reward["w_power"]), "w_speed": float(cfg.reward["w_speed"]),
+                 "dbeta_max_R2": float(cfg.dbeta_max),
+                 "dbeta_max_R3": float(args.dbeta_max_R3 if args.dbeta_max_R3 is not None else cfg.dbeta_max)}
     if args.ipc_max > 0.0:
         knobs["ipc_max"] = float(args.ipc_max)     # 7th knob: dq cyclic-pitch authority [rad/axis]
+    # llm_hparam supervises the LEARNER, not the reward: its knob namespace is the PPO
+    # hyper-parameters, which are applied in this process and never sent to the workers.
+    if args.supervisor in ("llm_hparam", "random_hparam"):
+        knobs = {"actor_lr": float(ppo_yaml["actor_lr"]), "critic_lr": float(ppo_yaml["critic_lr"]),
+                 "gae_lambda": float(args.gae_lambda if args.gae_lambda is not None else ppo_yaml["gae_lambda"]),
+                 "clip_range": float(ppo_yaml["clip_range"]), "entropy_coef": 0.0,
+                 "policy_std": float(np.exp(args.log_std_init if args.log_std_init is not None else -1.0))}
     json.dump({**vars(args), "reward": cfg.reward, "ppo": ppo_yaml, "obs_dim": obs_dim, "knobs0": knobs,
                "episodes": [e.__dict__ for e in episodes], "eval_episodes": [e.__dict__ for e in eval_episodes],
                "curriculum_episodes": [e.__dict__ for e in cur_episodes]},
@@ -272,9 +321,10 @@ def main():
     run_tag = re.sub(r"[^A-Za-z0-9_.-]", "_", out.name)[:40]
     pool = WorkerPool(args.workers, args.backend, cur_episodes + episodes + eval_episodes, cfg_over,
                       hidden=pcfg.hidden, port0=args.port0, tag=f"wk_{run_tag}")
-    base = baseline_metrics(baseline_dir(args.backend), eval_episodes, dt, wg_rated)
+    relabel = float(cfg.turbine["rated_wind_ms"]) if OBJ == "J" else None
+    base = baseline_metrics(baseline_dir(args.backend), eval_episodes, dt, wg_rated, relabel_wind=relabel)
     proposes = args.supervisor in ("random", "llm", "schedule", "schedule_comp")
-    forks = args.supervisor in ("llm_fork", "random_fork")
+    forks = args.supervisor in ("llm_fork", "random_fork", "llm_hparam", "random_hparam", "llm_reward")
     use_rollback = args.supervisor != "none"
     use_twin = proposes and args.supervisor not in ("schedule", "schedule_comp") and not args.no_dry_run
     if use_twin and args.backend != "toy":
@@ -283,23 +333,32 @@ def main():
                                {**cfg_over, "baseline_dir": baseline_dir("toy"),
                                 "reward": {**cfg.reward, "load_signal": "M_oop"}}, hidden=pcfg.hidden,
                                tag=f"tw_{run_tag}")
-        twin_base = baseline_metrics(baseline_dir("toy"), eval_episodes, dt, wg_rated)
+        twin_base = baseline_metrics(baseline_dir("toy"), eval_episodes, dt, wg_rated, relabel_wind=relabel)
     else:
         twin_pool, twin_base = pool, base
 
     if args.supervisor == "llm":
         from llm.client import LLMClient
         sup = LLMSupervisor(LLMClient(out / "llm_transcript.jsonl", reasoning_effort=args.reasoning_effort),
-                            load_signal=cfg.reward.get("load_signal", "M_oop"), fitness_target=fitness_target)
+                            load_signal=cfg.reward.get("load_signal", "M_oop"), fitness_target=fitness_target,
+                            objective=OBJ, reward_version=args.reward)
     elif args.supervisor == "llm_fork":
         from llm.client import LLMClient
         sup = LLMCandidateSupervisor(LLMClient(out / "llm_transcript.jsonl", reasoning_effort=args.reasoning_effort),
                                      n_candidates=args.n_candidates,
-                                     load_signal=cfg.reward.get("load_signal", "M_oop"), fitness_target=fitness_target)
+                                     load_signal=cfg.reward.get("load_signal", "M_oop"), fitness_target=fitness_target,
+                                     objective=OBJ, reward_version=args.reward)
     elif args.supervisor == "random":
         sup = RandomSupervisor(seed=args.seed)
-    elif args.supervisor == "random_fork":
+    elif args.supervisor in ("random_fork", "random_hparam"):
+        # random_hparam = the same fork verification as llm_hparam with random candidates in the
+        # hyper-parameter namespace: the control that separates the proposer from the search
         sup = RandomCandidateSupervisor(seed=args.seed, n_candidates=args.n_candidates)
+    elif args.supervisor in ("llm_hparam", "llm_reward"):
+        from llm.client import LLMClient
+        cls = LLMHparamSupervisor if args.supervisor == "llm_hparam" else LLMRewardSupervisor
+        sup = cls(LLMClient(out / "llm_transcript.jsonl", reasoning_effort=args.reasoning_effort),
+                  n_candidates=args.n_candidates, objective=OBJ, reward_version=args.reward)
     elif args.supervisor == "schedule":
         sup = ScheduleSupervisor(args.knob_schedule)
     elif args.supervisor == "schedule_comp":
@@ -307,12 +366,42 @@ def main():
     else:
         sup = NoneSupervisor()
 
+    HPARAM_KEYS = set(HPARAM_BOUNDS)
+    _reward_src = knobs.get("reward_code")
+
+    def apply_knobs(knobs_: dict) -> dict:
+        """Apply the learner-side knobs in this process and return the ones the workers need.
+        For every supervisor except llm_hparam this is the identity."""
+        # a new reward expression changes the return scale, so the cumulative value normaliser
+        # has to forget (otherwise the critic stays normalised for the previous reward)
+        nonlocal _reward_src
+        src_now = knobs_.get("reward_code")
+        if src_now != _reward_src:
+            _reward_src = src_now
+            for l in unique_learners:
+                l.reset_value_scale()
+        hp = {kk: v for kk, v in knobs_.items() if kk in HPARAM_KEYS}
+        if hp:
+            for l in unique_learners:
+                l.set_hparams(hp)
+            if ipc_learner is not None:
+                ipc_learner.set_hparams({kk: v for kk, v in hp.items() if kk != "gae_lambda"})
+        return {kk: v for kk, v in knobs_.items() if kk not in HPARAM_KEYS}
+
     def evaluate(pool_, base_, knobs_, ps=None) -> dict:
         ps = ps or policy_set()
         off = (len(cur_episodes) + len(episodes)) if pool_ is pool else 0
-        jobs = [{"policy_set": ps, "episode_index": off + i, "deterministic": True, "seed": 12345, "knobs": knobs_}
+        wk = apply_knobs(knobs_)
+        jobs = [{"policy_set": ps, "episode_index": off + i, "deterministic": True, "seed": 12345, "knobs": wk}
                 for i in range(len(eval_episodes))]
-        return fitness(pool_.run(jobs), base_, target=(fitness_target if pool_ is pool else "blade"))
+        fit_ = fitness(pool_.run(jobs), base_, target=(fitness_target if pool_ is pool else "blade"))
+        fit_["_objective"] = OBJ
+        return fit_
+
+    def score(f: dict) -> float:
+        """The selection scalar: J or F. `best["F"]` and ckpt_best["F"] hold this score whatever the
+        objective (the key name is historical); `objective` in summary.json says which."""
+        return float(f[OBJ])
 
     # ---------------------------------------------------------------- bookkeeping
     csv_path, evals_path, dec_path = out / "episodes.csv", out / "evals.csv", out / "decisions.jsonl"
@@ -380,23 +469,57 @@ def main():
 
     # ---------------------------------------------------------------- initial evaluation
     t_start = time.time()
-    fit = evaluate(pool, base, knobs)
-    record_eval(0, fit, "init")
-    best = {"episode": 0, "F": fit["F"], "knobs": dict(knobs), "state": learners_state()}
-    log_decision({"index": 0, "episode": 0, "type": "init", "knobs": knobs,
-                  "fit": {kk: v for kk, v in fit.items() if kk != "per_episode"}, "per_episode": fit["per_episode"]})
-    print(f"[init] F={fit['F']:.2f} DELred={fit['del_red_pct']:.2f}% Eloss={fit['energy_loss_pct']:.2f}% "
-          f"spd={fit['speed_std_ratio']:.3f}", flush=True)
-    decision_index, next_decision_at, window_start = 0, args.supervise_every, 0
+    resume_files = sorted(out.glob("resume_*.pt"))
+    if args.resume and resume_files:
+        # ---- pausable / resumable runs (2026-09-11): everything the training loop needs is in the
+        # newest resume_*.pt; the decision log is truncated to the resumed episode so a run that was
+        # killed mid-wave does not leave duplicate records
+        R = torch.load(resume_files[-1], weights_only=False)
+        k = int(R["k"]); knobs = dict(R["knobs"]); best = R["best"]; history = list(R["history"])
+        decision_index, next_decision_at, window_start = R["decision_index"], R["next_decision_at"], R["window_start"]
+        rows[:] = R["rows"]; eval_rows[:] = R["eval_rows"]
+        apply_knobs(knobs); learners_load(R["learners"])
+        if hasattr(sup, "set_state"):
+            sup.set_state(R.get("sup_state") or {})
+        t_start = time.time() - float(R.get("elapsed_s", 0.0))
+        if dec_path.exists():
+            keep = [l for l in open(dec_path, encoding="utf-8") if json.loads(l).get("episode", 0) <= k]
+            open(dec_path, "w", encoding="utf-8").writelines(keep)
+        dump_csv(csv_path, rows); dump_csv(evals_path, eval_rows)
+        fit = R["fit"]
+        print(f"[resume] {resume_files[-1].name}: episode {k}, best {OBJ}={best['F']:.2f} @ep {best['episode']}, "
+              f"{decision_index} decisions so far", flush=True)
+    else:
+        fit = evaluate(pool, base, knobs)
+        record_eval(0, fit, "init")
+        best = {"episode": 0, "F": score(fit), "knobs": dict(knobs), "state": learners_state()}
+        log_decision({"index": 0, "episode": 0, "type": "init", "knobs": knobs,
+                      "fit": {kk: v for kk, v in fit.items() if kk != "per_episode"}, "per_episode": fit["per_episode"]})
+        print(f"[init] {OBJ}={score(fit):.2f} F={fit['F']:.2f} DELred={fit['del_red_pct']:.2f}% "
+              f"Eloss={fit['energy_loss_pct']:.2f}% spd={fit['speed_std_ratio']:.3f}", flush=True)
+        decision_index, next_decision_at, window_start = 0, args.supervise_every, 0
+        k = 0
+    last_resume_t = time.time()
 
-    k = 0
+    def save_resume():
+        """Write the newest resume point and prune to --resume_keep. Called at wave boundaries only,
+        never inside a fork, so the saved state is always a consistent one."""
+        st = {"k": k, "knobs": dict(knobs), "best": best, "history": history,
+              "decision_index": decision_index, "next_decision_at": next_decision_at,
+              "window_start": window_start, "rows": rows, "eval_rows": eval_rows,
+              "learners": learners_state(), "fit": fit, "elapsed_s": time.time() - t_start,
+              "sup_state": (sup.get_state() if hasattr(sup, "get_state") else {}), "objective": OBJ}
+        torch.save(st, out / f"resume_{k:05d}.pt")
+        for old in sorted(out.glob("resume_*.pt"))[:-args.resume_keep]:
+            old.unlink()
 
     def train_wave(knobs_: dict, fork: str = "") -> tuple[list, dict]:
         """One wave of training episodes with the given knobs (rollout + PPO update + logging)."""
         nonlocal k
         wave = min(args.workers, args.episodes - k)
+        wk = apply_knobs(knobs_)
         jobs = [{"policy_set": policy_set(), "episode_index": train_ep_index(k + i), "deterministic": False,
-                 "seed": args.seed * 100003 + k + i, "knobs": knobs_} for i in range(wave)]
+                 "seed": args.seed * 100003 + k + i, "knobs": wk} for i in range(wave)]
         t0 = time.time()
         results = pool.run(jobs)
         t_roll = time.time() - t0
@@ -470,28 +593,34 @@ def main():
                        "per_episode": fit["per_episode"]}
                 # outcome of the previous decision
                 if history:
-                    history[-1]["F_after"] = fit["F"]
+                    history[-1]["F_after"] = score(fit)
                     history[-1]["outcome"] = {kk: fit[kk] for kk in ("del_red_pct", "energy_loss_pct", "speed_std_ratio")}
                 # guardrail (Lakhani-style supervisor): if F fell by > rollback_drop below the best evaluation
                 # so far, restore the best state (knobs + policies) and continue from there
-                if args.rollback_on == "violation":
+                if OBJ == "J":
+                    # no tiers under J: roll back on a drop of the objective, or on the one hard
+                    # physical constraint (energy loss > 1 %)
+                    do_rollback = use_rollback and k >= args.rollback_after and (
+                        score(fit) < best["F"] - args.rollback_drop or not fit.get("energy_ok", True))
+                elif args.rollback_on == "violation":
                     do_rollback = use_rollback and k >= args.rollback_after and fit.get("tier") == "degraded"
                 else:
                     do_rollback = use_rollback and k >= args.rollback_after and fit["F"] < best["F"] - args.rollback_drop
                 if do_rollback:
                     knobs = dict(best["knobs"])
                     learners_load(best["state"])
-                    rec["rollback"] = {"to_episode": best["episode"], "F_now": fit["F"], "F_best": best["F"]}
+                    apply_knobs(knobs)
+                    rec["rollback"] = {"to_episode": best["episode"], "F_now": score(fit), "F_best": best["F"]}
                     if history:
                         history[-1]["rolled_back"] = True
                     print(f"[sup ] ROLLBACK to best state @ep {best['episode']} (F {fit['F']:.2f} < "
                           f"{best['F']:.2f} - {args.rollback_drop})", flush=True)
-                    fit = dict(fit, F=best["F"], F_measured=fit["F"])
-                elif fit["F"] > best["F"]:
-                    best = {"episode": k, "F": fit["F"], "knobs": dict(knobs), "state": learners_state()}
-                    torch.save({"episode": k, "F": fit["F"], "knobs": dict(knobs), "state": best["state"]},
+                    fit = dict(fit, **{OBJ: best["F"], OBJ + "_measured": score(fit), "F_measured": fit["F"]})
+                elif score(fit) > best["F"]:
+                    best = {"episode": k, "F": score(fit), "knobs": dict(knobs), "state": learners_state()}
+                    torch.save({"episode": k, "F": score(fit), "objective": OBJ, "knobs": dict(knobs), "state": best["state"]},
                                out / "ckpt_best.pt")
-                print(f"[eval] ep {k}: F={fit['F']:.2f} DELred={fit['del_red_pct']:.2f}% "
+                print(f"[eval] ep {k}: {OBJ}={score(fit):.2f} F={fit['F']:.2f} DELred={fit['del_red_pct']:.2f}% "
                       f"Eloss={fit['energy_loss_pct']:.2f}% spd={fit['speed_std_ratio']:.3f} "
                       f"tier={fit.get('tier', '?')} F_tol2={fit.get('F_tol2', float('nan')):.2f} ({rec['wall_eval_s']:.0f}s)", flush=True)
                 if forks and k < args.episodes:
@@ -504,6 +633,18 @@ def main():
                     outcomes = []
                     for ci, c in enumerate(cands):
                         kc, notes = clamp_proposal(c.get("knobs", {}), knobs)
+                        # clamp_proposal only keeps numeric knobs it has bounds for; an LLM-written
+                        # reward expression is re-attached here and validated in this process, so a
+                        # broken one costs nothing instead of a whole fork wave.
+                        src = (c.get("knobs") or {}).get("reward_code")
+                        if src:
+                            try:
+                                compile_reward_code(src)
+                                kc["reward_code"] = src
+                            except ValueError as e:
+                                notes.append(f"reward_code rejected ({e}); kept the previous reward")
+                                if knobs.get("reward_code"):
+                                    kc["reward_code"] = knobs["reward_code"]
                         learners_load(S0)
                         k = k0
                         for _ in range(args.fork_waves):
@@ -513,30 +654,34 @@ def main():
                         outcomes.append({"i": ci, "style": c.get("style", "?"), "knobs": kc, "notes": notes,
                                          "rationale": str(c.get("rationale", ""))[:200], "fit": fit_c,
                                          "state": learners_state(), "k_after": k})
-                    best_c = max(outcomes, key=lambda o_: (TIER_RANK.get(o_["fit"].get("tier"), 0), o_["fit"]["F"], o_["fit"].get("F_tol2", 0.0)))
+                    if OBJ == "J":
+                        best_c = max(outcomes, key=lambda o_: (bool(o_["fit"].get("energy_ok", True)), o_["fit"]["J"]))
+                    else:
+                        best_c = max(outcomes, key=lambda o_: (TIER_RANK.get(o_["fit"].get("tier"), 0), o_["fit"]["F"], o_["fit"].get("F_tol2", 0.0)))
                     learners_load(best_c["state"])
                     knobs = dict(best_c["knobs"])
                     k = min(args.episodes, k0 + sum(o_["k_after"] - k0 for o_ in outcomes))   # every fork's episodes count toward the budget
                     fit = best_c["fit"]
                     record_eval(k, fit, f"fork_select{best_c['i']}")
-                    if fit["F"] > best["F"]:
-                        best = {"episode": k, "F": fit["F"], "knobs": dict(knobs), "state": learners_state()}
-                        torch.save({"episode": k, "F": fit["F"], "knobs": dict(knobs), "state": best["state"]}, out / "ckpt_best.pt")
+                    if score(fit) > best["F"]:
+                        best = {"episode": k, "F": score(fit), "knobs": dict(knobs), "state": learners_state()}
+                        torch.save({"episode": k, "F": score(fit), "objective": OBJ, "knobs": dict(knobs), "state": best["state"]}, out / "ckpt_best.pt")
                     rec["fork"] = {"chosen": best_c["i"], "candidates": [
                         {kk: v for kk, v in o_.items() if kk != "state"} | {"fit": {q: w for q, w in o_["fit"].items() if q != "per_episode"}}
                         for o_ in outcomes]}
                     rec["analysis"] = cands[0].get("analysis", "") if cands else ""
                     rec["wall_supervise_s"] = time.time() - t0
                     history.append({"decision": decision_index, "episode": k, "knobs": dict(knobs), "accepted": True,
-                                    "chosen_style": best_c["style"], "F_before": fit["F"],
-                                    "candidates": [{"style": o_["style"], "knobs": o_["knobs"], "F": o_["fit"]["F"],
+                                    "chosen_style": best_c["style"], "F_before": score(fit),
+                                    "candidates": [{"style": o_["style"], "knobs": o_["knobs"], "F": score(o_["fit"]),
                                                     "tier": o_["fit"].get("tier"), "del_red_pct": o_["fit"]["del_red_pct"],
                                                     "speed_std_ratio": o_["fit"]["speed_std_ratio"],
                                                     "energy_loss_pct": o_["fit"]["energy_loss_pct"],
                                                     "rationale": o_["rationale"]} for o_ in outcomes],
                                     "rationale": best_c["rationale"]})
-                    print(f"[sup ] {sup.name}: " + " | ".join(f"{o_['i']}:{o_['style'][:4]} F={o_['fit']['F']:.1f}/{o_['fit'].get('tier','?')[:4]}" for o_ in outcomes)
-                          + f" -> keep {best_c['i']} ({best_c['style']}) knobs " + ", ".join(f"{kk}={v:g}" for kk, v in knobs.items()), flush=True)
+                    print(f"[sup ] {sup.name}: " + " | ".join(f"{o_['i']}:{o_['style'][:4]} {OBJ}={score(o_['fit']):.1f}/{('E-ok' if o_['fit'].get('energy_ok', True) else 'E-BAD') if OBJ == 'J' else o_['fit'].get('tier','?')[:4]}" for o_ in outcomes)
+                          + f" -> keep {best_c['i']} ({best_c['style']}) knobs "
+                          + ", ".join(f"{kk}={_knob_str(v)}" for kk, v in knobs.items()), flush=True)
                     window_start = k
                     next_decision_at = k + args.supervise_every
                 elif proposes and k < args.episodes:
@@ -550,7 +695,8 @@ def main():
                     rec["proposed_knobs_raw"] = proposal.get("knobs")
                     rec["validation_notes"] = notes
                     changed = {kk: (knobs[kk], new_knobs[kk]) for kk in knobs if kk in new_knobs
-                               and abs(new_knobs[kk] - knobs[kk]) > 1e-12}
+                               and (knobs[kk] != new_knobs[kk] if isinstance(new_knobs[kk], str)
+                                    else abs(new_knobs[kk] - knobs[kk]) > 1e-12)}
                     accepted = bool(changed)
                     if changed and use_twin:
                         ps = policy_set()
@@ -568,18 +714,22 @@ def main():
                         knobs = new_knobs
                     history.append({"decision": decision_index, "episode": k, "knobs": dict(knobs),
                                     "accepted": accepted, "changed": {kk: v[1] for kk, v in changed.items()},
-                                    "F_before": fit["F"], "rationale": str(proposal.get("rationale", ""))[:300]})
-                    print(f"[sup ] {sup.name}: " + (", ".join(f"{kk}: {a:g}->{b:g}" for kk, (a, b) in changed.items())
+                                    "F_before": score(fit), "rationale": str(proposal.get("rationale", ""))[:300]})
+                    print(f"[sup ] {sup.name}: " + (", ".join(f"{kk}: {_knob_str(a)}->{_knob_str(b)}" for kk, (a, b) in changed.items())
                                                   if changed else "no change")
                           + ("" if accepted else "  [REJECTED]") + f" | {str(proposal.get('rationale', ''))[:160]}",
                           flush=True)
                 log_decision(rec)
                 window_start = k
+            if time.time() - last_resume_t >= args.resume_every_s:
+                save_resume()
+                last_resume_t = time.time()
     finally:
         pool.close()
         if twin_pool is not pool:
             twin_pool.close()
-    json.dump({"final_knobs": knobs, "best_F": best["F"], "best_episode": best["episode"], "best_knobs": best["knobs"],
+    json.dump({"final_knobs": knobs, "best_F": best["F"], "objective": OBJ, "reward": args.reward,
+               "best_episode": best["episode"], "best_knobs": best["knobs"],
                "history": history, "wall_min": (time.time() - t_start) / 60,
                "llm_calls": getattr(getattr(sup, "client", None), "n_calls", 0),
                "llm_usage": getattr(getattr(sup, "client", None), "usage", None)},

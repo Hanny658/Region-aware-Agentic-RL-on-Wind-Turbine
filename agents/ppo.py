@@ -99,6 +99,13 @@ class PPOConfig:
     max_grad_norm: float = 0.5
     entropy_coef: float = 0.0
     log_std_init: float = -1.0
+    # 2026-09-10: with un-normalised targets the R3 value target is O(1e3-1e4) (reward ~16/step,
+    # gamma 0.998) while the critic starts at xavier gain 0.1 under grad-norm clipping — it
+    # cannot travel there inside the episode budget, saturates its hidden layer on the way and
+    # ends up a constant (scripts/dev/critic_health.py). With value_norm the critic predicts a
+    # standardised return and is denormalised wherever a value is used. Default off so the
+    # existing runs stay bit-reproducible.
+    value_norm: bool = False
 
 
 class PPOLearner:
@@ -112,6 +119,7 @@ class PPOLearner:
         self.opt_a = torch.optim.Adam(self.actor.parameters(), lr=cfg.actor_lr)
         self.opt_c = torch.optim.Adam(self.critic.parameters(), lr=cfg.critic_lr)
         self.obs_rms = RunningMeanStd((obs_dim,))
+        self.ret_rms = RunningMeanStd((1,))
         self.n_updates = 0
         self.n_samples = 0
 
@@ -131,6 +139,13 @@ class PPOLearner:
             adv[t] = last
         return adv, adv + val
 
+    def _value(self, obs_t: torch.Tensor) -> np.ndarray:
+        """Critic output in return units (identity unless value_norm is on)."""
+        v = self.critic(obs_t).numpy()
+        if not self.cfg.value_norm:
+            return v
+        return v * np.sqrt(self.ret_rms.var[0] + 1e-8) + self.ret_rms.mean[0]
+
     def prepare(self, segments: list[dict]) -> dict | None:
         """segments: list of {'obs','act','logp','rew','terminal'} contiguous in time for this
         learner. Returns a flat batch with advantages/returns."""
@@ -144,12 +159,17 @@ class PPOLearner:
         with torch.no_grad():
             for s in segments:
                 o = self.obs_rms.normalize(s["obs"]).astype(np.float32)
-                v = self.critic(torch.as_tensor(o)).numpy()
-                last_val = 0.0 if s["terminal"] else float(self.critic(
-                    torch.as_tensor(self.obs_rms.normalize(s["last_obs"]).astype(np.float32)).unsqueeze(0)))
+                v = self._value(torch.as_tensor(o))
+                last_val = 0.0 if s["terminal"] else float(self._value(
+                    torch.as_tensor(self.obs_rms.normalize(s["last_obs"]).astype(np.float32)).unsqueeze(0))[0])
                 adv, ret = self._gae(s["rew"].astype(np.float32), v, last_val)
                 O.append(o); A.append(s["act"]); LP.append(s["logp"]); ADV.append(adv); RET.append(ret)
         self.obs_rms.update(obs_all)
+        if self.cfg.value_norm:
+            r_all = np.concatenate(RET).astype(np.float64)
+            self.ret_rms.update(r_all.reshape(-1, 1))
+            sd = np.sqrt(self.ret_rms.var[0] + 1e-8)
+            RET = [(r - self.ret_rms.mean[0]) / sd for r in RET]
         return {"obs": np.concatenate(O), "act": np.concatenate(A).astype(np.float32),
                 "logp": np.concatenate(LP).astype(np.float32), "adv": np.concatenate(ADV),
                 "ret": np.concatenate(RET)}
@@ -187,13 +207,56 @@ class PPOLearner:
         return {f"{self.name}/{kk}": v / k for kk, v in stats.items()} | {
             f"{self.name}/std": float(self.actor.log_std.exp().mean().detach()), f"{self.name}/batch": n}
 
+    def set_hparams(self, hp: dict):
+        """Hot-swap PPO hyper-parameters between waves (llm_hparam supervision). Only the fields
+        read at update time are settable; the network shapes are not."""
+        for k in ("gae_lambda", "clip_range", "entropy_coef", "gamma"):
+            if k in hp:
+                setattr(self.cfg, k, float(hp[k]))
+        for k in ("batch_size", "n_epochs"):
+            if k in hp:
+                setattr(self.cfg, k, int(hp[k]))
+        if "actor_lr" in hp:
+            self.cfg.actor_lr = float(hp["actor_lr"])
+            for g in self.opt_a.param_groups:
+                g["lr"] = self.cfg.actor_lr
+        if "critic_lr" in hp:
+            self.cfg.critic_lr = float(hp["critic_lr"])
+            for g in self.opt_c.param_groups:
+                g["lr"] = self.cfg.critic_lr
+        if "policy_std" in hp:               # exploration scale, stored as log_std on the actor
+            with torch.no_grad():
+                self.actor.log_std.fill_(float(np.log(max(float(hp["policy_std"]), 1e-6))))
+
+    def reset_value_scale(self):
+        """Forget the return statistics. Needed when the reward function itself changes
+        (llm_reward supervision): the running mean/var are cumulative, so after a few hundred
+        thousand samples they would never adapt to a new reward scale and the critic would be
+        permanently mis-normalised. Costs one wave of poor value estimates per reward change."""
+        self.ret_rms = RunningMeanStd((1,))
+
+    def hparams(self) -> dict:
+        return {"actor_lr": self.cfg.actor_lr, "critic_lr": self.cfg.critic_lr,
+                "gae_lambda": self.cfg.gae_lambda, "clip_range": self.cfg.clip_range,
+                "entropy_coef": self.cfg.entropy_coef,
+                "policy_std": float(self.actor.log_std.exp().mean().detach())}
+
     def state_dict(self):
+        # optimiser moments included since 2026-09-11 so that a resumed or rolled-back learner is the
+        # same learner (evaluate.py ignores them; old checkpoints without them still load)
         return {"actor": self.actor.state_dict(), "critic": self.critic.state_dict(),
-                "obs_rms": self.obs_rms.state(), "n_updates": self.n_updates, "n_samples": self.n_samples}
+                "obs_rms": self.obs_rms.state(), "ret_rms": self.ret_rms.state(),
+                "opt_a": self.opt_a.state_dict(), "opt_c": self.opt_c.state_dict(),
+                "n_updates": self.n_updates, "n_samples": self.n_samples}
 
     def load_state_dict(self, s):
         self.actor.load_state_dict(s["actor"]); self.critic.load_state_dict(s["critic"])
-        self.obs_rms.load(s["obs_rms"]); self.n_updates = s["n_updates"]; self.n_samples = s["n_samples"]
+        self.obs_rms.load(s["obs_rms"])
+        if "ret_rms" in s:                      # absent in checkpoints written before 2026-09-10
+            self.ret_rms.load(s["ret_rms"])
+        if "opt_a" in s:
+            self.opt_a.load_state_dict(s["opt_a"]); self.opt_c.load_state_dict(s["opt_c"])
+        self.n_updates = s["n_updates"]; self.n_samples = s["n_samples"]
 
 
 # ====================================================================== specialised actors, shared critic
@@ -319,10 +382,15 @@ class SharedCriticPPO:
     def state_dict(self):
         return {"actors": {r: self.actors[r].state_dict() for r in self.regions}, "critic": self.critic.state_dict(),
                 "obs_rms": self.obs_rms.state(), "n_updates": self.n_updates, "n_samples": self.n_samples,
+                "opt_a": {r: self.opt_a[r].state_dict() for r in self.regions}, "opt_c": self.opt_c.state_dict(),
                 "shared_critic": True}
 
     def load_state_dict(self, s):
         for r in self.regions:
             self.actors[r].load_state_dict(s["actors"][r])
         self.critic.load_state_dict(s["critic"]); self.obs_rms.load(s["obs_rms"])
+        if "opt_a" in s:
+            for r in self.regions:
+                self.opt_a[r].load_state_dict(s["opt_a"][r])
+            self.opt_c.load_state_dict(s["opt_c"])
         self.n_updates = s["n_updates"]; self.n_samples = s["n_samples"]

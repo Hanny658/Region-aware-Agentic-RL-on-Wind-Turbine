@@ -5,7 +5,7 @@ import os
 import sys
 
 pats = sys.argv[1:] or ["~/wtrl/exp/of*"]
-print(f"{'run':>26} {'tag':>24} {'tgt':>5} {'F':>7} {'F_tol2':>7} {'tier':>8} {'blade':>6} {'tower':>6} {'Eloss':>6} {'spd':>6} {'spdMAE':>7}")
+print(f"{'run':>26} {'tag':>24} {'tgt':>5} {'F':>7} {'F_tol2':>7} {'tier':>8} {'J':>7} {'blade':>6} {'tower':>6} {'Eloss':>6} {'spd':>6} {'spdMAE':>7}")
 for pat in pats:
     for d in sorted(glob.glob(os.path.expanduser(pat))):
         for f in sorted(glob.glob(os.path.join(d, "eval_*.json"))):
@@ -17,5 +17,5 @@ for pat in pats:
             blade = j.get('RootMyc1_DEL_red_pct', j['del_red_pct'])
             tower = j.get('TwrBsMyt_DEL_red_pct', float('nan'))
             print(f"{os.path.basename(d):>26} {tag:>24} {str(j.get('target', 'blade'))[:5]:>5} {j['F']:7.2f} "
-                  f"{j.get('F_tol2', float('nan')):7.2f} {j.get('tier', '?'):>8} {blade:6.2f} {tower:6.2f} "
+                  f"{j.get('F_tol2', float('nan')):7.2f} {j.get('tier', '?'):>8} {j.get('J', float('nan')):7.2f} {blade:6.2f} {tower:6.2f} "
                   f"{j['energy_loss_pct']:6.2f} {j['speed_std_ratio']:6.3f} {j.get('speed_mae_ratio_R3', float('nan')):7.3f}")

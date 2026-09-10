@@ -198,7 +198,9 @@ class ResidualPitchEnv(gym.Env):
             region = self.region
             self.region = self.router.update(m["beta_native"], m["min_pit"])
             r, info = self.reward_fn(region, m["P"], self._P_base(m["t"], m["P"]), m["gen_speed"],
-                                     m[self.load_key], m_prev[self.load_key], 0.0)
+                                     m[self.load_key], m_prev[self.load_key], 0.0,
+                                     aux=(m.get("fa_acc", float("nan")), m_prev.get("fa_acc", float("nan")),
+                                          m["M_oop"], m_prev["M_oop"]))
             if self.cfg.ipc_max_rad > 0.0:
                 md, mq = coleman((m["M_oop"], m["M_oop2"], m["M_oop3"]), m["azimuth"])
                 self._dq += self._dq_alpha * (np.array([md, mq]) - self._dq)
@@ -233,7 +235,9 @@ class ResidualPitchEnv(gym.Env):
                      * self._gen_eff
         dipc = float(np.hypot(theta_d, theta_q))
         r, info = self.reward_fn(region, m["P"], self._P_base(m["t"], m["P"]), m["gen_speed"],
-                                 m[self.load_key], m_prev[self.load_key], dbeta, dtau, ke_dot, dipc)
+                                 m[self.load_key], m_prev[self.load_key], dbeta, dtau, ke_dot, dipc,
+                                 aux=(m.get("fa_acc", float("nan")), m_prev.get("fa_acc", float("nan")),
+                                      m["M_oop"], m_prev["M_oop"]))
         if self.cfg.ipc_max_rad > 0.0:      # dq-moment observation (EMA), from the fresh measurement
             md, mq = coleman((m["M_oop"], m["M_oop2"], m["M_oop3"]), m["azimuth"])
             self._dq += self._dq_alpha * (np.array([md, mq]) - self._dq)

@@ -27,6 +27,28 @@ ENERGY_TOL_PCT = 1.0
 SPEED_TOL_RATIO = 1.0
 PENALTY = 20.0
 
+# ---- objective J (2026-09-11): the baseline paper's metric set as ONE continuous scalar.
+#   J = weighted mean of the four % reductions vs paired GSPI (power MSE, gen-speed MSE, tower-base
+#       DEL, blade-root DEL), each clipped to +-J_CLIP, minus PENALTY per % of energy loss over 1 %.
+# No tiers: speed regulation is an objective here, not a constraint. Equal weights are the paper's
+# metric set verbatim; note that power MSE == speed MSE under constant torque, so the effective
+# split is 50 % regulation / 25 % tower / 25 % blade.
+J_METRICS = ("power_mse_red_pct", "gen_speed_mse_red_pct", "TwrBsMyt_DEL_red_pct", "RootMyc1_DEL_red_pct")
+J_WEIGHTS = (1.0, 1.0, 1.0, 1.0)
+J_CLIP = 100.0
+
+
+def objective_J(extra: dict, energy_loss_pct: float, weights=J_WEIGHTS) -> tuple[float, dict]:
+    """`extra[m]` = the % reduction of metric m (fitness() passes per-episode-clipped means; a
+    stored aggregate is acceptable for re-scoring old evaluations). Missing / nan terms count 0."""
+    terms = {}
+    for m in J_METRICS:
+        v = extra.get(m)
+        terms[m] = 0.0 if v is None or v != v else max(-J_CLIP, min(J_CLIP, float(v)))
+    comp = sum(w * terms[m] for w, m in zip(weights, J_METRICS)) / sum(weights)
+    pen = PENALTY * max(0.0, energy_loss_pct - ENERGY_TOL_PCT)
+    return comp - pen, {"J_metric_mean": comp, "J_energy_penalty": pen, **{f"J_{m}": v for m, v in terms.items()}}
+
 
 def baseline_metrics(baseline_dir: str, episodes: list[EpisodeSpec], dt: float, wg_rated: float,
                      relabel_wind: float | None = None) -> dict:
@@ -85,19 +107,29 @@ def fitness(results: list[dict], base: dict, target: str = "blade") -> dict:
              "speed_mae_ratio_R3": speed_mae_ratio_R3, "gen_speed_mae_R3": gen_speed_mae_R3,
              "power_mae_R3": power_mae_R3}
     # paper-style paired MSE reductions (Wang et al. Fig. 4 analogues, R3 steps, vs rated)
+    pe_red = {}                      # per-episode % reductions of the four paper metrics (nan = n/a)
     for key, name in (("power_mse_R3", "power_mse_red_pct"), ("gen_speed_mse_R3", "gen_speed_mse_red_pct")):
-        pairs = [(r["metrics"].get(key), base[r["wind_file"]].get(key))
-                 for r in results if r["metrics"]["frac_R3"] >= 0.5]
-        pairs = [(a, b) for a, b in pairs if a == a and b == b and b]
-        extra[name] = float(np.mean([100.0 * (1 - a / b) for a, b in pairs])) if pairs else float("nan")
-    if all("RootMyc1_DEL_MNm" in r["metrics"] for r in results) and \
-            all("RootMyc1_DEL_MNm" in base[r["wind_file"]] for r in results):
-        extra["RootMyc1_DEL_red_pct"] = float(np.mean(
-            [100 * (1 - r["metrics"]["RootMyc1_DEL_MNm"] / base[r["wind_file"]]["RootMyc1_DEL_MNm"]) for r in results]))
-        extra["TwrBsMyt_DEL_red_pct"] = float(np.mean(
-            [100 * (1 - r["metrics"]["TwrBsMyt_DEL_MNm"] / base[r["wind_file"]]["TwrBsMyt_DEL_MNm"]) for r in results]))
+        pe = []
+        for r in results:
+            a, b = r["metrics"].get(key), base[r["wind_file"]].get(key)
+            ok = r["metrics"]["frac_R3"] >= 0.5 and a == a and b == b and bool(b)
+            pe.append(100.0 * (1 - a / b) if ok else float("nan"))
+        pe_red[name] = pe
+        extra[name] = float(np.nanmean(pe)) if any(v == v for v in pe) else float("nan")
+    if all("RootMyc1_DEL_MNm" in r["metrics"] for r in results) and             all("RootMyc1_DEL_MNm" in base[r["wind_file"]] for r in results):
+        for key, name in (("RootMyc1_DEL_MNm", "RootMyc1_DEL_red_pct"), ("TwrBsMyt_DEL_MNm", "TwrBsMyt_DEL_red_pct")):
+            pe_red[name] = [100.0 * (1 - r["metrics"][key] / base[r["wind_file"]][key]) for r in results]
+            extra[name] = float(np.mean(pe_red[name]))
+    # objective J: each episode's reduction clipped to +-J_CLIP before averaging (decision D4), so a
+    # single blown MSE episode cannot own the objective; the unclipped means above stay for the tables
+    J_in = {}
+    for name in J_METRICS:
+        pe = [v for v in pe_red.get(name, []) if v == v]
+        J_in[name] = float(np.mean(np.clip(pe, -J_CLIP, J_CLIP))) if pe else float("nan")
+    J, J_parts = objective_J(J_in, energy_loss_pct)
     return {
-        "F": float(F), "del_red_pct": del_red_pct, "energy_loss_pct": float(energy_loss_pct),
+        "F": float(F), "J": float(J), "energy_ok": bool(energy_loss_pct <= ENERGY_TOL_PCT), **J_parts,
+        "del_red_pct": del_red_pct, "energy_loss_pct": float(energy_loss_pct),
         "speed_std_ratio": speed_std_ratio, "constraints_ok": bool(pen_e == 0 and pen_s == 0),
         "terminated_any": any(r["terminated"] for r in results),
         "per_episode": [{"mean_wind": r["mean_wind"], "del_red_pct": d,
@@ -107,7 +139,8 @@ def fitness(results: list[dict], base: dict, target: str = "blade") -> dict:
                          "gen_speed_mae_R3": r["metrics"].get("gen_speed_mae_R3"),
                          "pitch_travel_deg": r["metrics"]["pitch_travel_deg"],
                          "pitch_travel_base_deg": base[r["wind_file"]]["pitch_travel_deg"],
-                         "dbeta_abs_mean_deg": r["metrics"]["dbeta_abs_mean_deg"]}
-                        for r, d in zip(results, del_red)],
+                         "dbeta_abs_mean_deg": r["metrics"]["dbeta_abs_mean_deg"],
+                         **{name: pe_red[name][i] for name in J_METRICS if name in pe_red}}
+                        for i, (r, d) in enumerate(zip(results, del_red))],
         **extra,
     }

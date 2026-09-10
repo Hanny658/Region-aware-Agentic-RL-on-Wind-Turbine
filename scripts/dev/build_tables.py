@@ -54,7 +54,7 @@ ARMS = {
 }
 
 FIELDS = [
-    "F", "F_strict", "F_tol2", "tier", "target",
+    "F", "F_strict", "F_tol2", "tier", "target", "J", "energy_ok",
     "del_red_pct", "TwrBsMyt_DEL_red_pct", "RootMyc1_DEL_red_pct",
     "speed_std_ratio", "speed_mae_ratio_R3", "energy_loss_pct",
     "power_mse_red_pct", "gen_speed_mse_red_pct", "constraints_ok",

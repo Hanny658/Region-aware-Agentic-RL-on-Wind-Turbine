@@ -58,8 +58,13 @@ in this repo's docs, commits or manuscripts. The IPC/torque code paths stay in t
 
 ## Key commands
 - Train: `~/wtrl/run.sh python scripts/train.py --backend {toy,openfast} --method {spec,mono,mono_flag,spec_sc,r3only} --supervisor {none,guard,random,llm,llm_fork,random_fork,schedule} --episodes 300 --workers 8 --seeds 1 --eval_seeds 1 2 --lambda_load 1 --rollback_on violation --load_signal fa_acc --fitness_target tower --obs_fa_acc --port0 5800 --out ~/wtrl/exp/<name>`
+- Metric-set objective (roadmap v2, 2026-09-11): add `--objective J --reward v2 --value_norm` (guard-v1
+  control: `--reward v1`); supervisors `llm_hparam | random_hparam | llm_reward` need `--n_candidates 3`.
+  Runs are pausable: `--resume_every_s 300 --resume_keep 5` write `resume_*.pt`, `--resume` continues;
+  `scripts/wsl/campaign_ctl.sh {pause|resume|stop|status}` drives a whole campaign session.
 - Evaluate held-out: `scripts/evaluate.py --run <dir> --ckpt ckpt_best.pt --backend openfast --seeds 3 4 5 6 --tag <tag>`
-- Tables: `scripts/summarize.py`, `scripts/dev/{heldout_table,paper_table,per_wind_table,eval_detail,power_mae_table}.py`
+  (J runs are scored with wind-labelled R3 subsets automatically; prints J and the four terms)
+- Tables: `scripts/summarize.py`, `scripts/dev/{heldout_table,paper_table,per_wind_table,eval_detail,power_mae_table,pick_by_J}.py`
 - Campaign patterns (resumable, run-level skip on existing summary.json): `scripts/wsl/campaign_*.sh`.
 
 ## Hard-won implementation facts (do not rediscover)

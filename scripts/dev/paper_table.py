@@ -34,7 +34,7 @@ for pat in args or ["~/wtrl/exp/n1_*"]:
         method = re.sub(r"_s\d+$", "", name)
         runs[method].append((name, json.load(open(f, encoding="utf-8"))))
 
-cols = [("power_mse_red_pct", "Power MSE red%"), ("gen_speed_mse_red_pct", "GenSpd MSE red%"),
+cols = [("J", "J (metric-set obj)"), ("power_mse_red_pct", "Power MSE red%"), ("gen_speed_mse_red_pct", "GenSpd MSE red%"),
         ("TwrBsMyt_DEL_red_pct", "TwrBsMyt DEL red%"), ("RootMyc1_DEL_red_pct", "RootMyc1 DEL red%"),
         ("energy_loss_pct", "Energy loss%")]
 print(f"{'method':>14} " + " ".join(f"{h:>18}" for _, h in cols) + f" {'tiers':>22}")

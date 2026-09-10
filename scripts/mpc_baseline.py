@@ -112,12 +112,15 @@ def main():
     from itertools import product
     for r_w, qt_w, wcv in product(args.r, args.qt, args.wc_v):
         mpc_kw = dict(horizon=args.horizon, ts=args.ts, q=args.q, r=r_w, qt=qt_w, wc_v=wcv)
+        rtag = f"{args.tag}_N{args.horizon}q{args.q:g}r{r_w:g}qt{qt_w:g}w{wcv:g}"
+        if (out / f"eval_{rtag}.json").exists():      # grids are resumable: a finished point is kept
+            print(f"mpc [{rtag}] skip (exists)", flush=True)
+            continue
         jobs = [(i, episodes, tb, cp_path, mpc_kw, args.port0 + 7 * i,
                  f"work_mpc{i}") for i in range(len(episodes))]
         with mp.Pool(min(args.jobs, len(jobs))) as pool:
             res = pool.map(_worker, jobs)
         fit = fitness(res, base, target=args.fitness_target)
-        rtag = f"{args.tag}_N{args.horizon}q{args.q:g}r{r_w:g}qt{qt_w:g}w{wcv:g}"
         with open(out / f"eval_{rtag}.csv", "w", newline="") as f:
             keys = ["mean_wind", "wind_file", "terminated"]
             for rr in res:
@@ -132,7 +135,10 @@ def main():
         print(f"mpc [{rtag}] target={fit.get('target')} F_strict={fit['F']:.2f} "
               f"F_tol2={fit.get('F_tol2', float('nan')):.2f} tier={fit.get('tier')} "
               f"DELred={fit['del_red_pct']:.2f}% Eloss={fit['energy_loss_pct']:.2f}% "
-              f"spd_ratio={fit['speed_std_ratio']:.3f} (avg solve {1e3 * ws:.1f} ms)", flush=True)
+              f"spd_ratio={fit['speed_std_ratio']:.3f} J={fit['J']:.2f} "
+              f"[P {fit['J_power_mse_red_pct']:+.1f} w {fit['J_gen_speed_mse_red_pct']:+.1f} "
+              f"T {fit['J_TwrBsMyt_DEL_red_pct']:+.1f} B {fit['J_RootMyc1_DEL_red_pct']:+.1f}] "
+              f"(avg solve {1e3 * ws:.1f} ms)", flush=True)
 
 
 if __name__ == "__main__":

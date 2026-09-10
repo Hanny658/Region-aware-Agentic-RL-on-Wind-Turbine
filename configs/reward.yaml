@@ -31,3 +31,11 @@ kappa_beta_rad: 0.1        # paper kappa = 0.1 rad
 region_rule:
   pitch_threshold_deg: 0.5
   hold_s: 1.0
+# ---- reward v2 (2026-09-11, objective J = the baseline paper's four metrics): selected per run with
+# `train.py --reward v2`; the yaml default stays v1 so historical commands are unchanged.
+#   r = 1[R2]*w_power*(P/P_base-1) - 1[R3]*w_speed*(d_wg/speed_err_ref)^2
+#       - lambda_tower*range_inc(fa_acc) - lambda_blade*range_inc(M_oop) - lambda_act*(dbeta/kappa)^2
+version: v1
+speed_err_ref: 0.005       # typical |d_wg| in R3 (obs statistics 2026-09-10); makes the quadratic term O(1) per step
+lambda_tower: 1.0
+lambda_blade: 1.0
