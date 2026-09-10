@@ -9,14 +9,13 @@ knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TSTE 2026 (`Rela
 - `docs/roadmap_2026-08-30.md` — day-by-day experiment log, all intermediate tables (sections 1–22).
 - Design decisions history: the user's explicit answers are recorded in the report; do not re-ask them.
 
-## Scope (narrowed 2026-09-08)
-This repository is the **collective-pitch half**: region-aware residual RL + agentic (LLM)
-supervision + the GSPI, LPV-MPC and ROSCO-tower-damper baselines (roadmap §1–23). Anything outside
-that scope stays outside it: **do not describe other research directions** in this repo's docs,
-commits or manuscripts. The one exception, agreed 2026-09-10, is the already-completed
-individual-pitch (IPC) negative result, cited as the boundary of the supervision claim (roadmap §23).
-The IPC/torque code paths stay in the tree (inert at `--ipc_max 0` / `--dtau_max 0`) because the
-migrated run configs reference them.
+## Scope
+This repository covers region-aware residual RL for **collective pitch**, agentic (LLM)
+supervision, the GSPI / LPV-MPC / ROSCO-tower-damper baselines (roadmap §1–23), and the
+**individual-pitch negative result** (`docs/RESULTS_2026-09-05_ipc-negative.md`), which is kept
+because it bounds the supervision claim. **Do not describe research directions beyond that scope**
+in this repo's docs, commits or manuscripts. The IPC/torque code paths stay in the tree (inert at
+`--ipc_max 0` / `--dtau_max 0`) because run configs reference them.
 
 ## Final state (campaigns complete; manuscript in preparation)
 - Headline (revised 2026-09-09 after redoing everything on ONE wind bank, roadmap §21): the
@@ -37,10 +36,11 @@ migrated run configs reference them.
   (§18). Every supervised spec variant Pareto-dominates both. R2 torque residual: clear seed-paired
   negative (§15). Robustness: the residual's tower gain is invariant TI8→TI22 and 41/42 stress
   evaluations stay strict, but it vanishes at U18 (no R2 to peak-shave) (§17).
-- Data on this machine: `wtrl-migration/cpc-result/` (38 runs, MPC grid, aggregate rebuild script,
-  caveats C1–C10) + `wtrl-migration/{wind,openfast}` (canonical wind bank + paired GSPI baselines).
-  These are copied into `~/wtrl/{wind,baselines/openfast,exp}` inside WSL by the migration step —
-  **never regenerate the wind bank**, or historical F values stop being seed-paired (caveat C1).
+- Data: run artifacts, wind bank and paired GSPI baselines live in WSL at
+  `~/wtrl/{exp,wind,baselines/openfast}`, with a copy outside the repo at `../wtrl-data/`.
+  Derived tables are in `docs/tables/` (rebuild: `scripts/dev/build_tables.py`); provenance, the run
+  inventory and the reporting caveats C1–C12 are in `docs/RESULTS_2026-09-10_data-and-caveats.md`.
+  **Never regenerate the wind bank**, or historical F values stop being seed-paired (caveat C1).
 
 ## Environment / how to run
 - Linux/WSL: `WTRL_SKIP_WIND=1 bash scripts/wsl/bootstrap.sh` from the repo root inside WSL

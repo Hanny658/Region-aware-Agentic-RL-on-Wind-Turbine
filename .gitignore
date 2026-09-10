@@ -220,17 +220,9 @@ __marimo__/
 # Reference files
 RelatedWorks/
 
-# Migrated experiment data (wind bank, GSPI baselines, frozen run artifacts) — GBs, never commit
-# Migrated experiment data: the GB-scale payload (wind bank, GSPI baselines, checkpoints,
-# raw run artifacts) is never committed, but the manuscript-relevant TEXT of the data package is
-# — the caveat list, the rebuild script and the aggregate tables are what a reader needs and they
-# are only ~190 KB. Git cannot re-include a file under an excluded directory, hence the star form.
-wtrl-migration/*
-!wtrl-migration/cpc-result/
-wtrl-migration/cpc-result/*
-!wtrl-migration/cpc-result/README.md
-!wtrl-migration/cpc-result/MANIFEST_external_data.csv
-!wtrl-migration/cpc-result/aggregate/
-wtrl-migration/cpc-result/aggregate/*
-!wtrl-migration/cpc-result/aggregate/*.py
-!wtrl-migration/cpc-result/aggregate/*.csv
+# Bulk experiment data (wind bank, GSPI baselines, run artifacts, checkpoints) lives outside
+# the repository in ../wtrl-data/ and inside WSL at ~/wtrl/. Never commit it.
+wtrl-data/
+
+# campaign logs kept as run provenance (the blanket *.log rule above would drop them)
+!docs/logs/*.log

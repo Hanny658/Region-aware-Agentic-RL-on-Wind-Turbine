@@ -1,0 +1,67 @@
+[
+ {
+  "episode": 32,
+  "knobs": {
+   "lambda_load_R2": 1.0,
+   "lambda_load_R3": 1.0,
+   "w_power": 220.0,
+   "w_speed": 20.0,
+   "dbeta_max_R2": 0.025,
+   "dbeta_max_R3": 0.02
+  },
+  "F_gate": -131.15437283474998,
+  "tier_gate": "degraded"
+ },
+ {
+  "episode": 88,
+  "knobs": {
+   "lambda_load_R2": 1.0,
+   "lambda_load_R3": 1.3,
+   "w_power": 220.0,
+   "w_speed": 25.0,
+   "dbeta_max_R2": 0.05,
+   "dbeta_max_R3": 0.04
+  },
+  "F_gate": -148.0820968638291,
+  "tier_gate": "degraded"
+ },
+ {
+  "episode": 144,
+  "knobs": {
+   "lambda_load_R2": 1.5,
+   "lambda_load_R3": 2.6,
+   "w_power": 200.0,
+   "w_speed": 50.0,
+   "dbeta_max_R2": 0.045,
+   "dbeta_max_R3": 0.028
+  },
+  "F_gate": 17.490575740755332,
+  "tier_gate": "strict"
+ },
+ {
+  "episode": 200,
+  "knobs": {
+   "lambda_load_R2": 3.0,
+   "lambda_load_R3": 2.6,
+   "w_power": 150.0,
+   "w_speed": 50.0,
+   "dbeta_max_R2": 0.06,
+   "dbeta_max_R3": 0.028
+  },
+  "F_gate": 19.03208575647957,
+  "tier_gate": "strict"
+ },
+ {
+  "episode": 256,
+  "knobs": {
+   "lambda_load_R2": 2.0,
+   "lambda_load_R3": 3.0,
+   "w_power": 150.0,
+   "w_speed": 80.0,
+   "dbeta_max_R2": 0.06,
+   "dbeta_max_R3": 0.02
+  },
+  "F_gate": -1.4179119996059804,
+  "tier_gate": "tol2"
+ }
+]

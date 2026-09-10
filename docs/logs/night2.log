@@ -1,0 +1,96 @@
+=== n1_llmfork_s3  Tue Sep  1 16:35:52 CST 2026 ===
+[init] F=0.11 DELred=0.12% Eloss=0.00% spd=1.000
+[eval] ep 32: F=-131.15 DELred=12.38% Eloss=0.22% spd=1.072 tier=degraded F_tol2=-91.15 (64s)
+[sup ] llm_fork: 0:cons F=-192.1/degr | 1:aggr F=-93.4/degr | 2:stru F=-85.9/degr -> keep 2 (structural) knobs lambda_load_R2=1, lambda_load_R3=1, w_power=220, w_speed=20, dbeta_max_R2=0.025, dbeta_max_R3=0.02
+[sup ] ROLLBACK to best state @ep 0 (F -148.08 < 0.11 - 5.0)
+[eval] ep 88: F=0.11 DELred=11.48% Eloss=0.14% spd=1.080 tier=degraded F_tol2=-108.08 (62s)
+[sup ] llm_fork: 0:cons F=7.9/stri | 1:aggr F=6.8/stri | 2:stru F=1.1/stri -> keep 0 (conservative) knobs lambda_load_R2=1, lambda_load_R3=1.3, w_power=220, w_speed=25, dbeta_max_R2=0.05, dbeta_max_R3=0.04
+[eval] ep 144: F=17.49 DELred=17.49% Eloss=0.22% spd=0.973 tier=strict F_tol2=17.49 (62s)
+[sup ] llm_fork: 0:cons F=17.4/stri | 1:aggr F=17.9/stri | 2:stru F=17.4/stri -> keep 1 (aggressive) knobs lambda_load_R2=1.5, lambda_load_R3=2.6, w_power=200, w_speed=50, dbeta_max_R2=0.045, dbeta_max_R3=0.028
+[eval] ep 200: F=19.03 DELred=19.03% Eloss=0.30% spd=0.988 tier=strict F_tol2=19.03 (60s)
+[sup ] llm_fork: 0:cons F=18.7/stri | 1:aggr F=19.9/stri | 2:stru F=21.4/stri -> keep 2 (structural) knobs lambda_load_R2=3, lambda_load_R3=2.6, w_power=150, w_speed=50, dbeta_max_R2=0.06, dbeta_max_R3=0.028
+[eval] ep 256: F=-1.42 DELred=22.88% Eloss=0.55% spd=1.012 tier=tol2 F_tol2=22.88 (60s)
+[sup ] llm_fork: 0:cons F=19.5/stri | 1:aggr F=21.1/stri | 2:stru F=23.3/stri -> keep 2 (structural) knobs lambda_load_R2=2, lambda_load_R3=3, w_power=150, w_speed=80, dbeta_max_R2=0.06, dbeta_max_R3=0.02
+[sup ] ROLLBACK to best state @ep 280 (F -27.18 < 23.29 - 5.0)
+[eval] ep 300: F=23.29 DELred=23.27% Eloss=0.70% spd=1.025 tier=degraded F_tol2=12.82 (60s)
+done in 74.4 min -> /Users/mac/wtrl/exp/n1_llmfork_s3
+=== n1_randfork_s3  Tue Sep  1 17:50:22 CST 2026 ===
+[init] F=0.11 DELred=0.12% Eloss=0.00% spd=1.000
+[eval] ep 32: F=-131.15 DELred=12.38% Eloss=0.22% spd=1.072 tier=degraded F_tol2=-91.15 (60s)
+[sup ] random_fork: 0:hold F=-216.9/degr | 1:rand F=-243.2/degr | 2:rand F=-227.3/degr -> keep 0 (hold) knobs lambda_load_R2=1, lambda_load_R3=1, w_power=220, w_speed=20, dbeta_max_R2=0.05, dbeta_max_R3=0.05
+[sup ] ROLLBACK to best state @ep 0 (F -337.44 < 0.11 - 5.0)
+[eval] ep 88: F=0.11 DELred=16.91% Eloss=0.32% spd=1.177 tier=degraded F_tol2=-297.44 (60s)
+[sup ] random_fork: 0:hold F=8.5/stri | 1:rand F=6.1/tol2 | 2:rand F=13.7/stri -> keep 2 (random) knobs lambda_load_R2=1, lambda_load_R3=1, w_power=220, w_speed=20, dbeta_max_R2=0.1, dbeta_max_R3=0.05
+[eval] ep 144: F=16.16 DELred=16.16% Eloss=0.34% spd=0.979 tier=strict F_tol2=16.16 (60s)
+[sup ] random_fork: 0:hold F=-3.9/tol2 | 1:rand F=-12.5/tol2 | 2:rand F=-91.1/degr -> keep 0 (hold) knobs lambda_load_R2=1, lambda_load_R3=1, w_power=220, w_speed=20, dbeta_max_R2=0.1, dbeta_max_R3=0.05
+[sup ] ROLLBACK to best state @ep 144 (F -216.22 < 16.16 - 5.0)
+[eval] ep 200: F=16.16 DELred=13.03% Eloss=0.78% spd=1.115 tier=degraded F_tol2=-176.22 (61s)
+[sup ] random_fork: 0:hold F=16.0/stri | 1:rand F=16.4/stri | 2:rand F=14.3/stri -> keep 1 (random) knobs lambda_load_R2=0.758574, lambda_load_R3=0.406981, w_power=220, w_speed=20, dbeta_max_R2=0.1, dbeta_max_R3=0.05
+[eval] ep 256: F=19.61 DELred=19.61% Eloss=0.81% spd=0.942 tier=strict F_tol2=19.61 (78s)
+[sup ] random_fork: 0:hold F=19.2/stri | 1:rand F=19.4/stri | 2:rand F=18.7/stri -> keep 1 (random) knobs lambda_load_R2=0.758574, lambda_load_R3=0.692259, w_power=220, w_speed=20, dbeta_max_R2=0.1, dbeta_max_R3=0.05
+[sup ] ROLLBACK to best state @ep 256 (F -160.77 < 19.61 - 5.0)
+[eval] ep 300: F=19.61 DELred=15.22% Eloss=1.32% spd=1.085 tier=degraded F_tol2=-120.77 (74s)
+done in 79.8 min -> /Users/mac/wtrl/exp/n1_randfork_s3
+SCHED_MISSING: /Users/mac/wtrl/exp/schedule_of5_llm.json not found — skipping n1_sched_s3
+=== n1_llmfork_s4  Tue Sep  1 19:10:16 CST 2026 ===
+[init] F=-0.01 DELred=-0.01% Eloss=0.00% spd=1.000
+[eval] ep 32: F=-2.77 DELred=17.74% Eloss=0.19% spd=1.010 tier=tol2 F_tol2=17.74 (77s)
+[sup ] llm_fork: 0:cons F=-69.0/degr | 1:aggr F=2.4/tol2 | 2:stru F=-17.3/tol2 -> keep 1 (aggressive) knobs lambda_load_R2=1, lambda_load_R3=3, w_power=220, w_speed=60, dbeta_max_R2=0.05, dbeta_max_R3=0.02
+[eval] ep 88: F=9.21 DELred=19.42% Eloss=0.22% spd=1.005 tier=tol2 F_tol2=19.42 (77s)
+[sup ] llm_fork: 0:cons F=15.0/stri | 1:aggr F=15.3/stri | 2:stru F=16.2/stri -> keep 2 (structural) knobs lambda_load_R2=3, lambda_load_R3=3, w_power=180, w_speed=60, dbeta_max_R2=0.025, dbeta_max_R3=0.02
+[eval] ep 144: F=-15.16 DELred=18.62% Eloss=0.16% spd=1.017 tier=tol2 F_tol2=18.62 (77s)
+[sup ] llm_fork: 0:cons F=-40.1/degr | 1:aggr F=-14.0/tol2 | 2:stru F=-24.1/tol2 -> keep 1 (aggressive) knobs lambda_load_R2=3, lambda_load_R3=9, w_power=180, w_speed=180, dbeta_max_R2=0.025, dbeta_max_R3=0.008
+[sup ] ROLLBACK to best state @ep 112 (F -61.29 < 16.22 - 5.0)
+[eval] ep 200: F=16.22 DELred=19.57% Eloss=0.30% spd=1.040 tier=degraded F_tol2=-21.29 (78s)
+[sup ] llm_fork: 0:cons F=19.2/stri | 1:aggr F=17.7/stri | 2:stru F=11.4/stri -> keep 0 (conservative) knobs lambda_load_R2=3.5, lambda_load_R3=4.5, w_power=180, w_speed=90, dbeta_max_R2=0.025, dbeta_max_R3=0.015
+[eval] ep 256: F=19.98 DELred=19.98% Eloss=0.27% spd=0.988 tier=strict F_tol2=19.98 (82s)
+[sup ] llm_fork: 0:cons F=20.2/stri | 1:aggr F=19.9/stri | 2:stru F=16.5/stri -> keep 0 (conservative) knobs lambda_load_R2=3.5, lambda_load_R3=5.5, w_power=180, w_speed=105, dbeta_max_R2=0.025, dbeta_max_R3=0.0135
+[eval] ep 300: F=18.51 DELred=18.51% Eloss=0.29% spd=0.972 tier=strict F_tol2=18.51 (76s)
+done in 96.4 min -> /Users/mac/wtrl/exp/n1_llmfork_s4
+=== n1_randfork_s4  Tue Sep  1 20:46:50 CST 2026 ===
+[init] F=-0.01 DELred=-0.01% Eloss=0.00% spd=1.000
+[eval] ep 32: F=-2.77 DELred=17.74% Eloss=0.19% spd=1.010 tier=tol2 F_tol2=17.74 (78s)
+[sup ] random_fork: 0:hold F=-83.2/degr | 1:rand F=-59.2/degr | 2:rand F=-86.7/degr -> keep 1 (random) knobs lambda_load_R2=1, lambda_load_R3=1, w_power=220, w_speed=7.96244, dbeta_max_R2=0.0633014, dbeta_max_R3=0.0381161
+[sup ] ROLLBACK to best state @ep 0 (F -383.67 < -0.01 - 5.0)
+[eval] ep 88: F=-0.01 DELred=14.23% Eloss=0.40% spd=1.199 tier=degraded F_tol2=-343.67 (78s)
+[sup ] random_fork: 0:hold F=-6.5/tol2 | 1:rand F=5.6/tol2 | 2:rand F=-4.2/tol2 -> keep 1 (random) knobs lambda_load_R2=0.858374, lambda_load_R3=1, w_power=220, w_speed=20, dbeta_max_R2=0.0943399, dbeta_max_R3=0.05
+[sup ] ROLLBACK to best state @ep 112 (F -201.66 < 5.65 - 5.0)
+[eval] ep 144: F=5.65 DELred=20.22% Eloss=0.52% spd=1.111 tier=degraded F_tol2=-161.66 (78s)
+[sup ] random_fork: 0:hold F=-31.0/degr | 1:rand F=-12.5/tol2 | 2:rand F=-46.5/degr -> keep 1 (random) knobs lambda_load_R2=0.858374, lambda_load_R3=1, w_power=220, w_speed=20, dbeta_max_R2=0.1, dbeta_max_R3=0.05
+[eval] ep 200: F=-8.14 DELred=18.26% Eloss=0.76% spd=1.013 tier=tol2 F_tol2=18.26 (78s)
+[sup ] random_fork: 0:hold F=1.2/tol2 | 1:rand F=2.0/tol2 | 2:rand F=-128.1/degr -> keep 1 (random) knobs lambda_load_R2=0.858374, lambda_load_R3=1, w_power=602.589, w_speed=20, dbeta_max_R2=0.1, dbeta_max_R3=0.0500249
+[sup ] ROLLBACK to best state @ep 112 (F -59.98 < 5.65 - 5.0)
+[eval] ep 256: F=5.65 DELred=18.97% Eloss=1.53% spd=1.034 tier=degraded F_tol2=-19.98 (78s)
+[sup ] random_fork: 0:hold F=-81.2/degr | 1:rand F=-110.7/degr | 2:rand F=-81.1/degr -> keep 2 (random) knobs lambda_load_R2=0.858374, lambda_load_R3=1, w_power=323.727, w_speed=20, dbeta_max_R2=0.0943399, dbeta_max_R3=0.05
+[eval] ep 300: F=14.46 DELred=14.46% Eloss=0.21% spd=0.962 tier=strict F_tol2=14.46 (73s)
+done in 96.1 min -> /Users/mac/wtrl/exp/n1_randfork_s4
+SCHED_MISSING: /Users/mac/wtrl/exp/schedule_of5_llm.json not found — skipping n1_sched_s4
+=== training done Tue Sep  1 22:23:03 CST 2026 ===
+=== held-out evaluation S3-S6 Tue Sep  1 22:23:03 CST 2026 ===
+--- n1_llmfork_s3 ckpt_best.pt  Tue Sep  1 22:23:03 CST 2026 ---
+n1_llmfork_s3 [heldout_s3456_ckpt_best] target=tower F_strict=17.99 F_tol2=17.99 tier=strict  DELred=17.99%  Eloss=0.45%  spd_ratio=0.986
+--- n1_llmfork_s3 ckpt_last.pt  Tue Sep  1 22:26:06 CST 2026 ---
+n1_llmfork_s3 [heldout_s3456_ckpt_last] target=tower F_strict=-10.98 F_tol2=19.66 tier=tol2  DELred=19.66%  Eloss=0.59%  spd_ratio=1.015
+--- n1_llmfork_s4 ckpt_best.pt  Tue Sep  1 22:29:01 CST 2026 ---
+n1_llmfork_s4 [heldout_s3456_ckpt_best] target=tower F_strict=13.62 F_tol2=13.62 tier=strict  DELred=13.62%  Eloss=0.21%  spd_ratio=0.996
+--- n1_llmfork_s4 ckpt_last.pt  Tue Sep  1 22:31:55 CST 2026 ---
+n1_llmfork_s4 [heldout_s3456_ckpt_last] target=tower F_strict=10.84 F_tol2=10.84 tier=strict  DELred=10.84%  Eloss=0.21%  spd_ratio=0.977
+--- n1_randfork_s3 ckpt_best.pt  Tue Sep  1 22:34:50 CST 2026 ---
+n1_randfork_s3 [heldout_s3456_ckpt_best] target=tower F_strict=16.53 F_tol2=16.53 tier=strict  DELred=16.53%  Eloss=0.70%  spd_ratio=0.950
+--- n1_randfork_s3 ckpt_last.pt  Tue Sep  1 22:37:46 CST 2026 ---
+n1_randfork_s3 [heldout_s3456_ckpt_last] target=tower F_strict=-15.67 F_tol2=11.62 tier=degraded  DELred=14.63%  Eloss=1.15%  spd_ratio=1.014
+--- n1_randfork_s4 ckpt_best.pt  Tue Sep  1 22:40:42 CST 2026 ---
+n1_randfork_s4 [heldout_s3456_ckpt_best] target=tower F_strict=8.12 F_tol2=8.12 tier=strict  DELred=8.12%  Eloss=0.16%  spd_ratio=0.959
+--- n1_randfork_s4 ckpt_last.pt  Tue Sep  1 22:43:36 CST 2026 ---
+n1_randfork_s4 [heldout_s3456_ckpt_last] target=tower F_strict=8.12 F_tol2=8.12 tier=strict  DELred=8.12%  Eloss=0.16%  spd_ratio=0.959
+=== summary ===
+                       run                      tag   tgt       F  F_tol2     tier  blade  tower  Eloss    spd  spdMAE
+             n1_llmfork_s3  heldout_s3456_ckpt_best tower   17.99   17.99   strict   7.53  17.99   0.45  0.986   0.981
+             n1_llmfork_s3  heldout_s3456_ckpt_last tower  -10.98   19.66     tol2   8.34  19.66   0.59  1.015   1.011
+             n1_llmfork_s4  heldout_s3456_ckpt_best tower   13.62   13.62   strict   3.28  13.62   0.21  0.996   0.996
+             n1_llmfork_s4  heldout_s3456_ckpt_last tower   10.84   10.84   strict   2.82  10.84   0.21  0.977   0.975
+            n1_randfork_s3  heldout_s3456_ckpt_best tower   16.53   16.53   strict  11.37  16.53   0.70  0.950   0.933
+            n1_randfork_s3  heldout_s3456_ckpt_last tower  -15.67   11.62 degraded   8.06  14.63   1.15  1.014   0.994
+            n1_randfork_s4  heldout_s3456_ckpt_best tower    8.12    8.12   strict   2.79   8.12   0.16  0.959   0.953
+            n1_randfork_s4  heldout_s3456_ckpt_last tower    8.12    8.12   strict   2.79   8.12   0.16  0.959   0.953
+CAMPAIGN_NIGHT2_DONE Tue Sep  1 22:46:33 CST 2026

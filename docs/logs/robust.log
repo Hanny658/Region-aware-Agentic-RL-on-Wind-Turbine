@@ -1,0 +1,69 @@
+--- lawrl_g_s0 robust_ti14  Sun Sep  6 10:23:31 CST 2026 ---
+lawrl_g_s0 [robust_ti14] target=blade F_strict=16.24 F_tol2=16.24 tier=strict  DELred=16.24%  Eloss=0.23%  spd_ratio=0.843
+--- lawrl_g_s0 robust_ti22  Sun Sep  6 10:25:48 CST 2026 ---
+lawrl_g_s0 [robust_ti22] target=blade F_strict=13.49 F_tol2=13.49 tier=strict  DELred=13.49%  Eloss=0.01%  spd_ratio=0.832
+--- lawrl_g_s0 robust_u18  Sun Sep  6 10:26:56 CST 2026 ---
+lawrl_g_s0 [robust_u18] target=blade F_strict=38.47 F_tol2=38.47 tier=strict  DELred=38.47%  Eloss=0.00%  spd_ratio=0.815
+--- lawrl_g_s1 robust_ti14  Sun Sep  6 10:28:04 CST 2026 ---
+lawrl_g_s1 [robust_ti14] target=blade F_strict=19.65 F_tol2=19.65 tier=strict  DELred=19.65%  Eloss=0.65%  spd_ratio=0.893
+--- lawrl_g_s1 robust_ti22  Sun Sep  6 10:30:21 CST 2026 ---
+lawrl_g_s1 [robust_ti22] target=blade F_strict=19.78 F_tol2=19.78 tier=strict  DELred=19.78%  Eloss=0.48%  spd_ratio=0.856
+--- lawrl_g_s1 robust_u18  Sun Sep  6 10:31:29 CST 2026 ---
+lawrl_g_s1 [robust_u18] target=blade F_strict=38.24 F_tol2=38.24 tier=strict  DELred=38.24%  Eloss=0.01%  spd_ratio=0.836
+--- lawrl_g_s2 robust_ti14  Sun Sep  6 10:32:36 CST 2026 ---
+lawrl_g_s2 [robust_ti14] target=blade F_strict=21.24 F_tol2=21.24 tier=strict  DELred=21.24%  Eloss=0.49%  spd_ratio=0.954
+--- lawrl_g_s2 robust_ti22  Sun Sep  6 10:34:51 CST 2026 ---
+lawrl_g_s2 [robust_ti22] target=blade F_strict=18.89 F_tol2=18.89 tier=strict  DELred=18.89%  Eloss=0.36%  spd_ratio=0.908
+--- lawrl_g_s2 robust_u18  Sun Sep  6 10:36:00 CST 2026 ---
+lawrl_g_s2 [robust_u18] target=blade F_strict=38.72 F_tol2=38.72 tier=strict  DELred=38.72%  Eloss=-0.00%  spd_ratio=0.945
+--- lawrl_g_s3 robust_ti14  Sun Sep  6 10:37:08 CST 2026 ---
+lawrl_g_s3 [robust_ti14] target=blade F_strict=19.19 F_tol2=19.19 tier=strict  DELred=19.19%  Eloss=0.84%  spd_ratio=0.921
+--- lawrl_g_s3 robust_ti22  Sun Sep  6 10:39:24 CST 2026 ---
+lawrl_g_s3 [robust_ti22] target=blade F_strict=20.35 F_tol2=20.35 tier=strict  DELred=20.35%  Eloss=0.85%  spd_ratio=0.885
+--- lawrl_g_s3 robust_u18  Sun Sep  6 10:40:32 CST 2026 ---
+lawrl_g_s3 [robust_u18] target=blade F_strict=41.58 F_tol2=41.58 tier=strict  DELred=41.58%  Eloss=0.01%  spd_ratio=0.888
+--- lawrl_g_s4 robust_ti14  Sun Sep  6 10:41:40 CST 2026 ---
+lawrl_g_s4 [robust_ti14] target=blade F_strict=19.62 F_tol2=19.62 tier=strict  DELred=19.62%  Eloss=0.62%  spd_ratio=0.934
+--- lawrl_g_s4 robust_ti22  Sun Sep  6 10:43:56 CST 2026 ---
+lawrl_g_s4 [robust_ti22] target=blade F_strict=18.38 F_tol2=18.38 tier=strict  DELred=18.38%  Eloss=0.47%  spd_ratio=0.889
+--- lawrl_g_s4 robust_u18  Sun Sep  6 10:45:04 CST 2026 ---
+lawrl_g_s4 [robust_u18] target=blade F_strict=39.75 F_tol2=39.75 tier=strict  DELred=39.75%  Eloss=0.00%  spd_ratio=0.903
+--- ipc_off_s0 robust_ti14  Sun Sep  6 10:46:12 CST 2026 ---
+ipc_off_s0 [robust_ti14] target=blade F_strict=12.51 F_tol2=12.51 tier=strict  DELred=12.51%  Eloss=0.62%  spd_ratio=0.878
+--- ipc_off_s0 robust_ti22  Sun Sep  6 10:48:26 CST 2026 ---
+ipc_off_s0 [robust_ti22] target=blade F_strict=5.38 F_tol2=5.38 tier=strict  DELred=5.38%  Eloss=0.41%  spd_ratio=0.817
+--- ipc_off_s0 robust_u18  Sun Sep  6 10:49:33 CST 2026 ---
+ipc_off_s0 [robust_u18] target=blade F_strict=5.86 F_tol2=5.86 tier=strict  DELred=5.86%  Eloss=-0.00%  spd_ratio=0.838
+--- ipc_off_s1 robust_ti14  Sun Sep  6 10:50:39 CST 2026 ---
+ipc_off_s1 [robust_ti14] target=blade F_strict=14.63 F_tol2=14.63 tier=strict  DELred=14.63%  Eloss=0.56%  spd_ratio=0.893
+--- ipc_off_s1 robust_ti22  Sun Sep  6 10:52:53 CST 2026 ---
+ipc_off_s1 [robust_ti22] target=blade F_strict=7.08 F_tol2=7.08 tier=strict  DELred=7.08%  Eloss=0.39%  spd_ratio=0.829
+--- ipc_off_s1 robust_u18  Sun Sep  6 10:53:59 CST 2026 ---
+ipc_off_s1 [robust_u18] target=blade F_strict=7.40 F_tol2=7.40 tier=strict  DELred=7.40%  Eloss=0.00%  spd_ratio=0.867
+--- ipc_off_s2 robust_ti14  Sun Sep  6 10:55:06 CST 2026 ---
+ipc_off_s2 [robust_ti14] target=blade F_strict=13.05 F_tol2=13.05 tier=strict  DELred=13.05%  Eloss=0.40%  spd_ratio=0.950
+--- ipc_off_s2 robust_ti22  Sun Sep  6 10:57:19 CST 2026 ---
+ipc_off_s2 [robust_ti22] target=blade F_strict=6.40 F_tol2=6.40 tier=strict  DELred=6.40%  Eloss=0.34%  spd_ratio=0.885
+--- ipc_off_s2 robust_u18  Sun Sep  6 10:58:26 CST 2026 ---
+ipc_off_s2 [robust_u18] target=blade F_strict=3.60 F_tol2=3.60 tier=strict  DELred=3.60%  Eloss=-0.00%  spd_ratio=0.939
+--- ipc_off_s3 robust_ti14  Sun Sep  6 10:59:32 CST 2026 ---
+ipc_off_s3 [robust_ti14] target=blade F_strict=5.79 F_tol2=5.79 tier=strict  DELred=5.79%  Eloss=0.21%  spd_ratio=0.961
+--- ipc_off_s3 robust_ti22  Sun Sep  6 11:01:46 CST 2026 ---
+ipc_off_s3 [robust_ti22] target=blade F_strict=1.81 F_tol2=1.81 tier=strict  DELred=1.81%  Eloss=0.23%  spd_ratio=0.935
+--- ipc_off_s3 robust_u18  Sun Sep  6 11:02:52 CST 2026 ---
+ipc_off_s3 [robust_u18] target=blade F_strict=1.48 F_tol2=1.48 tier=strict  DELred=1.48%  Eloss=0.00%  spd_ratio=0.967
+--- ipc_off_s4 robust_ti14  Sun Sep  6 11:03:59 CST 2026 ---
+ipc_off_s4 [robust_ti14] target=blade F_strict=13.85 F_tol2=13.85 tier=strict  DELred=13.85%  Eloss=0.63%  spd_ratio=0.965
+--- ipc_off_s4 robust_ti22  Sun Sep  6 11:06:13 CST 2026 ---
+ipc_off_s4 [robust_ti22] target=blade F_strict=7.33 F_tol2=7.33 tier=strict  DELred=7.33%  Eloss=0.59%  spd_ratio=0.894
+--- ipc_off_s4 robust_u18  Sun Sep  6 11:07:19 CST 2026 ---
+ipc_off_s4 [robust_u18] target=blade F_strict=2.87 F_tol2=2.87 tier=strict  DELred=2.87%  Eloss=-0.00%  spd_ratio=0.958
+=== law-alone ===
+LAWALONE [robust_ti14] {"F": 5.607530515624568, "tier": "strict", "DELred": 5.607530515624568, "Eloss": 0.0099558110128517, "spd": 0.9941586069449044}
+LAWALONE [robust_ti22] {"F": 4.497515598880109, "tier": "strict", "DELred": 4.497515598880109, "Eloss": -0.05222868439296313, "spd": 0.9852592417964837}
+LAWALONE [robust_u18] {"F": 37.09923534219043, "tier": "strict", "DELred": 37.09923534219043, "Eloss": 0.0018252174140531707, "spd": 0.9748710353558013}
+=== MPC ===
+mpc [robust_ti14_N20q1r0.02qt0w0.35] target=tower F_strict=-8.85 F_tol2=-8.85 tier=strict DELred=-8.85% Eloss=-0.33% spd_ratio=0.905 (avg solve 2.7 ms)
+mpc [robust_ti22_N20q1r0.02qt0w0.35] target=tower F_strict=-27.15 F_tol2=-27.15 tier=strict DELred=-27.15% Eloss=-0.28% spd_ratio=0.853 (avg solve 2.5 ms)
+mpc [robust_u18_N20q1r0.02qt0w0.35] target=tower F_strict=-56.08 F_tol2=-56.08 tier=strict DELred=-56.08% Eloss=-0.18% spd_ratio=0.641 (avg solve 2.4 ms)
+CAMPAIGN_ROBUST_DONE Sun Sep  6 11:21:17 CST 2026

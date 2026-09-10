@@ -1,0 +1,160 @@
+=== tq_on_s0  Wed Sep  2 15:39:56 CST 2026 ===
+[init] F=0.01 DELred=0.01% Eloss=0.00% spd=1.000
+[eval] ep 32: F=-5920.29 DELred=-173.27% Eloss=9.59% spd=3.788 tier=degraded F_tol2=-5880.29 (74s)
+[sup ] ROLLBACK to best state @ep 0 (F -300.36 < 0.01 - 5.0)
+[eval] ep 64: F=0.01 DELred=-111.46% Eloss=10.45% spd=1.000 tier=degraded F_tol2=-300.36 (73s)
+[sup ] ROLLBACK to best state @ep 0 (F -4340.41 < 0.01 - 5.0)
+[eval] ep 96: F=0.01 DELred=-4.75% Eloss=1.64% spd=3.161 tier=degraded F_tol2=-4300.41 (74s)
+[sup ] ROLLBACK to best state @ep 0 (F -170.62 < 0.01 - 5.0)
+[eval] ep 120: F=0.01 DELred=12.55% Eloss=6.56% spd=1.036 tier=degraded F_tol2=-130.62 (74s)
+[sup ] ROLLBACK to best state @ep 0 (F -207.21 < 0.01 - 5.0)
+[eval] ep 152: F=0.01 DELred=-12.92% Eloss=10.71% spd=1.000 tier=degraded F_tol2=-207.21 (91s)
+[sup ] ROLLBACK to best state @ep 0 (F -11093.66 < 0.01 - 5.0)
+[eval] ep 184: F=0.01 DELred=-6.26% Eloss=7.48% spd=6.479 tier=degraded F_tol2=-11053.66 (94s)
+[sup ] ROLLBACK to best state @ep 0 (F -10033.59 < 0.01 - 5.0)
+[eval] ep 216: F=0.01 DELred=-6.31% Eloss=8.09% spd=5.943 tier=degraded F_tol2=-9993.59 (74s)
+[sup ] ROLLBACK to best state @ep 0 (F -8630.02 < 0.01 - 5.0)
+[eval] ep 240: F=0.01 DELred=-81.64% Eloss=7.60% spd=5.208 tier=degraded F_tol2=-8590.02 (74s)
+[sup ] ROLLBACK to best state @ep 0 (F -140.47 < 0.01 - 5.0)
+[eval] ep 272: F=0.01 DELred=1.62% Eloss=8.07% spd=1.000 tier=degraded F_tol2=-139.72 (74s)
+[sup ] ROLLBACK to best state @ep 0 (F -8534.63 < 0.01 - 5.0)
+[eval] ep 300: F=0.01 DELred=-24.78% Eloss=7.61% spd=5.189 tier=degraded F_tol2=-8494.63 (74s)
+done in 79.4 min -> /Users/mac/wtrl/exp/tq_on_s0
+--- eval tq_on_s0 ckpt_last.pt  Wed Sep  2 16:59:30 CST 2026 ---
+Interrupted system call ; error code 4
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+[init] F=0.02 DELred=0.02% Eloss=0.00% spd=0.999
+[eval] ep 32: F=-71.56 DELred=14.97% Eloss=0.11% spd=1.043 tier=degraded F_tol2=-31.56 (95s)
+[eval] ep 64: F=-5.02 DELred=16.54% Eloss=0.22% spd=1.011 tier=tol2 F_tol2=16.54 (96s)
+[sup ] ROLLBACK to best state @ep 0 (F -77.68 < 0.02 - 5.0)
+[eval] ep 96: F=0.02 DELred=14.97% Eloss=0.29% spd=1.046 tier=degraded F_tol2=-37.68 (96s)
+[eval] ep 120: F=-0.78 DELred=10.01% Eloss=0.11% spd=1.005 tier=tol2 F_tol2=10.01 (75s)
+[eval] ep 152: F=17.89 DELred=17.89% Eloss=0.34% spd=0.952 tier=strict F_tol2=17.89 (74s)
+[sup ] ROLLBACK to best state @ep 152 (F -31.22 < 17.89 - 5.0)
+[eval] ep 184: F=17.89 DELred=20.74% Eloss=0.56% spd=1.026 tier=degraded F_tol2=8.78 (75s)
+[eval] ep 216: F=17.26 DELred=17.26% Eloss=0.50% spd=0.949 tier=strict F_tol2=17.26 (73s)
+[eval] ep 240: F=-14.49 DELred=12.35% Eloss=0.57% spd=1.013 tier=tol2 F_tol2=12.35 (74s)
+[eval] ep 272: F=17.39 DELred=17.39% Eloss=0.57% spd=0.903 tier=strict F_tol2=17.39 (73s)
+[sup ] ROLLBACK to best state @ep 152 (F -113.37 < 17.89 - 5.0)
+[eval] ep 300: F=17.89 DELred=8.96% Eloss=0.65% spd=1.061 tier=degraded F_tol2=-73.37 (73s)
+done in 82.2 min -> /Users/mac/wtrl/exp/tq_off_s0
+--- eval tq_off_s0 ckpt_best.pt  Wed Sep  2 18:24:06 CST 2026 ---
+tq_off_s0 [heldout_s3456_ckpt_best] target=tower F_strict=11.76 F_tol2=11.76 tier=strict  DELred=11.76%  Eloss=0.26%  spd_ratio=0.959
+--- eval tq_off_s0 ckpt_last.pt  Wed Sep  2 18:27:33 CST 2026 ---
+tq_off_s0 [heldout_s3456_ckpt_last] target=tower F_strict=-469.48 F_tol2=-429.48 tier=degraded  DELred=-10.12%  Eloss=0.57%  spd_ratio=1.230
+=== tq_off_s1  Wed Sep  2 18:31:02 CST 2026 ===
+[init] F=-0.57 DELred=-0.01% Eloss=0.00% spd=1.000
+[eval] ep 32: F=-109.32 DELred=7.60% Eloss=0.09% spd=1.058 tier=degraded F_tol2=-69.32 (74s)
+[sup ] ROLLBACK to best state @ep 0 (F -177.65 < -0.57 - 5.0)
+[eval] ep 64: F=-0.57 DELred=10.99% Eloss=0.22% spd=1.094 tier=degraded F_tol2=-137.65 (73s)
+[sup ] ROLLBACK to best state @ep 0 (F -83.72 < -0.57 - 5.0)
+[eval] ep 96: F=-0.57 DELred=18.48% Eloss=0.13% spd=1.051 tier=degraded F_tol2=-43.72 (73s)
+[sup ] ROLLBACK to best state @ep 0 (F -80.26 < -0.57 - 5.0)
+[eval] ep 120: F=-0.57 DELred=3.96% Eloss=0.06% spd=1.042 tier=degraded F_tol2=-40.26 (73s)
+[eval] ep 152: F=11.15 DELred=11.15% Eloss=0.08% spd=0.950 tier=strict F_tol2=11.15 (74s)
+[eval] ep 184: F=19.85 DELred=19.85% Eloss=0.16% spd=0.966 tier=strict F_tol2=19.85 (73s)
+[sup ] ROLLBACK to best state @ep 184 (F -78.17 < 19.85 - 5.0)
+[eval] ep 216: F=19.85 DELred=16.86% Eloss=0.33% spd=1.048 tier=degraded F_tol2=-38.17 (73s)
+[eval] ep 240: F=18.49 DELred=18.49% Eloss=0.21% spd=0.964 tier=strict F_tol2=18.49 (73s)
+[eval] ep 272: F=23.47 DELred=23.47% Eloss=0.44% spd=0.872 tier=strict F_tol2=23.47 (75s)
+[eval] ep 300: F=18.92 DELred=18.92% Eloss=0.54% spd=0.974 tier=strict F_tol2=18.92 (73s)
+done in 74.3 min -> /Users/mac/wtrl/exp/tq_off_s1
+--- eval tq_off_s1 ckpt_best.pt  Wed Sep  2 19:45:29 CST 2026 ---
+tq_off_s1 [heldout_s3456_ckpt_best] target=tower F_strict=15.97 F_tol2=15.97 tier=strict  DELred=15.97%  Eloss=0.35%  spd_ratio=0.919
+--- eval tq_off_s1 ckpt_last.pt  Wed Sep  2 19:48:56 CST 2026 ---
+tq_off_s1 [heldout_s3456_ckpt_last] target=tower F_strict=13.60 F_tol2=13.60 tier=strict  DELred=13.60%  Eloss=0.45%  spd_ratio=0.969
+=== tq_off_s2  Wed Sep  2 19:52:22 CST 2026 ===
+[init] F=-0.01 DELred=-0.01% Eloss=0.00% spd=1.000
+[eval] ep 32: F=19.87 DELred=19.87% Eloss=0.21% spd=0.984 tier=strict F_tol2=19.87 (73s)
+[sup ] ROLLBACK to best state @ep 32 (F -548.22 < 19.87 - 5.0)
+[eval] ep 64: F=19.87 DELred=8.57% Eloss=0.37% spd=1.278 tier=degraded F_tol2=-508.22 (73s)
+[eval] ep 96: F=19.39 DELred=19.39% Eloss=0.30% spd=1.000 tier=strict F_tol2=19.39 (73s)
+[sup ] ROLLBACK to best state @ep 32 (F -111.87 < 19.87 - 5.0)
+[eval] ep 120: F=19.87 DELred=18.28% Eloss=0.43% spd=1.065 tier=degraded F_tol2=-71.87 (73s)
+[sup ] ROLLBACK to best state @ep 32 (F -56.24 < 19.87 - 5.0)
+[eval] ep 152: F=19.87 DELred=19.96% Eloss=0.22% spd=1.038 tier=degraded F_tol2=-16.24 (74s)
+[eval] ep 184: F=0.28 DELred=17.18% Eloss=0.27% spd=1.008 tier=tol2 F_tol2=17.18 (75s)
+[eval] ep 216: F=16.93 DELred=16.93% Eloss=0.36% spd=0.999 tier=strict F_tol2=16.93 (74s)
+[sup ] ROLLBACK to best state @ep 32 (F -208.25 < 19.87 - 5.0)
+[eval] ep 240: F=19.87 DELred=14.03% Eloss=0.39% spd=1.111 tier=degraded F_tol2=-168.25 (74s)
+[sup ] ROLLBACK to best state @ep 32 (F -127.01 < 19.87 - 5.0)
+[eval] ep 272: F=19.87 DELred=19.15% Eloss=0.26% spd=1.073 tier=degraded F_tol2=-87.01 (74s)
+[sup ] ROLLBACK to best state @ep 32 (F -235.41 < 19.87 - 5.0)
+[eval] ep 300: F=19.87 DELred=12.18% Eloss=0.21% spd=1.124 tier=degraded F_tol2=-195.41 (74s)
+done in 75.2 min -> /Users/mac/wtrl/exp/tq_off_s2
+--- eval tq_off_s2 ckpt_best.pt  Wed Sep  2 21:07:40 CST 2026 ---
+tq_off_s2 [heldout_s3456_ckpt_best] target=tower F_strict=13.37 F_tol2=13.37 tier=strict  DELred=13.37%  Eloss=0.15%  spd_ratio=0.997
+--- eval tq_off_s2 ckpt_last.pt  Wed Sep  2 21:11:06 CST 2026 ---
+tq_off_s2 [heldout_s3456_ckpt_last] target=tower F_strict=-211.87 F_tol2=-171.87 tier=degraded  DELred=5.80%  Eloss=0.16%  spd_ratio=1.109
+=== tq_off_s3  Wed Sep  2 21:14:32 CST 2026 ===
+[init] F=0.11 DELred=0.12% Eloss=0.00% spd=1.000
+[eval] ep 32: F=-131.15 DELred=12.38% Eloss=0.22% spd=1.072 tier=degraded F_tol2=-91.15 (75s)
+[sup ] ROLLBACK to best state @ep 0 (F -284.79 < 0.11 - 5.0)
+[eval] ep 64: F=0.11 DELred=14.22% Eloss=0.35% spd=1.150 tier=degraded F_tol2=-244.79 (73s)
+[eval] ep 96: F=8.26 DELred=15.83% Eloss=0.13% spd=1.004 tier=tol2 F_tol2=15.83 (73s)
+[sup ] ROLLBACK to best state @ep 96 (F -44.78 < 8.26 - 5.0)
+[eval] ep 120: F=8.26 DELred=17.71% Eloss=0.22% spd=1.031 tier=degraded F_tol2=-4.78 (73s)
+[eval] ep 152: F=18.83 DELred=18.83% Eloss=0.23% spd=0.995 tier=strict F_tol2=18.83 (73s)
+[eval] ep 184: F=21.23 DELred=21.23% Eloss=0.39% spd=0.989 tier=strict F_tol2=21.23 (73s)
+[eval] ep 216: F=9.79 DELred=23.60% Eloss=0.49% spd=1.007 tier=tol2 F_tol2=23.60 (73s)
+[eval] ep 240: F=-6.81 DELred=23.36% Eloss=0.57% spd=1.015 tier=tol2 F_tol2=23.36 (73s)
+[eval] ep 272: F=19.04 DELred=19.04% Eloss=0.67% spd=0.954 tier=strict F_tol2=19.04 (73s)
+[sup ] ROLLBACK to best state @ep 184 (F -102.56 < 21.23 - 5.0)
+[eval] ep 300: F=21.23 DELred=20.00% Eloss=0.78% spd=1.061 tier=degraded F_tol2=-62.56 (73s)
+done in 75.1 min -> /Users/mac/wtrl/exp/tq_off_s3
+--- eval tq_off_s3 ckpt_best.pt  Wed Sep  2 22:29:44 CST 2026 ---
+tq_off_s3 [heldout_s3456_ckpt_best] target=tower F_strict=16.67 F_tol2=16.67 tier=strict  DELred=16.67%  Eloss=0.31%  spd_ratio=0.989
+--- eval tq_off_s3 ckpt_last.pt  Wed Sep  2 22:33:13 CST 2026 ---
+tq_off_s3 [heldout_s3456_ckpt_last] target=tower F_strict=-13.36 F_tol2=13.61 tier=tol2  DELred=13.61%  Eloss=0.67%  spd_ratio=1.013
+=== tq_off_s4  Wed Sep  2 22:36:40 CST 2026 ===
+[init] F=-0.01 DELred=-0.01% Eloss=0.00% spd=1.000
+[eval] ep 32: F=-2.77 DELred=17.74% Eloss=0.19% spd=1.010 tier=tol2 F_tol2=17.74 (73s)
+[sup ] ROLLBACK to best state @ep 0 (F -80.87 < -0.01 - 5.0)
+[eval] ep 64: F=-0.01 DELred=14.10% Eloss=0.26% spd=1.047 tier=degraded F_tol2=-40.87 (73s)
+[sup ] ROLLBACK to best state @ep 0 (F -262.52 < -0.01 - 5.0)
+[eval] ep 96: F=-0.01 DELred=9.82% Eloss=0.13% spd=1.136 tier=degraded F_tol2=-222.52 (73s)
+[sup ] ROLLBACK to best state @ep 0 (F -57.24 < -0.01 - 5.0)
+[eval] ep 120: F=-0.01 DELred=14.71% Eloss=0.17% spd=1.036 tier=degraded F_tol2=-17.24 (73s)
+[sup ] ROLLBACK to best state @ep 0 (F -171.91 < -0.01 - 5.0)
+[eval] ep 152: F=-0.01 DELred=16.73% Eloss=0.21% spd=1.094 tier=degraded F_tol2=-131.91 (73s)
+[sup ] ROLLBACK to best state @ep 0 (F -35.09 < -0.01 - 5.0)
+[eval] ep 184: F=-0.01 DELred=15.72% Eloss=0.23% spd=1.025 tier=degraded F_tol2=4.91 (73s)
+[eval] ep 216: F=14.91 DELred=14.91% Eloss=0.19% spd=0.989 tier=strict F_tol2=14.91 (74s)
+[sup ] ROLLBACK to best state @ep 216 (F -33.60 < 14.91 - 5.0)
+[eval] ep 240: F=14.91 DELred=16.81% Eloss=0.37% spd=1.025 tier=degraded F_tol2=6.40 (73s)
+[eval] ep 272: F=17.59 DELred=17.59% Eloss=0.33% spd=0.977 tier=strict F_tol2=17.59 (73s)
+[sup ] ROLLBACK to best state @ep 272 (F -81.71 < 17.59 - 5.0)
+[eval] ep 300: F=17.59 DELred=9.09% Eloss=0.25% spd=1.045 tier=degraded F_tol2=-41.71 (72s)
+done in 74.9 min -> /Users/mac/wtrl/exp/tq_off_s4
+--- eval tq_off_s4 ckpt_best.pt  Wed Sep  2 23:51:40 CST 2026 ---
+tq_off_s4 [heldout_s3456_ckpt_best] target=tower F_strict=11.85 F_tol2=11.85 tier=strict  DELred=11.85%  Eloss=0.25%  spd_ratio=0.975
+--- eval tq_off_s4 ckpt_last.pt  Wed Sep  2 23:55:08 CST 2026 ---
+tq_off_s4 [heldout_s3456_ckpt_last] target=tower F_strict=3.98 F_tol2=3.98 tier=strict  DELred=3.98%  Eloss=0.18%  spd_ratio=0.976
+=== summary ===
+                       run                      tag   tgt       F  F_tol2     tier  blade  tower  Eloss    spd  spdMAE
+                 tq_off_s0  heldout_s3456_ckpt_best tower   11.76   11.76   strict   5.50  11.76   0.26  0.959   0.958
+                 tq_off_s0  heldout_s3456_ckpt_last tower -469.48 -429.48 degraded  -2.92 -10.12   0.57  1.230   1.210
+                 tq_off_s1  heldout_s3456_ckpt_best tower   15.97   15.97   strict   4.53  15.97   0.35  0.919   0.907
+                 tq_off_s1  heldout_s3456_ckpt_last tower   13.60   13.60   strict   5.64  13.60   0.45  0.969   0.943
+                 tq_off_s2  heldout_s3456_ckpt_best tower   13.37   13.37   strict   2.60  13.37   0.15  0.997   0.994
+                 tq_off_s2  heldout_s3456_ckpt_last tower -211.87 -171.87 degraded  -2.10   5.80   0.16  1.109   1.093
+                 tq_off_s3  heldout_s3456_ckpt_best tower   16.67   16.67   strict   6.12  16.67   0.31  0.989   0.986
+                 tq_off_s3  heldout_s3456_ckpt_last tower  -13.36   13.61     tol2   6.75  13.61   0.67  1.013   0.987
+                 tq_off_s4  heldout_s3456_ckpt_best tower   11.85   11.85   strict   3.28  11.85   0.25  0.975   0.962
+                 tq_off_s4  heldout_s3456_ckpt_last tower    3.98    3.98   strict   5.72   3.98   0.18  0.976   0.955
+CAMPAIGN_TORQUE_DONE Wed Sep  2 23:58:34 CST 2026

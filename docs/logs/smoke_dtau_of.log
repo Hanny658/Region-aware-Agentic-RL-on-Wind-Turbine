@@ -1,0 +1,5 @@
+[init] F=-0.00 DELred=-0.00% Eloss=0.00% spd=1.000
+[   2/4] roll  60.8s upd  1.4s | U8: -1.50 U12.5: -0.26 | R2.kl=0.0031 R3.kl=-0.0375
+[   4/4] roll  59.8s upd  1.4s | U8: -1.59 U12.5:  0.07 | R2.kl=0.8685 R3.kl=0.0149
+[eval] ep 4: F=-132.55 DELred=10.09% Eloss=8.13% spd=1.000 tier=degraded F_tol2=-132.55 (59s)
+done in 4.1 min -> /Users/mac/wtrl/exp/smoke_dtau_of

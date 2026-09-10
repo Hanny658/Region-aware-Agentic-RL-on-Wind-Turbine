@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Rebuild every aggregate table of the CPC half from the frozen run artifacts in ../runs and ../mpc.
+"""Rebuild every derived table from the run artifacts.
 
-Stdlib only (no numpy/scipy) so it runs on any machine that can clone the repo:
-    python3 document/cpc-result/aggregate/build_tables.py
+Reads the run directories (default `~/wtrl/exp`, override with WTRL_EXP) and writes docs/tables/.
+Standard library only, so it also runs on a machine that only has the repository:
+    python3 scripts/dev/build_tables.py
 
-Outputs (written next to this script):
+Outputs (docs/tables/):
     all_evals.csv          one row per (run, eval tag) - the raw material for every other table
     table_heldout_main.csv main line, held-out S3-S6, best ckpt, grouped by arm
     table_paper_metrics.csv Wang et al. metric set for the same arms
@@ -26,9 +27,10 @@ from pathlib import Path
 from statistics import mean, pstdev
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parent
-RUNS = ROOT / "runs"
-MPC = ROOT / "mpc"
+REPO = HERE.parents[1]
+OUT = REPO / "docs" / "tables"
+RUNS = Path(os.path.expanduser(os.environ.get("WTRL_EXP", "~/wtrl/exp")))
+MPC = RUNS / "mpc"
 MPC_EXTRA = {"mpc600": "600 s window", "mpc600s": "150 s window on the 600 s bank"}
 
 # run -> (arm label, objective, campaign, note)
@@ -74,7 +76,7 @@ def load_evals() -> list[dict]:
             tag = f.stem[len("eval_"):]
             rows.append({"run": d.name, "arm": arm, "objective": obj, "campaign": camp,
                          "eval_tag": tag, **{k: num(j.get(k)) for k in FIELDS}, "note": note})
-    for d, note in [(MPC, "deterministic, n=1")] + [(ROOT / k, v) for k, v in MPC_EXTRA.items()]:
+    for d, note in [(MPC, "deterministic, n=1")] + [(RUNS / k, v) for k, v in MPC_EXTRA.items()]:
         if not d.is_dir():
             continue
         for f in sorted(d.glob("eval_*.json")):
@@ -89,7 +91,8 @@ def write(name: str, rows: list[dict], header: list[str] | None = None):
     if not rows:
         return
     header = header or list(rows[0].keys())
-    with open(HERE / name, "w", newline="", encoding="utf-8") as fh:
+    OUT.mkdir(parents=True, exist_ok=True)
+    with open(OUT / name, "w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=header, extrasaction="ignore")
         w.writeheader()
         w.writerows(rows)

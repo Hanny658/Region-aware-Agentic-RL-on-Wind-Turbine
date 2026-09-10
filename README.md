@@ -7,11 +7,12 @@ reward/action knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TS
 (Region-III-only residual RL on the IEA 15 MW); our extensions are the region split, the
 constraint-tiered evaluation, and the agentic supervision layer.
 
-**Scope**: this repository is the *collective-pitch* half — region-aware residual RL, agentic
-(LLM) supervision, and the GSPI / LPV-MPC / ROSCO-tower-damper baselines.
+**Scope**: region-aware residual RL for collective pitch, agentic (LLM) supervision, the
+GSPI / LPV-MPC / ROSCO-tower-damper baselines, and the individual-pitch negative result that bounds
+the supervision claim.
 
-Detailed, dated records: `docs/REPORT_2026-09-01.md` (verified findings F1–F7),
-`docs/roadmap_2026-08-30.md` (day-by-day experiment log, §1–17),
+Detailed, dated records: `docs/README.md` (index), `docs/REPORT_2026-09-01.md` (verified
+findings F1–F7), `docs/roadmap_2026-08-30.md` (day-by-day experiment log, §1–23),
 `docs/litreview_schedule_paradigm_2026-09-01.md` (supervision-paradigm literature review).
 
 ## System
@@ -233,15 +234,14 @@ Experiment campaigns are complete; the repository is in **manuscript preparation
 - **R2 torque residual**: clear seed-paired negative (roadmap §15).
 - **MPC baseline**: done (see above) — MPC wins speed regulation, loses tower loads; all
   supervised spec variants Pareto-dominate it on F, and the gap widens with turbulence (§17).
-- **Data**: the self-contained data package for this half is `wtrl-migration/cpc-result/` —
-  60 runs + 3 MPC directories + the aggregate rebuild script + the caveat list C1–C12. Its *text*
-  (README, `aggregate/*.py`, `aggregate/*.csv`) is version-controlled; the GB-scale payload is not.
-  The wind bank and paired GSPI baselines live in `wtrl-migration/{wind,openfast}` (64 realisations,
-  5.5 GB) — copy them, never regenerate them. `python3 wtrl-migration/cpc-result/aggregate/build_tables.py`
-  rebuilds every table with the standard library alone.
-- **Open before submission**: see the continuation list in `wtrl-migration/cpc-result/README.md` §7
-  (tower-objective stress sweep, GSPI+tower-damper baseline, 600 s re-evaluation, the three lost
-  night1 seeds, clean `schedule_comp` rerun).
+- **Data**: every derived table is in `docs/tables/` and rebuilt by
+  `python3 scripts/dev/build_tables.py` (standard library only) from the run artifacts in
+  `~/wtrl/exp`. The run inventory, the environment and the reporting caveats C1–C12 are in
+  `docs/RESULTS_2026-09-10_data-and-caveats.md`. The wind bank and paired GSPI baselines
+  (64 realisations, 5.5 GB) live in WSL with a copy at `../wtrl-data/` — copy them, never
+  regenerate them.
+- **Open before submission**: see `docs/RESULTS_2026-09-10_data-and-caveats.md` §4 — the
+  remaining items are optional ablations, not gaps in the main claims.
 
 ## How to run
 

@@ -1,0 +1,40 @@
+=== tq_on2kk_s0  Thu Sep  3 02:39:36 CST 2026 ===
+[init] F=0.02 DELred=0.02% Eloss=0.00% spd=1.000
+[eval] ep 32: F=-333.06 DELred=-151.30% Eloss=10.09% spd=1.000 tier=degraded F_tol2=-333.06 (74s)
+[sup ] ROLLBACK to best state @ep 0 (F -362.39 < 0.02 - 5.0)
+[eval] ep 64: F=0.02 DELred=-166.21% Eloss=10.81% spd=1.000 tier=degraded F_tol2=-362.39 (74s)
+[sup ] ROLLBACK to best state @ep 0 (F -10363.94 < 0.02 - 5.0)
+[eval] ep 96: F=0.02 DELred=-121.13% Eloss=5.14% spd=6.080 tier=degraded F_tol2=-10323.94 (73s)
+[sup ] ROLLBACK to best state @ep 0 (F -8.78 < 0.02 - 5.0)
+[eval] ep 120: F=0.02 DELred=-7.08% Eloss=1.08% spd=0.987 tier=degraded F_tol2=-8.78 (73s)
+[sup ] ROLLBACK to best state @ep 0 (F -6704.87 < 0.02 - 5.0)
+[eval] ep 152: F=0.02 DELred=-369.21% Eloss=3.77% spd=4.140 tier=degraded F_tol2=-6664.87 (73s)
+[sup ] ROLLBACK to best state @ep 0 (F -224.43 < 0.02 - 5.0)
+[eval] ep 184: F=0.02 DELred=9.29% Eloss=7.76% spd=1.049 tier=degraded F_tol2=-184.43 (74s)
+[sup ] ROLLBACK to best state @ep 0 (F -8673.06 < 0.02 - 5.0)
+[eval] ep 216: F=0.02 DELred=-2.52% Eloss=8.20% spd=5.263 tier=degraded F_tol2=-8633.06 (74s)
+[sup ] ROLLBACK to best state @ep 0 (F -10675.93 < 0.02 - 5.0)
+[eval] ep 240: F=0.02 DELred=-153.22% Eloss=3.08% spd=6.241 tier=degraded F_tol2=-10635.93 (73s)
+[sup ] ROLLBACK to best state @ep 0 (F -182.23 < 0.02 - 5.0)
+[eval] ep 272: F=0.02 DELred=7.66% Eloss=4.44% spd=1.061 tier=degraded F_tol2=-142.23 (73s)
+[sup ] ROLLBACK to best state @ep 0 (F -8061.39 < 0.02 - 5.0)
+[eval] ep 300: F=0.02 DELred=-30.64% Eloss=8.85% spd=4.937 tier=degraded F_tol2=-8021.39 (73s)
+done in 75.8 min -> /Users/mac/wtrl/exp/tq_on2kk_s0
+--- eval tq_on2kk_s0 ckpt_last.pt  Thu Sep  3 03:55:32 CST 2026 ---
+Interrupted system call ; error code 4
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe
+Traceback (most recent call last):
+BrokenPipeError: [Errno 32] Broken pipe

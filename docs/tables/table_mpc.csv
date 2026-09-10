@@ -1,7 +1,7 @@
 run,arm,objective,campaign,eval_tag,F,F_strict,F_tol2,tier,target,del_red_pct,TwrBsMyt_DEL_red_pct,RootMyc1_DEL_red_pct,speed_std_ratio,speed_mae_ratio_R3,energy_loss_pct,power_mse_red_pct,gen_speed_mse_red_pct,constraints_ok,note
 mpc,LPV-MPC,tower,mpc,heldout2W_N20q1r0.02qt0w0.35,-22.111,-22.111,-22.111,strict,tower,-22.111,-22.111,-3.105,0.907,1.067,-0.322,3.232,-10.34,True,"deterministic, n=1"
-mpc,LPV-MPC,tower,mpc,heldout_s3456_N20q1r0.02qt0w0.35,-116.205,-116.205,-76.205,degraded,tower,-17.637,-17.637,-0.707,1.049,1.085,-0.303,-409.43,-34.352,False,"deterministic, n=1"
 mpc,LPV-MPC,tower,mpc,heldoutW_N20q1r0.02qt0w0.35,-17.637,-17.637,-17.637,strict,tower,-17.637,-17.637,-0.707,0.912,0.966,-0.303,7.521,4.244,True,"deterministic, n=1"
+mpc,LPV-MPC,tower,mpc,heldout_s3456_N20q1r0.02qt0w0.35,-116.205,-116.205,-76.205,degraded,tower,-17.637,-17.637,-0.707,1.049,1.085,-0.303,-409.43,-34.352,False,"deterministic, n=1"
 mpc,LPV-MPC,tower,mpc,robust_ti14_N20q1r0.02qt0w0.35,-8.846,-8.846,-8.846,strict,tower,-8.846,-8.846,-0.729,0.905,0.846,-0.333,11.309,20.809,True,"deterministic, n=1"
 mpc,LPV-MPC,tower,mpc,robust_ti22_N20q1r0.02qt0w0.35,-27.147,-27.147,-27.147,strict,tower,-27.147,-27.147,-1.148,0.853,0.786,-0.279,4.292,28.166,True,"deterministic, n=1"
 mpc,LPV-MPC,tower,mpc,robust_u18_N20q1r0.02qt0w0.35,-56.082,-56.082,-56.082,strict,tower,-56.082,-56.082,0.945,0.641,0.678,-0.177,51.765,51.759,True,"deterministic, n=1"

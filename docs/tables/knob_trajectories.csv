@@ -1,4 +1,6 @@
 run,arm,type,episode,F,tier,lambda_load_R2,lambda_load_R3,w_power,w_speed,dbeta_max_R2,dbeta_max_R3
+calib8,?,init,0,0.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+calib8,?,eval,16,1.42,strict,1.0,1.0,220.0,20.0,0.05,0.05
 ipc_off_s0,guard (blade obj),init,0,-1.08,tol2,1.0,1.0,220.0,20.0,0.05,0.05
 ipc_off_s0,guard (blade obj),eval,32,5.42,strict,1.0,1.0,220.0,20.0,0.05,0.05
 ipc_off_s0,guard (blade obj),eval,64,7.39,strict,1.0,1.0,220.0,20.0,0.05,0.05
@@ -372,6 +374,24 @@ sched2_ep_s4,schedule_ep,eval,216,2.82,tol2,1.0,1.0,220.0,20.0,0.025,0.02
 sched2_ep_s4,schedule_ep,eval,240,-21.5,degraded,3.0,2.6,150.0,50.0,0.06,0.028
 sched2_ep_s4,schedule_ep,eval,272,19.37,strict,1.0,1.0,220.0,20.0,0.025,0.02
 sched2_ep_s4,schedule_ep,eval,300,19.12,strict,2.0,3.0,150.0,60.0,0.06,0.02
+sched3_comp_s0,?,init,0,0.02,strict,1.0,1.0,220.0,20.0,0.05,0.05
+sched3_comp_s0,?,eval,32,-69.61,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+sched3_comp_s0,?,eval,64,11.39,strict,1.0,1.0,220.0,20.0,0.025,0.02
+sched3_comp_s0,?,eval,96,18.41,strict,1.0,1.3,220.0,25.0,0.05,0.04
+sched3_comp_s0,?,eval,120,17.68,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched3_comp_s0,?,eval,152,21.67,strict,1.5,2.6,200.0,50.0,0.045,0.028
+sched3_comp_s0,?,eval,184,24.31,strict,3.0,2.6,150.0,50.0,0.06,0.028
+sched3_comp_s0,?,eval,216,18.27,degraded,2.0,3.0,150.0,80.0,0.06,0.02
+sched3_comp_s0,?,eval,240,26.99,strict,3.0,2.6,150.0,50.0,0.06,0.028
+sched3_comp_s1,?,init,0,-0.57,tol2,1.0,1.0,220.0,20.0,0.05,0.05
+sched3_comp_s1,?,eval,32,-108.42,degraded,1.0,1.0,220.0,20.0,0.05,0.05
+sched3_comp_s1,?,eval,64,2.63,tol2,1.0,1.0,220.0,20.0,0.025,0.02
+sched3_comp_s1,?,eval,96,-186.86,degraded,1.0,1.3,220.0,25.0,0.05,0.04
+sched3_comp_s1,?,eval,120,14.16,strict,1.0,1.0,220.0,20.0,0.025,0.02
+sched3_comp_s1,?,eval,152,-20.54,tol2,1.0,1.0,220.0,20.0,0.025,0.02
+sched3_comp_s1,?,eval,184,-53.56,degraded,1.0,1.0,220.0,20.0,0.025,0.02
+sched3_comp_s1,?,eval,216,-3.47,tol2,1.0,1.0,220.0,20.0,0.025,0.02
+sched3_comp_s1,?,eval,240,18.19,strict,1.5,2.6,200.0,50.0,0.045,0.028
 toy_dtau_0,toy torque sweep,init,0,-0.3,tol2,1.0,1.0,220.0,20.0,0.05,0.05
 toy_dtau_0,toy torque sweep,eval,30,4.2,strict,1.0,1.0,220.0,20.0,0.05,0.05
 toy_dtau_0,toy torque sweep,eval,60,12.17,strict,1.0,1.0,220.0,20.0,0.05,0.05
