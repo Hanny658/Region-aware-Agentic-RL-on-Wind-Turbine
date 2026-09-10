@@ -163,3 +163,18 @@ kill-free resume and a held-out evaluation). Details that differ from or refine 
   existing tower-damper sweep was already wind-labelled on both sides and is re-picked as is
   (J-best: FA_KI = 0.001, HPF = 0.172, J = 0.58 on S1+S2 — i.e. the damper has nothing to offer
   under J either; the held-out rows confirm or refute that in stage 2).
+
+## 8. Stage 2 results — reference controllers under J (2026-09-11, `campaign_j_baselines.sh`)
+
+| controller | selection on S1+S2 (by `(energy_ok, J)`) | S3–S6 J | S7–S10 J | notes |
+|---|---|---|---|---|
+| GSPI identity | — | **0.00** | — | zero-residual controller through the evaluation path: every term 0.0 |
+| LPV-MPC | N=20, q=1, **r=0.02, qt=0, wc_v=0.35** (J = 0.96 on S1+S2) — the same point F selected | **−1.64** (P +7.5, ω +4.2, tower −17.6, blade −0.7) | **−8.08** (P +3.2, ω −10.3, tower −22.1, blade −3.1) | 24-point grid r × qt × wc_v; every qt > 0 point loses ~71 % energy (rotor stall, as in §16), r ≤ 0.01 loses on all four terms |
+| ROSCO tower damper | **FA_KI = 0.001, HPF = 0.172** (J = 0.58) — the smallest gain in the sweep | **−0.06** (P −0.3, ω −0.5, tower +0.7, blade −0.0) | **−0.26** (tower +1.7, blade −1.8) | any larger gain trades regulation for tower DEL at a loss under J (KI 0.03: J −7.9; KI ≥ 0.1: −60 and worse) |
+
+Reading: under the paper's metric set neither reference controller improves on GSPI — the MPC's
+regulation gain on the first wind set (+7.5 / +4.2 %) does not survive the second set (ω −10.3 %)
+and is paid for with −18 to −22 % tower DEL in both; the damper at its J-best gain is GSPI. The
+bar for the RL arms in stage 3 is therefore J > 0 on both wind sets with energy ≤ 1 %, not "beat
+the MPC". (MPC held-out rows are the wind-labelled `heldoutW` / `heldout2W` evaluations; the
+oracle-labelled `heldout_s3456` files of the MPC are not comparable under J and are not used.)
