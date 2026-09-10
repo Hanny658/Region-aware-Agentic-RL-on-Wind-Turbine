@@ -1,6 +1,5 @@
-# CPC 半段（Region-aware Agentic CPC）— 手稿数据包
+# CPC（Region-aware Agentic CPC）— 手稿数据包
 
-冻结日期 **2026-09-08**。这个目录是"前半段"（collective-pitch / 区域感知残差 RL + 监督者消融 +
 MPC 基线 + 鲁棒性）**全部可复算数据**的自足快照，供在另一台机器上克隆冻结仓库后续跑实验、写手稿。
 
 数据源：本机 `~/wtrl/exp/*`（原始 run 目录）、`~/wtrl/*.log`（campaign 日志）、
@@ -8,10 +7,6 @@ MPC 基线 + 鲁棒性）**全部可复算数据**的自足快照，供在另一
 §1–§17、结论整合见 `docs/REPORT_2026-09-01.md`。
 
 ---
-
-## 0. 状态（2026-09-10，Windows / WSL Ubuntu-24.04）
-
-本包已在本机落位、验收，并在 2026-09-09/10 补完了写手稿前的实验（roadmap §17-§22）。
 
 **环境**：`WTRL_SKIP_WIND=1 bash scripts/wsl/bootstrap.sh`（该开关跳过风库/基线生成，正是为避免
 C1 重演）。OpenFAST 4.2.1 / TurbSim / torch 2.13.0 / sb3 2.9.0 / zmq 4.3.5 / openai 3.8.0 /
