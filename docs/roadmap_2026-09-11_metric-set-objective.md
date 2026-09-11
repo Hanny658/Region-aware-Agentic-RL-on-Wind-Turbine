@@ -193,3 +193,52 @@ the same pitch trajectory on a synthetic operating point). `campaign_j_mpc2.sh` 
 N ∈ {20, 40} × r ∈ {0.1, 0.3, 1, 3} × qt ∈ {0, 0.1, 0.3, 1, 3} × wc_v ∈ {0.25, 0.35} on S1+S2 by
 `(energy_ok, J)` and evaluates the winner on both held-out sets (tags `heldoutJ2_*`). No wind
 preview is added (the RL has none either). Results go here when it has run.
+
+## 9. Stage 3 results — core arms under J, 3-seed proof of concept (2026-09-11)
+
+All runs: `--objective J --reward v2 --value_norm` (guard-v1: `--reward v1`), 300 episodes, best
+checkpoint by J on S1+S2, held-out on both disjoint wind sets (`scripts/dev/j_table.py`).
+`llm_reward` is **not in this table**: its first three runs were invalid (candidates compiled with
+the v1 namespace and rejected; replies truncated at 2000 tokens — fixed in `908da1c`) and are
+being re-run.
+
+| arm | n | J on S1+S2 (train-time best) | **J on S3–S6** | **J on S7–S10** | S3–S6 terms P / ω / T / B |
+|---|---|---|---|---|---|
+| guard-v2 (fixed hparams, reward v2) | 3 | 3.07 ± 1.94 | 1.59 ± 0.87 | 0.97 ± 1.37 | −6.9 / −0.6 / 10.4 / 3.4 |
+| guard-v1 (reward v1) | 3 | 2.64 ± 1.59 | 1.24 ± 1.02 | 0.42 ± 1.33 | −7.1 / −2.0 / 10.9 / 3.2 |
+| **llm_hparam** | 3 | 10.69 ± 1.60 | **7.27 ± 1.70** | **8.98 ± 2.23** | 7.0 / 12.4 / 6.6 / 3.1 |
+| **random_hparam** | 3 | 10.98 ± 3.51 | **7.40 ± 2.65** | **8.42 ± 3.65** | 6.3 / 14.1 / 5.1 / 4.1 |
+| LPV-MPC (regulation-only, §8) | — | 0.96 | −1.64 | −8.08 | 7.5 / 4.2 / −17.6 / −0.7 |
+| ROSCO tower damper (§8) | — | 0.58 | −0.06 | −0.26 | −0.3 / −0.5 / 0.7 / 0.0 |
+
+Seed-paired differences of J (exact sign-flip floor 2/2³ = 0.25 at n = 3):
+
+| comparison | S3–S6 | S7–S10 |
+|---|---|---|
+| llm_hparam − guard-v2 | +5.68, 3/3 seeds, t-test p = 0.055 | +8.01, 3/3, p = 0.062 |
+| random_hparam − guard-v2 | +5.81, 3/3, p = 0.048 | +7.45, 3/3, p = 0.076 |
+| llm_hparam − random_hparam | −0.13, p = 0.95 | +0.56, p = 0.81 |
+| guard-v1 − guard-v2 | −0.35, p = 0.72 | −0.55, p = 0.60 |
+
+Findings so far:
+1. **Under the paper's metric set the fixed-hyper-parameter residual is worth ≈ 1 J** — a
+   +10 % tower-DEL gain paid with −7 % power MSE — and the reward version (v1 / v2) does not change
+   that. Every guard seed shows the same training dynamics: an early best (ep 32–96), then a
+   rollback at every later decision because the policy keeps re-entering a state that regulates
+   worse in the 12.5 m/s episodes (speed-MSE −70…−110 % there, tower +20 %).
+2. **Supervising the learner's hyper-parameters is worth +6…+8 J in every seed on both wind
+   sets** (energy 0.04–0.19 %). The accepted candidates lengthen the credit window (gae_lambda
+   0.98 → 0.992–0.995) and slow the actor (lr, clip, policy std); the best-J policies trade part of
+   the tower gain (6 vs 10 %) for regulation (+7 / +12…+14 % power / speed MSE), which J prices 2:1.
+3. **The proposer does not matter for this lever**: random candidates verified by the same fork
+   search are indistinguishable from the LLM's (−0.1 / +0.6 J, p ≈ 0.9). This is the mirror image of
+   the F-era reward-weight result (roadmap 08-30 §21: LLM > random 7/7). Read together: the LLM's
+   value showed where the search space was *semantic* (reward weights: which term to move) and
+   vanishes where a 6-D log-uniform perturbation plus verification already finds the answer.
+4. Both reference controllers are below GSPI on both wind sets, so the RL arms' J > 0 is not "beats
+   a weak baseline" — it is the only positive number in the table. (MPC with an active tower term
+   is being re-tuned, §8b.)
+
+Pending before the stage-3 table is final: the `llm_reward` re-run (3 seeds), the MPC v2 held-out
+rows, and — if the ranking is to be published — seeds 3–4 for the three core arms (n = 5 lifts the
+exact-test floor to 0.0625).
