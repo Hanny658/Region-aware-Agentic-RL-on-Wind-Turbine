@@ -192,7 +192,25 @@ are O(1) at typical values (the v1 optimum r = 0.02 maps to r ≈ 0.3 in v2; ver
 the same pitch trajectory on a synthetic operating point). `campaign_j_mpc2.sh` sweeps
 N ∈ {20, 40} × r ∈ {0.1, 0.3, 1, 3} × qt ∈ {0, 0.1, 0.3, 1, 3} × wc_v ∈ {0.25, 0.35} on S1+S2 by
 `(energy_ok, J)` and evaluates the winner on both held-out sets (tags `heldoutJ2_*`). No wind
-preview is added (the RL has none either). Results go here when it has run.
+preview is added (the RL has none either).
+
+**Result (11:32).** 82 grid points; J-best on S1+S2 is N=20, r=0.3, **qt=3**, wc_v=0.35 (J = 17.24;
+P +18.4, ω +28.0, tower +22.0, blade +0.5). N=40 is worse everywhere (≤ 9.1); qt=1 regulates
+harder but leaves the tower at +1…+12 %; qt=3 is the point that has both. Held-out:
+
+| MPC (cost scale v2, qt=3) | J | power MSE | speed MSE | tower DEL | blade DEL | energy | F |
+|---|---|---|---|---|---|---|---|
+| S3–S6 | **12.40** | +8.9 | +19.8 | +15.8 | +5.1 | −0.02 % | 15.79 strict |
+| S7–S10 | **14.10** | +12.7 | +26.3 | +18.3 | −0.9 | −0.07 % | 18.30 strict |
+| regulation-only MPC (v1 scale), S3–S6 / S7–S10 | −1.64 / −8.08 | +7.5 / +3.2 | +4.2 / −10.3 | −17.6 / −22.1 | −0.7 / −3.1 | −0.3 % | −17.6 / −22.1 |
+
+So the §16 baseline statement "the MPC wins speed regulation and loses tower DEL (−17.6 %)" was
+an artefact of the cost scaling, not a property of model-predictive pitch control: with its tower
+term active the same 3-state LPV-MPC is positive on every term of J on both wind sets, beats every
+stage-3 RL arm by ≈ 5 J (hparam arms 7.3 / 8.4–9.0), and under the old objective it is strict with
+F 15.8 / 18.3 — on par with the F-era llm_fork (17.9 / ~16). It also improves energy slightly. The
+RL arms' remaining edge is nil on J; the manuscript's comparison table must carry this row as the
+model-based reference, and the residual-RL claim has to be made against it, not against GSPI.
 
 ## 9. Stage 3 results — core arms under J, 3-seed proof of concept (2026-09-11)
 
