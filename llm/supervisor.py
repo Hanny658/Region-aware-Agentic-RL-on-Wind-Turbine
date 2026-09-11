@@ -26,6 +26,9 @@ BOUNDS = {
     "lambda_load_R2": (0.0, 50.0), "lambda_load_R3": (0.0, 50.0),
     "w_power": (1.0, 1000.0), "w_speed": (1.0, 1000.0),
     "dbeta_max_R2": (0.005, 0.10), "dbeta_max_R3": (0.005, 0.10),
+    # reward v2/v3 load weights (tower and blade proxies); absent until 2026-09-11 evening, which
+    # silently dropped them from every proposal (clamp_proposal keeps only keys in BOUNDS)
+    "lambda_tower": (0.0, 50.0), "lambda_blade": (0.0, 50.0),
     # optional 7th knob (present only in IPC experiments): dq cyclic-pitch authority [rad/axis]
     "ipc_max": (0.002, 0.035),
 }

@@ -40,9 +40,15 @@ arm_args() {  # prefix -> train.py arguments
     jhp3) echo "--supervisor llm_hparam    --reward v3 --n_candidates 3" ;;
     jrhp3) echo "--supervisor random_hparam --reward v3 --n_candidates 3" ;;
     jrw3) echo "--supervisor llm_reward    --reward v3 --n_candidates 3" ;;
+    # fairness step 2: the same arms started from the J-tuned weight vector (KNOBS=<json>)
+    jg3t)   echo "--supervisor guard         --reward v3 --knobs_json $KNOBS" ;;
+    jhp3t)  echo "--supervisor llm_hparam    --reward v3 --n_candidates 3 --knobs_json $KNOBS" ;;
+    jrhp3t) echo "--supervisor random_hparam --reward v3 --n_candidates 3 --knobs_json $KNOBS" ;;
+    jrw3t)  echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS" ;;
     *) echo "unknown arm $1" >&2; return 1 ;;
   esac
 }
+KNOBS=${KNOBS:-}
 
 run() {  # name port seed extra...
   local name=$1 port=$2 seed=$3; shift 3
