@@ -348,3 +348,37 @@ search, 3 seeds, held-out:
    J on S1+S2, both held-out sets) — queued behind step 2. If a higher λ_T restores the tower gain
    at a small regulation cost, that is the RL's fair default; if not, the trade is intrinsic to the
    residual and the paper says so.
+
+**Step 2 result (2026-09-12 07:41).** The agentic arms re-run from the J-tuned default (reward v3,
+`configs/knobs_j_v3_tuned.json`), 3 seeds, held-out:
+
+| arm (reward v3, tuned default) | J S1+S2 | **J S3–S6** | **J S7–S10** | S3–S6 terms P / ω / T / B |
+|---|---|---|---|---|
+| guard (`jg3t`) | 8.22 ± 2.40 | 5.76 ± 1.76 | 6.81 ± 1.29 | 18.2 / 21.1 / **−17.3** / 1.1 |
+| llm_hparam (`jhp3t`) | 10.76 ± 2.67 | 8.22 ± 2.20 | 9.89 ± 1.90 | 18.8 / 23.5 / −10.9 / 1.5 |
+| random_hparam (`jrhp3t`) | 9.45 ± 0.78 | 7.37 ± 1.02 | 8.32 ± 0.80 | 16.5 / 20.5 / −9.9 / 2.3 |
+| **llm_reward (`jrw3t`)** | 13.13 ± 1.44 | 8.30 ± 1.93 | 9.17 ± 1.13 | 9.3 / 15.7 / **+4.3** / **+3.9** |
+| MPC-v2, residual channel (§10 step 0) | 18.15 | 11.97 | 11.61 | 8.5 / 20.5 / 13.2 / 5.6 |
+
+Paired vs `jg3t` (n = 3, exact floor 0.25): llm_hparam +2.5 / +3.1 (2/3, 3/3 seeds; t p = 0.43 /
+0.24), random_hparam +1.6 / +1.5 (2/3), llm_reward +2.5 / +2.4 (3/3; p = 0.30 / 0.20). Tuned
+default vs untuned (`jg3t` − `jg3`): +1.2 / +0.9.
+
+Reading:
+1. **On a fair default the agentic effect sizes shrink** from +6…+8 (§9, against a default whose
+   training collapsed) to +1.5…+3 J, below what n = 3 can establish. Most of §9's hyper-parameter
+   gain was the repair of the rollback loop that the reward gating fixes by itself.
+2. **The reward-code arm is the only RL arm with all four terms positive** (tower +4.3, blade
+   +3.9, power +9.3, speed +15.7 on S3–S6; the same on S7–S10) — it equals llm_hparam on J with a
+   qualitatively different solution. All three seeds' best expressions share one structure: a
+   *saturated* speed term `tanh(|δω|/0.005)` on the wind-labelled subset (steep near zero where
+   the quadratic is flat, bounded where the quadratic explodes), an explicit power-deviation term
+   there, and **centred, bounded load terms `tanh(load − 1)`** that penalise only above-baseline
+   load and cannot be swamped by the regulation term. That is the balanced trade the 6-knob weight
+   search could not reach (§10 step 1, point 3): it is a change of *shape*, not of weights.
+3. The hyper-parameter arms (both proposers) still buy regulation with tower DEL (−10 to −11 %);
+   under J that is net positive, which is the objective's known 2 : 1 pricing.
+4. Against the residual-channel MPC (12.0 / 11.6, every term positive, deterministic) the best RL
+   arms are ≈ 2.5–3.5 J behind on the mean and match it in the best seed (jhp3t_s1 11.3 / 12.5,
+   jrw3t_s1 10.3 / 10.6). The λ_T grid (`jg3L*`, running) tells whether a heavier tower weight
+   alone gives the guard the MPC's balance.
