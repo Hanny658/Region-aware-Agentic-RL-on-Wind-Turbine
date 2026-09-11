@@ -32,7 +32,7 @@ def load_env(path: Path | None = None) -> dict:
 
 class LLMClient:
     def __init__(self, transcript_path: str | Path | None = None, reasoning_effort: str = "medium",
-                 max_completion_tokens: int = 2000, retries: int = 3, timeout: float = 180.0):
+                 max_completion_tokens: int = 6000, retries: int = 3, timeout: float = 180.0):
         env = load_env()
         missing = [k for k in ("LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL") if k not in env]
         if missing:

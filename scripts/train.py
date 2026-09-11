@@ -639,7 +639,7 @@ def main():
                         src = (c.get("knobs") or {}).get("reward_code")
                         if src:
                             try:
-                                compile_reward_code(src)
+                                compile_reward_code(src, version=args.reward)   # v2 namespace has load_t/load_b
                                 kc["reward_code"] = src
                             except ValueError as e:
                                 notes.append(f"reward_code rejected ({e}); kept the previous reward")
