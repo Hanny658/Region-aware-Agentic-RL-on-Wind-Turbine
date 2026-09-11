@@ -212,13 +212,12 @@ F 15.8 / 18.3 — on par with the F-era llm_fork (17.9 / ~16). It also improves 
 RL arms' remaining edge is nil on J; the manuscript's comparison table must carry this row as the
 model-based reference, and the residual-RL claim has to be made against it, not against GSPI.
 
-## 9. Stage 3 results — core arms under J, 3-seed proof of concept (2026-09-11)
+## 9. Stage 3 results — core arms under J, 3-seed proof of concept (2026-09-11, final at 13:57)
 
 All runs: `--objective J --reward v2 --value_norm` (guard-v1: `--reward v1`), 300 episodes, best
-checkpoint by J on S1+S2, held-out on both disjoint wind sets (`scripts/dev/j_table.py`).
-`llm_reward` is **not in this table**: its first three runs were invalid (candidates compiled with
-the v1 namespace and rejected; replies truncated at 2000 tokens — fixed in `908da1c`) and are
-being re-run.
+checkpoint by J on S1+S2, held-out on both disjoint wind sets (`scripts/dev/j_table.py`). The
+`llm_reward` rows are the clean re-run after `908da1c` (its first three runs had every candidate
+rejected by a v1-namespace compile and most replies truncated at 2000 tokens).
 
 | arm | n | J on S1+S2 (train-time best) | **J on S3–S6** | **J on S7–S10** | S3–S6 terms P / ω / T / B |
 |---|---|---|---|---|---|
@@ -226,7 +225,9 @@ being re-run.
 | guard-v1 (reward v1) | 3 | 2.64 ± 1.59 | 1.24 ± 1.02 | 0.42 ± 1.33 | −7.1 / −2.0 / 10.9 / 3.2 |
 | **llm_hparam** | 3 | 10.69 ± 1.60 | **7.27 ± 1.70** | **8.98 ± 2.23** | 7.0 / 12.4 / 6.6 / 3.1 |
 | **random_hparam** | 3 | 10.98 ± 3.51 | **7.40 ± 2.65** | **8.42 ± 3.65** | 6.3 / 14.1 / 5.1 / 4.1 |
-| LPV-MPC (regulation-only, §8) | — | 0.96 | −1.64 | −8.08 | 7.5 / 4.2 / −17.6 / −0.7 |
+| llm_reward (Eureka-style expression) | 3 | 7.19 ± 2.99 | 5.05 ± 2.02 | 6.00 ± 1.90 | 1.6 / 7.2 / 8.1 / 3.3 |
+| **LPV-MPC, tower term active (§8b)** | — | 17.24 | **12.40** | **14.10** | 8.9 / 19.8 / 15.8 / 5.1 |
+| LPV-MPC regulation-only (§8) | — | 0.96 | −1.64 | −8.08 | 7.5 / 4.2 / −17.6 / −0.7 |
 | ROSCO tower damper (§8) | — | 0.58 | −0.06 | −0.26 | −0.3 / −0.5 / 0.7 / 0.0 |
 
 Seed-paired differences of J (exact sign-flip floor 2/2³ = 0.25 at n = 3):
@@ -235,10 +236,19 @@ Seed-paired differences of J (exact sign-flip floor 2/2³ = 0.25 at n = 3):
 |---|---|---|
 | llm_hparam − guard-v2 | +5.68, 3/3 seeds, t-test p = 0.055 | +8.01, 3/3, p = 0.062 |
 | random_hparam − guard-v2 | +5.81, 3/3, p = 0.048 | +7.45, 3/3, p = 0.076 |
+| llm_reward − guard-v2 | +3.46, 3/3, p = 0.107 | +5.03, 3/3, p = 0.059 |
 | llm_hparam − random_hparam | −0.13, p = 0.95 | +0.56, p = 0.81 |
 | guard-v1 − guard-v2 | −0.35, p = 0.72 | −0.55, p = 0.60 |
 
-Findings so far:
+What the reward-code arm did: all three best checkpoints run an LLM-written expression (kept in
+`ckpt_best.pt["knobs"]["reward_code"]`), e.g. seed 0 (S1+S2 J 10.51 at ep 280):
+`180·tanh(15(p_ratio−1))` in R2, `−40·sqrt(tanh(|δω|/0.005)² + tanh(60|p_ratio−1|)²)` in R3,
+`−0.9·tanh(log((2+load_t+load_b)/4)) − 0.1·tanh(act)` — a saturated, power-tracking-aware R3 term
+plus a compressed joint load term. Its trajectories still show the guard's 12.5 m/s regulation
+collapse and rollbacks; the rewrite raises the best point (+3.5 / +5.0 J over guard) without
+removing the dynamics, and it stays ≈ 2–3 J below the hyper-parameter arms.
+
+Findings:
 1. **Under the paper's metric set the fixed-hyper-parameter residual is worth ≈ 1 J** — a
    +10 % tower-DEL gain paid with −7 % power MSE — and the reward version (v1 / v2) does not change
    that. Every guard seed shows the same training dynamics: an early best (ep 32–96), then a
@@ -253,10 +263,19 @@ Findings so far:
    the F-era reward-weight result (roadmap 08-30 §21: LLM > random 7/7). Read together: the LLM's
    value showed where the search space was *semantic* (reward weights: which term to move) and
    vanishes where a 6-D log-uniform perturbation plus verification already finds the answer.
-4. Both reference controllers are below GSPI on both wind sets, so the RL arms' J > 0 is not "beats
-   a weak baseline" — it is the only positive number in the table. (MPC with an active tower term
-   is being re-tuned, §8b.)
+4. **Rewriting the reward is the weakest of the three agentic levers under J** (+3.5 / +5.0), and
+   it does not touch the learning dynamics that cap every RL arm.
+5. **The model-based reference, once its tower term works, is the best controller in the table**
+   (12.4 / 14.1, every term positive, energy ≤ 0, F strict 15.8 / 18.3). The regulation-only MPC
+   and the tower damper are below GSPI. Ranking under J: MPC-v2 ≫ hparam arms > llm_reward >
+   guard ≈ GSPI > damper > regulation-only MPC.
 
-Pending before the stage-3 table is final: the `llm_reward` re-run (3 seeds), the MPC v2 held-out
-rows, and — if the ranking is to be published — seeds 3–4 for the three core arms (n = 5 lifts the
-exact-test floor to 0.0625).
+Consequence for the manuscript (replaces §6): the residual-RL claim cannot be "beats the model
+baseline". What the data supports: (i) the objective decides which lever works (F: reward weights
+and the proposer; J: the learner's hyper-parameters, proposer-agnostic) — the scaling / credit-window
+story of the 08-30 roadmap §21–23 and the critic finding; (ii) a 3-state LPV-MPC with a correctly
+scaled multi-objective cost is a strong, cheap (3.6 ms/solve) controller on the paper's own metrics;
+(iii) the gap RL-to-MPC (≈ 5 J) is the open problem, and the guards' rollback loop names its
+mechanism. Whether to close (iii) before writing — same hyper-parameter search plus the MPC's
+knowledge (tower velocity in the reward or the observation), longer training, n = 5 — is the next
+decision.
