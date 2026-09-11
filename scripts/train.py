@@ -108,6 +108,9 @@ def main():
     ap.add_argument("--reward", default="v1", choices=["v1", "v2", "v3"],
                     help="v2: quadratic (MSE-matched) speed term + tower AND blade load proxies "
                          "(configs/reward.yaml); v1 is the historical reward")
+    ap.add_argument("--knobs_json", default=None,
+                    help="JSON file with initial knob values (reward weights / dbeta bounds) overriding the "
+                         "yaml defaults — the J-tuned default of fairness step 2 (scripts/dev/tuned_knobs.py)")
     ap.add_argument("--resume", action="store_true",
                     help="continue from the newest resume_*.pt in --out (state saved every "
                          "--resume_every_s seconds, --resume_keep newest kept)")
@@ -235,6 +238,13 @@ def main():
                  "dbeta_max_R3": float(args.dbeta_max_R3 if args.dbeta_max_R3 is not None else cfg.dbeta_max)}
     if args.ipc_max > 0.0:
         knobs["ipc_max"] = float(args.ipc_max)     # 7th knob: dq cyclic-pitch authority [rad/axis]
+    if args.knobs_json:
+        kj = json.load(open(os.path.expanduser(args.knobs_json), encoding="utf-8"))
+        unknown = [kk for kk in kj if kk not in knobs]
+        if unknown:
+            raise SystemExit(f"--knobs_json: keys not in this run's knob namespace: {unknown} (namespace {list(knobs)})")
+        knobs.update({kk: float(v) for kk, v in kj.items()})
+        print(f"[init] knobs from {args.knobs_json}: " + ", ".join(f"{kk}={v:g}" for kk, v in knobs.items()), flush=True)
     # llm_hparam supervises the LEARNER, not the reward: its knob namespace is the PPO
     # hyper-parameters, which are applied in this process and never sent to the workers.
     if args.supervisor in ("llm_hparam", "random_hparam"):

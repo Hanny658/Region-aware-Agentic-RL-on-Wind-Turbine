@@ -306,3 +306,16 @@ Plan (in order; each step is a queued campaign):
   now sees `region_w` in its namespace) — the agentic effect sizes reported in the paper are the
   ones measured here, not §9's.
 - Stated, not equalised: the MPC's perfect model; the RL's true-wind observation.
+
+**Step 0 result (14:41).** Through the RL's channel (±0.05 rad, damper on) the MPC re-selects the
+same weights (r = 0.3, qt = 3, wc_v = 0.35; S1+S2 J = 18.15, even higher than wide-open) and holds:
+
+| MPC-v2 | J S3–S6 | J S7–S10 | S3–S6 terms P / ω / T / B |
+|---|---|---|---|
+| wide-open channel (±20°) | 12.40 | 14.10 | 8.9 / 19.8 / 15.8 / 5.1 |
+| **RL residual channel (±2.9°, damped)** | **11.97** | **11.61** | 8.5 / 20.5 / 13.2 / 5.6 |
+
+Authority is worth 0.4–2.5 J, mostly tower DEL on the second wind set; with identical actuation
+the MPC still leads the best RL arm by ≈ 3–4.5 J. So the gap is not authority — it is what the
+controller knows and optimises (a model with the tower state, weights selected on J), which is
+what steps 1–2 give the RL.
