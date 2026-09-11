@@ -35,8 +35,16 @@ from eval.fitness import baseline_metrics, fitness
 DBETA_MAX = 0.35     # residual channel wide open: MPC expresses the full (target - native) offset
 
 
-def run_episode_mpc(ep_index: int, episodes, tb, cp_path, mpc_kw, port, tag) -> dict:
-    cfg = default_config(baseline_dir=baseline_dir("openfast"), dbeta_max=DBETA_MAX, use_damper=False)
+def run_episode_mpc(ep_index: int, episodes, tb, cp_path, mpc_kw, port, tag, residual: bool = False) -> dict:
+    # `residual` (fairness step 0, 2026-09-11): the MPC's target goes through exactly the RL agents'
+    # channel — |target - native| <= the PPO residual bound with the same second-order damper — so
+    # the comparison no longer hands the MPC 20 deg of authority against the RL's 2.9 deg.
+    if residual:
+        cfg = default_config(baseline_dir=baseline_dir("openfast"), use_damper=True)
+        dbeta_max = cfg.dbeta_max
+    else:
+        cfg = default_config(baseline_dir=baseline_dir("openfast"), dbeta_max=DBETA_MAX, use_damper=False)
+        dbeta_max = DBETA_MAX
     env = make_env("openfast", episodes, cfg, port=port, work_tag=tag)
     mpc = LPVMPC(tb, cp_path, **mpc_kw)
     hold = max(1, int(round(mpc.Ts / env.dt)))
@@ -51,7 +59,7 @@ def run_episode_mpc(ep_index: int, episodes, tb, cp_path, mpc_kw, port, tag) -> 
             t0 = time.time()
             target = mpc.solve(m["rot_speed"], m["beta_meas"], m["v_est"], m["min_pit"])
             t_solve += time.time() - t0
-        a = np.clip((target - m["beta_native"]) / DBETA_MAX, -1.0, 1.0)
+        a = np.clip((target - m["beta_native"]) / dbeta_max, -1.0, 1.0)
         obs, r, terminated, truncated, info = env.step(np.array([a], np.float32))
         done = terminated or truncated
         k += 1
@@ -87,6 +95,9 @@ def main():
     ap.add_argument("--wc_v", nargs="+", type=float, default=[0.25], help="wind LPF corner(s) [rad/s]")
     ap.add_argument("--r", nargs="+", type=float, default=[1.0], help="pitch-rate weight(s); >1 value = sweep")
     ap.add_argument("--fitness_target", default="tower", choices=["tower", "blade"])
+    ap.add_argument("--residual", action="store_true",
+                    help="drive the plant through the RL agents' bounded, damped residual channel "
+                         "(same authority as the RL) instead of the wide-open channel")
     ap.add_argument("--out", default="~/wtrl/exp/mpc")
     ap.add_argument("--tag", default="eval")
     ap.add_argument("--port0", type=int, default=6000)
@@ -121,7 +132,7 @@ def main():
             print(f"mpc [{rtag}] skip (exists)", flush=True)
             continue
         jobs = [(i, episodes, tb, cp_path, mpc_kw, args.port0 + 7 * i,
-                 f"work_mpc{i}") for i in range(len(episodes))]
+                 f"work_mpc{i}", args.residual) for i in range(len(episodes))]
         with mp.Pool(min(args.jobs, len(jobs))) as pool:
             res = pool.map(_worker, jobs)
         fit = fitness(res, base, target=args.fitness_target)

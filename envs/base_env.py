@@ -80,6 +80,7 @@ class ResidualPitchEnv(gym.Env):
         self._ep_idx = -1
 
         self.wg_rated = float(self.tb["rated_gen_speed_rads"])
+        self._rated_wind = float(self.tb["rated_wind_ms"])     # wind label for reward v3 / metrics
         self.reward_fn = RegionReward({**cfg.reward, "rated_power_w": self.tb["rated_power_w"]},
                                       self.wg_rated, self.BACKEND, self.dt)
         rr = cfg.reward["region_rule"]
@@ -200,7 +201,8 @@ class ResidualPitchEnv(gym.Env):
             r, info = self.reward_fn(region, m["P"], self._P_base(m["t"], m["P"]), m["gen_speed"],
                                      m[self.load_key], m_prev[self.load_key], 0.0,
                                      aux=(m.get("fa_acc", float("nan")), m_prev.get("fa_acc", float("nan")),
-                                          m["M_oop"], m_prev["M_oop"]))
+                                          m["M_oop"], m_prev["M_oop"]),
+                                     region_w=(R3 if m["v_hub"] > self._rated_wind else R2))
             if self.cfg.ipc_max_rad > 0.0:
                 md, mq = coleman((m["M_oop"], m["M_oop2"], m["M_oop3"]), m["azimuth"])
                 self._dq += self._dq_alpha * (np.array([md, mq]) - self._dq)
@@ -237,7 +239,8 @@ class ResidualPitchEnv(gym.Env):
         r, info = self.reward_fn(region, m["P"], self._P_base(m["t"], m["P"]), m["gen_speed"],
                                  m[self.load_key], m_prev[self.load_key], dbeta, dtau, ke_dot, dipc,
                                  aux=(m.get("fa_acc", float("nan")), m_prev.get("fa_acc", float("nan")),
-                                      m["M_oop"], m_prev["M_oop"]))
+                                      m["M_oop"], m_prev["M_oop"]),
+                                 region_w=(R3 if m["v_hub"] > self._rated_wind else R2))
         if self.cfg.ipc_max_rad > 0.0:      # dq-moment observation (EMA), from the fresh measurement
             md, mq = coleman((m["M_oop"], m["M_oop2"], m["M_oop3"]), m["azimuth"])
             self._dq += self._dq_alpha * (np.array([md, mq]) - self._dq)

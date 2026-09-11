@@ -105,7 +105,7 @@ def main():
                          "J: the baseline paper's metric set as one continuous scalar (2026-09-11): "
                          "mean of the four %% reductions, energy penalised, no tiers; selection, "
                          "rollback and best-checkpoint all use it")
-    ap.add_argument("--reward", default="v1", choices=["v1", "v2"],
+    ap.add_argument("--reward", default="v1", choices=["v1", "v2", "v3"],
                     help="v2: quadratic (MSE-matched) speed term + tower AND blade load proxies "
                          "(configs/reward.yaml); v1 is the historical reward")
     ap.add_argument("--resume", action="store_true",
@@ -191,8 +191,8 @@ def main():
             raise SystemExit("--ipc_hold is not wired into the shared-critic method")
         cfg.ipc_hold_s = args.ipc_hold
         cfg_over["ipc_hold_s"] = args.ipc_hold
-    if args.reward == "v2":
-        cfg.reward["version"] = "v2"
+    if args.reward in ("v2", "v3"):
+        cfg.reward["version"] = args.reward      # v3 = v2 with the speed term gated by the wind label
     OBJ = args.objective
     if OBJ == "J":
         # the MSE terms of J are R3-only; label that subset by wind speed (controller-independent)
@@ -221,7 +221,7 @@ def main():
             return kk % len(cur_episodes)
         return len(cur_episodes) + (kk % len(episodes))
     lam = cfg.reward["lambda_load"]
-    if args.reward == "v2":
+    if args.reward in ("v2", "v3"):
         lam_s = float(lam["R3"] if isinstance(lam, dict) else lam)
         knobs = {"lambda_tower": lam_s, "lambda_blade": lam_s,
                  "w_power": float(cfg.reward["w_power"]), "w_speed": float(cfg.reward["w_speed"]),

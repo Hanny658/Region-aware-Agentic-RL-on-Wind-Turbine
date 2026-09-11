@@ -32,6 +32,14 @@ arm_args() {  # prefix -> train.py arguments
     jrhp) echo "--supervisor random_hparam --reward v2 --n_candidates 3" ;;
     jg1)  echo "--supervisor guard         --reward v1" ;;
     jrw)  echo "--supervisor llm_reward    --reward v2 --n_candidates 3" ;;
+    # fairness step 1 (2026-09-11): reward v3 = speed term gated by the wind label; the weight
+    # namespace searched under J by the same fork verification the MPC's grid amounts to
+    jg3)  echo "--supervisor guard         --reward v3" ;;
+    jwf3) echo "--supervisor random_fork   --reward v3 --n_candidates 3" ;;
+    jlf3) echo "--supervisor llm_fork      --reward v3 --n_candidates 3" ;;
+    jhp3) echo "--supervisor llm_hparam    --reward v3 --n_candidates 3" ;;
+    jrhp3) echo "--supervisor random_hparam --reward v3 --n_candidates 3" ;;
+    jrw3) echo "--supervisor llm_reward    --reward v3 --n_candidates 3" ;;
     *) echo "unknown arm $1" >&2; return 1 ;;
   esac
 }

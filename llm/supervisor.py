@@ -156,7 +156,7 @@ class RandomSupervisor:
 def system_prompt(load_signal: str = "M_oop", fitness_target: str = "blade", objective: str = "F",
                   reward_version: str = "v1") -> str:
     s = SYSTEM_PROMPT.replace("{OBJECTIVE}", J_OBJECTIVE_TEXT if objective == "J" else F_OBJECTIVE_TEXT)
-    if reward_version == "v2":
+    if reward_version in ("v2", "v3"):
         s = s.replace(
             "  R2: w_power*(P/P_gspi - 1) - lambda_load_R2*load_proxy_t - 0.1*(dbeta/0.1)^2\n"
             "  R3: w_speed*exp(-|dw_gen|/0.02) - lambda_load_R3*load_proxy_t - 0.1*(dbeta/0.1)^2",
@@ -453,6 +453,14 @@ The reward currently in use, which you are asked to improve on, is:
     (220*(p_ratio - 1) if region == 0 else -20*(d_wg/0.005)**2) - 1.0*load_t - 1.0*load_b - 0.1*act
 """
 
+REWARD_VARS_V3 = REWARD_VARS_V2.replace(
+    "  d_wg        (generator speed - rated) / rated.",
+    "  region_w    1 when the hub wind is above rated, else 0 — the label the objective's speed/power MSE\n"
+    "              terms use (they are scored on region_w == 1 steps, whatever the controller does)\n"
+    "  d_wg        (generator speed - rated) / rated.").replace(
+    "    (220*(p_ratio - 1) if region == 0 else -20*(d_wg/0.005)**2) - 1.0*load_t - 1.0*load_b - 0.1*act",
+    "    (220*(p_ratio - 1) if region == 0 else 0) - (20*(d_wg/0.005)**2 if region_w == 1 else 0) - 1.0*load_t - 1.0*load_b - 0.1*act")
+
 CANDIDATES_TAIL = """
 You will propose K candidates instead of one. Each is trained for a short fork from the same
 checkpoint and evaluated on the ground-truth fitness on several wind seeds; the best fork is kept.
@@ -485,7 +493,7 @@ class LLMRewardSupervisor(LLMCandidateSupervisor):
         tail = CANDIDATES_TAIL.replace("FIELD", '"reward_code": "<one Python expression>"')
         head = (REWARD_PROMPT
                 .replace("{OBJECTIVE}", J_OBJECTIVE_TEXT if objective == "J" else F_OBJECTIVE_TEXT)
-                .replace("{VARIABLES}", REWARD_VARS_V2 if reward_version == "v2" else REWARD_VARS_V1))
+                .replace("{VARIABLES}", {"v2": REWARD_VARS_V2, "v3": REWARD_VARS_V3}.get(reward_version, REWARD_VARS_V1)))
         self.system = head + tail.replace("K candidates", f"{n_candidates} candidates")
 
     def propose_candidates(self, summary: dict) -> list[dict]:

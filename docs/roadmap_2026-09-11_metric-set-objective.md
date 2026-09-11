@@ -279,3 +279,30 @@ scaled multi-objective cost is a strong, cheap (3.6 ms/solve) controller on the 
 mechanism. Whether to close (iii) before writing — same hyper-parameter search plus the MPC's
 knowledge (tower velocity in the reward or the observation), longer training, n = 5 — is the next
 decision.
+
+## 10. Fairness of the RL-vs-MPC comparison (2026-09-11, user decision: make it fair before writing)
+
+The stage-3 table is not a like-for-like comparison. Asymmetries, verified in code:
+
+| dimension | RL residual arms | MPC-v2 | favours |
+|---|---|---|---|
+| objective weights | reward weights hand-set (w_speed 20, λ_T = λ_B = 1), never tuned under J; the hparam arms tune PPO only | 82-point cost grid selected by J on S1+S2 | MPC |
+| actuation authority | residual ±0.05 rad (2.9°) on the GSPI command, through a 2nd-order damper | replaces ROSCO's pitch PI, ±0.35 rad (20°), no damper | MPC |
+| model knowledge | none | the simulation's own Cp/Ct tables + hand-set tower mode (0.324 Hz, 437 t) | MPC |
+| 12.5 m/s transition | R2 residual pitches for tower load; wind-labelled J counts it as regulation loss (the guards' collapse) | rides the pitch floor below rated (= GSPI there) | MPC |
+| wind information | observes simulator-truth v_hub | ROSCO's wind estimate, low-passed | RL |
+| seeds | 3, best checkpoint | deterministic | neutral (held-out on both) |
+
+Plan (in order; each step is a queued campaign):
+- **Step 0** `campaign_j_mpc_res.sh`: the MPC through the RL's residual channel (`mpc_baseline.py
+  --residual`: ±0.05 rad, damper on), 24-point grid under J, both held-out sets → how much of
+  12.4 / 14.1 is authority.
+- **Step 1** reward **v3** = v2 with the speed term gated by the wind label (`region_w`, the subset
+  J's MSE terms use) instead of the router's region — under v2 the transition steps J scores as R3
+  carried no speed penalty at all. Arms `jg3` (guard, v3) and `jwf3` (random_fork in the weight
+  namespace, v3, 3 candidates) × 3 seeds: does the gating alone remove the rollback loop, and what
+  does a J-tuned weight vector look like.
+- **Step 2** the agentic arms re-run on the tuned default (`jhp3`, `jrhp3`, `jrw3`; `llm_reward`
+  now sees `region_w` in its namespace) — the agentic effect sizes reported in the paper are the
+  ones measured here, not §9's.
+- Stated, not equalised: the MPC's perfect model; the RL's true-wind observation.

@@ -38,6 +38,7 @@ _GRID = [(reg, d, p, l, a)
          for p in (0.9, 1.0, 1.05) for l in (0.0, 1.0, 5.0) for a in (0.0, 0.1, 1.0)]
 REWARD_CODE_VARS = ("region", "d_wg", "p_ratio", "load", "act")
 REWARD_CODE_VARS_V2 = ("region", "d_wg", "p_ratio", "load_t", "load_b", "act")
+REWARD_CODE_VARS_V3 = ("region", "region_w", "d_wg", "p_ratio", "load_t", "load_b", "act")
 
 
 class _LoadProxy:
@@ -83,7 +84,12 @@ def compile_reward_code(src: str, limit: float = 1.0e4, version: str = "v1"):
     ns = dict(_SAFE)
     ns["__builtins__"] = {}
 
-    if version == "v2":
+    if version == "v3":
+        def f(region, region_w, d_wg, p_ratio, load_t, load_b, act):
+            return float(eval(code, ns, {"region": region, "region_w": region_w, "d_wg": d_wg, "p_ratio": p_ratio,
+                                         "load_t": load_t, "load_b": load_b, "act": act}))
+        grid = [(reg, rw, d, p, lt, lb, a) for reg, d, p, lt, a in _GRID for lb in (0.0, 2.0) for rw in (0, 1)]
+    elif version == "v2":
         def f(region, d_wg, p_ratio, load_t, load_b, act):
             return float(eval(code, ns, {"region": region, "d_wg": d_wg, "p_ratio": p_ratio,
                                          "load_t": load_t, "load_b": load_b, "act": act}))
@@ -153,11 +159,15 @@ class RegionReward:
         # The objective J carries both DELs and the R3 speed MSE; v1 could only serve one load
         # signal and its exp(-|dw|/0.02) term is nearly flat at the typical error of 0.005.
         self.version = str(cfg.get("version", "v1"))
+        # v3 (2026-09-11, fairness step 1): the speed term is gated by the WIND label (v_hub > rated),
+        # the same subset the objective's MSE terms use, instead of the router's region — under v2
+        # the transition steps that J scores as R3 carried no speed penalty at all (roadmap v2 §9)
+        self.speed_by_wind = self.version == "v3"
         self.err_ref = float(cfg.get("speed_err_ref", 0.005))
         self.lam_T = float(cfg.get("lambda_tower", cfg.get("lambda_load", 1.0) if not isinstance(cfg.get("lambda_load"), dict) else 1.0))
         self.lam_B = float(cfg.get("lambda_blade", self.lam_T))
         self._px_t = self._px_b = None
-        if self.version == "v2":
+        if self.version in ("v2", "v3"):
             ema_a = dt / float(cfg.get("ema_tau_s", 5.0))
             kind = cfg.get("load_proxy", "range_inc")
             fa = {k: (float(cfg[k].get(backend, 1.0)) if isinstance(cfg.get(k), dict) else float(cfg.get(k) or 1.0))
@@ -203,7 +213,7 @@ class RegionReward:
             self.lam_B = float(knobs["lambda_blade"])
 
     def knobs(self) -> dict:
-        if self.version == "v2":
+        if self.version in ("v2", "v3"):
             k = {"w_power": self.w_P, "w_speed": self.w_w,
                  "lambda_tower": self.lam_T, "lambda_blade": self.lam_B}
         else:
@@ -213,22 +223,29 @@ class RegionReward:
             k["reward_code"] = self.code_src
         return k
 
-    def _call_v2(self, region, P, P_base, d_wg, dbeta, dtau, dipc, aux) -> tuple[float, dict]:
+    def _call_v2(self, region, P, P_base, d_wg, dbeta, dtau, dipc, aux, region_w=None) -> tuple[float, dict]:
         """aux = (fa_acc, fa_acc_prev, M_oop, M_oop_prev). Tower proxy is 0 on a backend without
-        fa_acc (the toy twin), which keeps the twin usable for smoke tests."""
+        fa_acc (the toy twin), which keeps the twin usable for smoke tests. `region_w` = wind label
+        (v3): the speed term follows it; the power term always follows the router's region."""
         fa, fa_p, mo, mo_p = aux if aux is not None else (0.0, 0.0, 0.0, 0.0)
         load_t = self._px_t(fa, fa_p) if fa == fa else 0.0
         load_b = self._px_b(mo, mo_p)
         act = ((dbeta / self.kappa) ** 2 + (dtau / self.kappa_tau) ** 2 + (dipc / self.kappa_ipc) ** 2)
         p_ratio = P / max(P_base, 1.0)
+        if region_w is None:
+            region_w = region
         if self.code_fn is not None:
-            r = self.code_fn(region, d_wg, p_ratio, load_t, load_b, act)
+            if self.version == "v3":
+                r = self.code_fn(region, region_w, d_wg, p_ratio, load_t, load_b, act)
+            else:
+                r = self.code_fn(region, d_wg, p_ratio, load_t, load_b, act)
             return r, {"r_task": r, "r_load": -(self.lam_T * load_t + self.lam_B * load_b),
                        "r_act": -self.lam_A * act, "d_wg": d_wg}
+        r_task = 0.0
         if region == R2:
-            r_task = self.w_P * (p_ratio - 1.0)
-        else:
-            r_task = -self.w_w * (d_wg / self.err_ref) ** 2
+            r_task += self.w_P * (p_ratio - 1.0)
+        if (region_w if self.speed_by_wind else region) == R3:
+            r_task -= self.w_w * (d_wg / self.err_ref) ** 2
         r_load = -(self.lam_T * load_t + self.lam_B * load_b)
         r_act = -self.lam_A * act
         return r_task + r_load + r_act, {"r_task": r_task, "r_load": r_load, "r_act": r_act, "d_wg": d_wg}
@@ -256,10 +273,10 @@ class RegionReward:
     def __call__(self, region: int, P: float, P_base: float, gen_speed: float,
                  M_oop: float, M_prev: float, dbeta: float, dtau: float = 0.0,
                  ke_dot: float | None = None, dipc: float = 0.0,
-                 aux: tuple | None = None) -> tuple[float, dict]:
+                 aux: tuple | None = None, region_w: int | None = None) -> tuple[float, dict]:
         d_wg = (gen_speed - self.wg_rated) / self.wg_rated
-        if self.version == "v2":
-            return self._call_v2(region, P, P_base, d_wg, dbeta, dtau, dipc, aux)
+        if self.version in ("v2", "v3"):
+            return self._call_v2(region, P, P_base, d_wg, dbeta, dtau, dipc, aux, region_w=region_w)
         r_task = 0.0
         if region == R2:
             if ke_dot is None:               # torque channel off: original formula, bit-identical
