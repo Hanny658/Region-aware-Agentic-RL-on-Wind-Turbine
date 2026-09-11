@@ -1,0 +1,9 @@
+{
+ "dbeta_max_R2": 0.07443946526706968,
+ "dbeta_max_R3": 0.05000000000000001,
+ "lambda_blade": 1.3117140616007317,
+ "lambda_tower": 30.0,
+ "w_power": 220.00000000000009,
+ "w_speed": 25.19902646803207,
+ "_rule": "tuned default with lambda_tower = 30 (RL analogue of the MPC's qt grid)"
+}

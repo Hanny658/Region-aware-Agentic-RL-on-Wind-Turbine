@@ -1,0 +1,14 @@
+{
+ "dbeta_max_R2": 0.07443946526706968,
+ "dbeta_max_R3": 0.05000000000000001,
+ "lambda_blade": 1.3117140616007317,
+ "lambda_tower": 1.0,
+ "w_power": 220.00000000000009,
+ "w_speed": 25.19902646803207,
+ "_source": [
+  "jwf3_s0",
+  "jwf3_s1",
+  "jwf3_s2"
+ ],
+ "_rule": "geometric median of best-checkpoint knobs"
+}

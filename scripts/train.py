@@ -239,7 +239,8 @@ def main():
     if args.ipc_max > 0.0:
         knobs["ipc_max"] = float(args.ipc_max)     # 7th knob: dq cyclic-pitch authority [rad/axis]
     if args.knobs_json:
-        kj = json.load(open(os.path.expanduser(args.knobs_json), encoding="utf-8"))
+        kj = {kk: v for kk, v in json.load(open(os.path.expanduser(args.knobs_json), encoding="utf-8")).items()
+              if not kk.startswith("_")}          # "_source", "_rule": provenance written by tuned_knobs.py
         unknown = [kk for kk in kj if kk not in knobs]
         if unknown:
             raise SystemExit(f"--knobs_json: keys not in this run's knob namespace: {unknown} (namespace {list(knobs)})")

@@ -45,6 +45,11 @@ arm_args() {  # prefix -> train.py arguments
     jhp3t)  echo "--supervisor llm_hparam    --reward v3 --n_candidates 3 --knobs_json $KNOBS" ;;
     jrhp3t) echo "--supervisor random_hparam --reward v3 --n_candidates 3 --knobs_json $KNOBS" ;;
     jrw3t)  echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS" ;;
+    # the RL analogue of the MPC's qt grid: the tuned default with the tower weight at 3 / 10 / 30
+    # (the 30-episode fork search never keeps a higher lambda_tower — tower DEL responds too slowly)
+    jg3L3)  echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT3.json" ;;
+    jg3L10) echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT10.json" ;;
+    jg3L30) echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT30.json" ;;
     *) echo "unknown arm $1" >&2; return 1 ;;
   esac
 }

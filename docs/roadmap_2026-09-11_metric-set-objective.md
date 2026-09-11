@@ -319,3 +319,32 @@ Authority is worth 0.4–2.5 J, mostly tower DEL on the second wind set; with id
 the MPC still leads the best RL arm by ≈ 3–4.5 J. So the gap is not authority — it is what the
 controller knows and optimises (a model with the tower state, weights selected on J), which is
 what steps 1–2 give the RL.
+
+**Step 1 result (23:21).** Reward v3 (speed term gated by the wind label) and the 6-knob weight
+search, 3 seeds, held-out:
+
+| arm | J S1+S2 | J S3–S6 | J S7–S10 | S3–S6 terms P / ω / T / B |
+|---|---|---|---|---|
+| guard-v2 (§9, for reference) | 3.07 ± 1.94 | 1.59 ± 0.87 | 0.97 ± 1.37 | −6.9 / −0.6 / **10.4** / 3.4 |
+| **guard-v3** (`jg3`) | 7.40 ± 1.90 | 4.60 ± 2.38 | 5.96 ± 2.02 | 17.3 / 18.6 / **−18.0** / 0.5 |
+| **random_fork weights, v3** (`jwf3`) | 8.12 ± 1.11 | 6.70 ± 2.12 | 7.89 ± 2.21 | 18.0 / 20.1 / **−13.2** / 1.9 |
+| llm_hparam (v2, §9) | 10.69 ± 1.60 | 7.27 ± 1.70 | 8.98 ± 2.23 | 7.0 / 12.4 / 6.6 / 3.1 |
+
+1. The gating **removes the rollback loop**: every v3 seed climbs through the run (best points at
+   ep 184–300 instead of 32–96), and J rises by +3 / +5 over guard-v2 (0/3 and 1/3 seeds lose).
+2. But it does so by **inverting the residual's trade**: regulation +17 / +19 %, tower DEL −13 to
+   −22 %. Under J's 2 : 1 pricing that is net positive; as a load-reduction controller the residual
+   is gone. The MPC gets both (+20 ω, +15 T) because its tower-velocity term is explicit and,
+   after re-scaling, heavy (qt = 3 ≈ 170 % of the speed term at typical values); the RL's
+   `range_inc` proxy at λ_T = 1 is nowhere near that.
+3. The **weight search cannot find that region**: candidates with λ_T = 1.4–2.9 were proposed in
+   every seed and never won a 30-episode fork — tower DEL responds over tens of episodes, the
+   regulation gain within one fork. A myopic verification horizon is a structural limit of the
+   fork search, and the reason the MPC's *grid* (full-run evaluation per point) is not the same
+   tuning budget as the RL's *fork search*. The tuned default therefore keeps λ_T = 1
+   (`configs/knobs_j_v3_tuned.json`: w_speed 25.2, λ_B 1.31, dbeta_R2 0.074, dbeta_R3 0.05).
+4. Step 2 (agentic arms on that default) runs as planned; **added**: the RL analogue of the MPC's
+   qt grid — guard-v3 from the tuned default with λ_T ∈ {3, 10, 30} (`jg3L*`, seed 0, selection by
+   J on S1+S2, both held-out sets) — queued behind step 2. If a higher λ_T restores the tower gain
+   at a small regulation cost, that is the RL's fair default; if not, the trade is intrinsic to the
+   residual and the paper says so.
