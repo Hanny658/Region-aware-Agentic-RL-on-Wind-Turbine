@@ -16,7 +16,11 @@ import numpy as np
 EXP = os.path.expanduser(os.environ.get("WTRL_EXP", "~/wtrl/exp"))
 TAGS = {"S3-S6": "eval_heldout_s3456_ckpt_best.json", "S7-S10": "eval_heldout2_s78910.json"}
 LABEL = {"jg2": "guard-v2 (fixed hparams, reward v2)", "jg1": "guard-v1 (reward v1)", "jhp": "llm_hparam",
-         "jrhp": "random_hparam", "jrw": "llm_reward", "jllm": "llm weights (v2)", "jmono": "mono (v2)"}
+         "jrhp": "random_hparam", "jrw": "llm_reward", "jllm": "llm weights (v2)", "jmono": "mono (v2)",
+         "jg3": "guard-v3 (reward v3, untuned)", "jwf3": "random_fork weights (v3)", "jwf3k4": "random_fork weights (v3, 4-knob bug)",
+         "jg3t": "guard-v3 tuned default", "jhp3t": "llm_hparam (v3, tuned)", "jrhp3t": "random_hparam (v3, tuned)",
+         "jrw3t": "llm_reward (v3, tuned)", "jg3L3": "guard-v3 tuned, lambda_tower 3", "jg3L10": "guard-v3 tuned, lambda_tower 10",
+         "jg3L30": "guard-v3 tuned, lambda_tower 30"}
 
 
 def perm_p(d):
