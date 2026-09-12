@@ -434,12 +434,13 @@ step 2 point 2). That closes the fairness campaign.
    (c) one of the agentic levers; without (b) it collapses into a rollback loop, without (a) the
    critic is a constant. These are the mechanism results (08-30 roadmap §21–§23, critic finding,
    roadmap v2 §9–§10) and they are seed-paired and replicated on both wind sets.
-3. **Agentic supervision — what survives a fair default**: +1.5…+3 J for every lever at n = 3
-   (not significant); the LLM proposer equals random search in the hyper-parameter namespace;
-   the reward-*code* lever is the one that changes the solution's shape (all four terms positive,
-   the only RL arm to do so) — and it does what neither the weight search (fork-myopic) nor a
-   weight sweep (λ_T grid) can. The F-era proposer result (LLM > random 7/7 on reward weights)
-   stands as the complementary case: the LLM matters where the search space is semantic.
+3. **Agentic supervision — what survives a fair default** (§12): the hyper-parameter lever is
+   worth nothing once the default is tuned (LLM −0.5 / +0.3, random −0.8 / −0.9); the combined
+   agent is not additive (6.3 / 8.1); **the reward-code lever is the one that survives**: +2.5 / +2.4
+   over a tuned fixed reward in 3/3 seeds, the only RL arm positive on all four terms, and it does
+   what neither the weight search (fork-myopic), a weight sweep (λ_T grid), the hyper-parameter
+   search nor the combined agent can. The F-era proposer result (LLM > random 7/7 on reward
+   weights) stands as the complementary case: the LLM matters where the search space is semantic.
 4. **Honest framing**: the objective decides which lever "works" (F: proposer; J: learner
    hyper-parameters, then reward shape). The RL does not beat the fixed model-based reference;
    its best seeds match it. n = 3 for the J arms is a proof of concept — extend to 5 before
@@ -457,3 +458,35 @@ four terms positive); if the two are complementary the combined agent should app
 residual-channel MPC (12.0 / 11.6). Arms: `jcb3t` × 3 seeds, plus the corrected `jhp3t` / `jrhp3t`
 × 3 (tuned default this time). Then: n = 5 for `jrw3t` / `jg3t`, the agent-loop ablations
 (single-shot, objective-conditioning), see the plan agreed on 2026-09-12.
+
+**Result (2026-09-12 20:11; held-out S3–S6 / S7–S10, 3 seeds, all on the tuned v3 default):**
+
+| arm | J S1+S2 | J S3–S6 | J S7–S10 | S3–S6 P / ω / T / B | vs guard (S3–S6 / S7–S10) |
+|---|---|---|---|---|---|
+| guard (`jg3t`) | 8.22 ± 2.40 | 5.76 ± 1.76 | 6.81 ± 1.29 | 18.2 / 21.1 / −17.3 / 1.1 | — |
+| llm_hparam, tuned (`jhp3t`, corrected) | 8.35 ± 1.62 | 5.26 ± 2.39 | 7.13 ± 3.05 | 17.1 / 20.7 / −18.1 / 1.2 | −0.5 / +0.3 (p ≈ 0.9) |
+| random_hparam, tuned (`jrhp3t`, corrected) | 8.14 ± 0.25 | 4.93 ± 2.02 | 5.96 ± 2.17 | 15.1 / 17.0 / −13.2 / 0.8 | −0.8 / −0.9 (p ≈ 0.8) |
+| **llm_reward** (`jrw3t`) | 13.13 ± 1.44 | **8.30 ± 1.93** | **9.17 ± 1.13** | 9.3 / 15.7 / **+4.3** / **+3.9** | +2.5 / +2.4 (3/3) |
+| llm_combo (`jcb3t`) | 8.26 ± 0.93 | 6.28 ± 1.95 | 8.07 ± 1.12 | 15.9 / 16.4 / −8.1 / 0.9 | +0.5 / +1.3 (2/3, p ≈ 0.5–0.9) |
+| MPC-v2, residual channel | 18.15 | 11.97 | 11.61 | 8.5 / 20.5 / 13.2 / 5.6 | |
+
+1. **On a tuned default the hyper-parameter lever is worth nothing** (−0.5 / +0.3 for the LLM,
+   −0.8 / −0.9 for random; every difference within noise). §9's +6…+8 and the "+2.5" of the first
+   step-2 table were both measured against defaults whose training was broken (rollback loop) or
+   untuned; with the reward gated and the weights tuned, the learner no longer needs the repair.
+   The lever's value was entirely the repair of a bad default — the D6 question answered.
+2. **The combined agent is not additive**: 6.3 / 8.1 sits between guard and the reward-only agent,
+   below the latter by ≈ 2 / 1 J. Its best checkpoints show why: the agent raised the learning
+   rates ×2–5 and γλ to 0.99–0.995 *and* wrote *quadratic* regulation terms with linear or
+   `max(0, load−1)` load terms — a weaker reward shape than the reward-only agent's saturated
+   `tanh` terms — while tower DEL only recovered to −7…−11 %. Two levers in one prompt split the
+   agent's attention; the reward-only agent, asked one question, answered it better.
+3. Therefore the paper's agentic result is **one lever, the reward's shape**: +2.5 / +2.4 over a
+   tuned fixed reward in 3/3 seeds, the only RL variant positive on all four terms, unreachable by
+   weight search, weight sweep, hyper-parameter search or the combined agent. Everything else the
+   agent was given to tune is either noise on a fair default (hyper-parameters) or a repair of a
+   default that should not have been broken (reward weights under F, hyper-parameters under J).
+
+Next (plan of 2026-09-12): n = 5 for `jrw3t` / `jg3t` (seeds 3–4), then the agent-loop ablations —
+single-shot without fork verification / history, and the objective-conditioning test (the same
+agent given the F text under J).
