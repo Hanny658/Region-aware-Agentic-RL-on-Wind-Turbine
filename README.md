@@ -58,7 +58,43 @@ companion), tower-base fore-aft DEL, blade-root out-of-plane DEL — all reporte
 reduction vs GSPI (`scripts/dev/paper_table.py`); energy loss is our addition (the Region-III-only
 paper holds torque constant and does not track it).
 
-## Headline results (CPC + region-aware, held-out wind S3–S6, best checkpoint)
+## Results under the baseline paper's metric set (J, 2026-09-11/12)
+
+From 2026-09-11 every run is scored, selected and rolled back by **J** = mean of the four paper
+metrics (% reduction vs paired GSPI of power MSE, generator-speed MSE, tower-base DEL, blade-root
+DEL; per-episode clipped ±100), −20 per % of energy loss over 1 %, no tiers, R3 subsets labelled by
+wind speed (`docs/roadmap_2026-09-11_metric-set-objective.md`). Held-out on two disjoint wind sets
+(S3–S6 / S7–S10), best-by-J checkpoints, three seeds per RL arm:
+
+| controller | J S3–S6 | J S7–S10 | four terms (S3–S6) P / ω / T / B |
+|---|---|---|---|
+| **LPV-MPC, tower term active, through the RL's ±2.9° residual channel** | **11.97** | **11.61** | 8.5 / 20.5 / 13.2 / 5.6 |
+| LPV-MPC, same cost, wide-open channel | 12.40 | 14.10 | 8.9 / 19.8 / 15.8 / 5.1 |
+| llm_reward (LLM-written reward, reward v3, J-tuned default) | 8.30 ± 1.93 | 9.17 ± 1.13 | 9.3 / 15.7 / **4.3** / **3.9** |
+| llm_hparam (LLM tunes PPO hyper-parameters) | 8.22 ± 2.20 | 9.89 ± 1.90 | 18.8 / 23.5 / −10.9 / 1.5 |
+| random_hparam (same fork search, random candidates) | 7.37 ± 1.02 | 8.32 ± 0.80 | 16.5 / 20.5 / −9.9 / 2.3 |
+| guard (fixed knobs, reward v3, J-tuned default) | 5.76 ± 1.76 | 6.81 ± 1.29 | 18.2 / 21.1 / −17.3 / 1.1 |
+| guard (fixed knobs, reward v2, untuned) | 1.59 ± 0.87 | 0.97 ± 1.37 | −6.9 / −0.6 / 10.4 / 3.4 |
+| ROSCO tower damper (best gain under J) | −0.06 | −0.26 | ≈ 0 |
+| LPV-MPC regulation-only (the F-era tuning) | −1.64 | −8.08 | 7.5 / 4.2 / −17.6 / −0.7 |
+
+What changed relative to the F-era results below:
+- **The MPC's tower-DEL loss was a cost-scaling artefact.** With the speed, pitch-rate and
+  tower-velocity terms scaled to O(1) at their typical values, the tower weight can act
+  (qt = 3) and the same 3-state LPV-MPC is positive on all four metrics, F-strict 15.8 / 18.3,
+  and ahead of every RL arm — also when driven through the RL's own bounded, damped residual
+  channel (authority explains only 0.4–2.5 J of its lead).
+- **Residual RL needs three things to be competitive on J**: a normalised value target
+  (`--value_norm`; the critic was a constant before), a speed term gated by the wind label the
+  objective uses (`--reward v3`; otherwise training collapses into a rollback loop at 12.5 m/s),
+  and one agentic lever on top. On that fair default the agentic gains are +1.5…+3 J (n = 3,
+  not significant); the LLM proposer equals random search for hyper-parameters; the LLM-written
+  reward is the only RL variant positive on all four terms (a saturated speed term and centred,
+  bounded load terms — a change the weight search cannot reach, and a heavier tower weight
+  λ_T ∈ {3, 10, 30} does not reach either).
+- Tables: `docs/tables/table_J_stage3.csv`, `table_J_fairness.csv` (`scripts/dev/j_table.py --csv`).
+
+## Headline results under F (CPC + region-aware, held-out wind S3–S6, best checkpoint) — historical
 
 **1. Region specialisation buys speed regulation, not load (F1, restated 2026-09-10).** `spec + guard`
 and `mono` are indistinguishable on load: 13.93 ± 2.29 vs 13.80 ± 2.71 (paired p = 0.96) and
@@ -232,16 +268,20 @@ Experiment campaigns are complete; the repository is in **manuscript preparation
   schedule) are statistically tied (roadmap §13–§14). Supervision helps; the supervisor's identity
   does not, and the verification machinery (not the proposer) is what guarantees compliance.
 - **R2 torque residual**: clear seed-paired negative (roadmap §15).
-- **MPC baseline**: done (see above) — MPC wins speed regulation, loses tower loads; all
-  supervised spec variants Pareto-dominate it on F, and the gap widens with turbulence (§17).
+- **MPC baseline**: the F-era verdict ("wins speed regulation, loses tower loads") was a
+  cost-scaling artefact; with the tower term active the LPV-MPC is the strongest controller on the
+  paper's metric set and F-strict (roadmap v2 §8b, §10). The RL arms match it only in their best
+  seeds.
+- **Objective J (2026-09-11)**: the manuscript is scored on the paper's four metrics; the agentic
+  supervision claims are being re-established under it (roadmap v2 §9–§11, n = 3 so far).
 - **Data**: every derived table is in `docs/tables/` and rebuilt by
   `python3 scripts/dev/build_tables.py` (standard library only) from the run artifacts in
   `~/wtrl/exp`. The run inventory, the environment and the reporting caveats C1–C12 are in
   `docs/RESULTS_2026-09-10_data-and-caveats.md`. The wind bank and paired GSPI baselines
   (64 realisations, 5.5 GB) live in WSL with a copy at `../wtrl-data/` — copy them, never
   regenerate them.
-- **Open before submission**: see `docs/RESULTS_2026-09-10_data-and-caveats.md` §4 — the
-  remaining items are optional ablations, not gaps in the main claims.
+- **Open before submission**: seeds 3–4 for the J arms (n = 5 lifts the exact-test floor to
+  0.0625) and the caveats in `docs/RESULTS_2026-09-10_data-and-caveats.md` §4.
 
 ## How to run
 

@@ -382,3 +382,59 @@ Reading:
    arms are ≈ 2.5–3.5 J behind on the mean and match it in the best seed (jhp3t_s1 11.3 / 12.5,
    jrw3t_s1 10.3 / 10.6). The λ_T grid (`jg3L*`, running) tells whether a heavier tower weight
    alone gives the guard the MPC's balance.
+
+**λ_T grid result (2026-09-12 11:43).** guard-v3 from the tuned default, seed 0, λ_T ∈ {1 (= `jg3t_s0`),
+3, 10, 30}, held-out:
+
+| λ_T | J S1+S2 | J S3–S6 | J S7–S10 | S3–S6 P / ω / T / B |
+|---|---|---|---|---|
+| 1 | 5.71 | 4.99 | 5.93 | 18.7 / 20.4 / −20.6 / 1.5 |
+| 3 | 5.83 | 1.41 | 3.74 | 16.0 / 8.9 / −18.2 / −1.1 |
+| 10 | 2.54 | −2.88 | −3.27 | 10.6 / −0.3 / −16.9 / −4.9 |
+| 30 | 0.04 (never left the initial policy) | — | — | tower −2…−11 % during training, regulation negative |
+
+A heavier tower weight **does not buy the tower back**: tower DEL stays at −17…−21 % up to
+λ_T = 10 while regulation and J fall, and at λ_T = 30 the load-noise term dominates the reward and
+learning stops. The `range_inc` proxy scaled up is not the MPC's tower-velocity cost — so the
+balanced solution is unreachable on the *weight* axis of this reward family, and reachable on the
+*shape* axis (the reward-code arm's saturated speed term and centred `tanh(load − 1)` load terms,
+step 2 point 2). That closes the fairness campaign.
+
+### Closing table of the fairness campaign (held-out S3–S6 / S7–S10, best-by-J checkpoints)
+
+| controller | n | J S3–S6 | J S7–S10 | all four terms > 0? |
+|---|---|---|---|---|
+| **LPV-MPC-v2, residual channel (±2.9°)** | det. | **11.97** | **11.61** | yes |
+| LPV-MPC-v2, wide-open (±20°) | det. | 12.40 | 14.10 | yes |
+| llm_reward, v3, tuned default | 3 | 8.30 ± 1.93 | 9.17 ± 1.13 | **yes** (T +4.3, B +3.9) |
+| llm_hparam, v3, tuned default | 3 | 8.22 ± 2.20 | 9.89 ± 1.90 | no (T −10.9) |
+| random_hparam, v3, tuned default | 3 | 7.37 ± 1.02 | 8.32 ± 0.80 | no (T −9.9) |
+| guard, v3, tuned default | 3 | 5.76 ± 1.76 | 6.81 ± 1.29 | no (T −17.3) |
+| guard, v2 (§9) | 3 | 1.59 ± 0.87 | 0.97 ± 1.37 | no (P −6.9) |
+| ROSCO tower damper | det. | −0.06 | −0.26 | ≈ GSPI |
+| LPV-MPC regulation-only (v1 scale) | det. | −1.64 | −8.08 | no (T −17.6) |
+
+`docs/tables/table_J_fairness.csv`, `table_J_stage3.csv`; rebuild with `scripts/dev/j_table.py --csv`.
+
+## 11. What the manuscript can claim (2026-09-12)
+
+1. **Primary**: on the baseline paper's own metric set, a 3-state LPV-MPC with a correctly scaled
+   multi-objective cost is the strongest collective-pitch controller in this study (J ≈ 12 on two
+   disjoint held-out wind sets, all four terms positive, 3.6 ms per solve), and it keeps that lead
+   through the same ±2.9° damped residual channel the RL uses. The tower-DEL loss reported for MPC
+   in the F-era tables was a cost-scaling artefact; the paper states it and shows the fix.
+2. **Residual RL under J** reaches 8–10 (best seeds 11–12) only with (a) a critic whose value
+   target is normalised, (b) a reward whose speed term is gated by the objective's own subset, and
+   (c) one of the agentic levers; without (b) it collapses into a rollback loop, without (a) the
+   critic is a constant. These are the mechanism results (08-30 roadmap §21–§23, critic finding,
+   roadmap v2 §9–§10) and they are seed-paired and replicated on both wind sets.
+3. **Agentic supervision — what survives a fair default**: +1.5…+3 J for every lever at n = 3
+   (not significant); the LLM proposer equals random search in the hyper-parameter namespace;
+   the reward-*code* lever is the one that changes the solution's shape (all four terms positive,
+   the only RL arm to do so) — and it does what neither the weight search (fork-myopic) nor a
+   weight sweep (λ_T grid) can. The F-era proposer result (LLM > random 7/7 on reward weights)
+   stands as the complementary case: the LLM matters where the search space is semantic.
+4. **Honest framing**: the objective decides which lever "works" (F: proposer; J: learner
+   hyper-parameters, then reward shape). The RL does not beat the fixed model-based reference;
+   its best seeds match it. n = 3 for the J arms is a proof of concept — extend to 5 before
+   quoting the agentic differences as effects.
