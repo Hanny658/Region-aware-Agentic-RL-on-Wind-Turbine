@@ -70,10 +70,11 @@ wind speed (`docs/roadmap_2026-09-11_metric-set-objective.md`). Held-out on two 
 |---|---|---|---|
 | **LPV-MPC, tower term active, through the RL's ±2.9° residual channel** | **11.97** | **11.61** | 8.5 / 20.5 / 13.2 / 5.6 |
 | LPV-MPC, same cost, wide-open channel | 12.40 | 14.10 | 8.9 / 19.8 / 15.8 / 5.1 |
-| llm_reward (LLM-written reward, reward v3, J-tuned default) | 8.30 ± 1.93 | 9.17 ± 1.13 | 9.3 / 15.7 / **4.3** / **3.9** |
-| llm_hparam (LLM tunes PPO hyper-parameters) | 8.22 ± 2.20 | 9.89 ± 1.90 | 18.8 / 23.5 / −10.9 / 1.5 |
-| random_hparam (same fork search, random candidates) | 7.37 ± 1.02 | 8.32 ± 0.80 | 16.5 / 20.5 / −9.9 / 2.3 |
-| guard (fixed knobs, reward v3, J-tuned default) | 5.76 ± 1.76 | 6.81 ± 1.29 | 18.2 / 21.1 / −17.3 / 1.1 |
+| llm_reward (LLM-written reward, reward v3, J-tuned default; n = 5) | 5.30 ± 4.17 | 6.04 ± 4.28 | 6.8 / 10.1 / **+1.5** / **2.7** (3/5 seeds all-positive) |
+| llm_combo (hyper-parameters + reward in one agent) | 6.28 ± 1.95 | 8.07 ± 1.12 | 15.9 / 16.4 / −8.1 / 0.9 |
+| llm_hparam (LLM tunes PPO hyper-parameters, tuned default) | 5.26 ± 2.39 | 7.13 ± 3.05 | 17.1 / 20.7 / −18.1 / 1.2 |
+| random_hparam (same fork search, random candidates, tuned default) | 4.93 ± 2.02 | 5.96 ± 2.17 | 15.1 / 17.0 / −13.2 / 0.8 |
+| guard (fixed knobs, reward v3, J-tuned default; n = 5) | 4.86 ± 2.76 | 5.50 ± 2.09 | 17.4 / 19.0 / −17.6 / 0.7 |
 | guard (fixed knobs, reward v2, untuned) | 1.59 ± 0.87 | 0.97 ± 1.37 | −6.9 / −0.6 / 10.4 / 3.4 |
 | ROSCO tower damper (best gain under J) | −0.06 | −0.26 | ≈ 0 |
 | LPV-MPC regulation-only (the F-era tuning) | −1.64 | −8.08 | 7.5 / 4.2 / −17.6 / −0.7 |
@@ -87,11 +88,12 @@ What changed relative to the F-era results below:
 - **Residual RL needs three things to be competitive on J**: a normalised value target
   (`--value_norm`; the critic was a constant before), a speed term gated by the wind label the
   objective uses (`--reward v3`; otherwise training collapses into a rollback loop at 12.5 m/s),
-  and one agentic lever on top. On that fair default the agentic gains are +1.5…+3 J (n = 3,
-  not significant); the LLM proposer equals random search for hyper-parameters; the LLM-written
-  reward is the only RL variant positive on all four terms (a saturated speed term and centred,
-  bounded load terms — a change the weight search cannot reach, and a heavier tower weight
-  λ_T ∈ {3, 10, 30} does not reach either).
+  and — for the composition of J, not its level — the LLM-written reward. On that fair default no
+  agentic lever moves the mean J outside seed noise (hyper-parameters ≈ 0; combined agent not
+  additive; reward code +0.4 / +0.5 at n = 5, p ≈ 0.7), but the LLM-written reward is the only RL
+  variant that reaches the balanced solution (all four terms positive, 3 of 5 seeds; a saturated
+  speed term and centred, bounded load terms) — a solution the weight search, a heavier tower
+  weight λ_T ∈ {3, 10, 30}, the hyper-parameter search and the combined agent never reach.
 - Tables: `docs/tables/table_J_stage3.csv`, `table_J_fairness.csv` (`scripts/dev/j_table.py --csv`).
 
 ## Headline results under F (CPC + region-aware, held-out wind S3–S6, best checkpoint) — historical

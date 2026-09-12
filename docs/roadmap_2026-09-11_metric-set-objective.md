@@ -434,17 +434,19 @@ step 2 point 2). That closes the fairness campaign.
    (c) one of the agentic levers; without (b) it collapses into a rollback loop, without (a) the
    critic is a constant. These are the mechanism results (08-30 roadmap §21–§23, critic finding,
    roadmap v2 §9–§10) and they are seed-paired and replicated on both wind sets.
-3. **Agentic supervision — what survives a fair default** (§12): the hyper-parameter lever is
-   worth nothing once the default is tuned (LLM −0.5 / +0.3, random −0.8 / −0.9); the combined
-   agent is not additive (6.3 / 8.1); **the reward-code lever is the one that survives**: +2.5 / +2.4
-   over a tuned fixed reward in 3/3 seeds, the only RL arm positive on all four terms, and it does
-   what neither the weight search (fork-myopic), a weight sweep (λ_T grid), the hyper-parameter
-   search nor the combined agent can. The F-era proposer result (LLM > random 7/7 on reward
-   weights) stands as the complementary case: the LLM matters where the search space is semantic.
-4. **Honest framing**: the objective decides which lever "works" (F: proposer; J: learner
-   hyper-parameters, then reward shape). The RL does not beat the fixed model-based reference;
-   its best seeds match it. n = 3 for the J arms is a proof of concept — extend to 5 before
-   quoting the agentic differences as effects.
+3. **Agentic supervision — what survives a fair default** (§12–§13): the hyper-parameter lever
+   is worth nothing once the default is tuned (LLM −0.5 / +0.3, random −0.8 / −0.9); the combined
+   agent is not additive (6.3 / 8.1); the reward-code agent has **no mean effect at n = 5**
+   (+0.4 / +0.5, 3/5 seeds, p ≈ 0.7) but **changes what the same J is made of**: 3/5 seeds reach the
+   balanced solution (all four terms positive; arm-mean tower DEL +1.5 % vs −17.6 % for the guard at
+   equal J) that no weight search (fork-myopic), weight sweep (λ_T grid), hyper-parameter search or
+   combined agent ever reached. The honest claim is reachability with 3/5 reliability, not a
+   level gain. The F-era proposer result (LLM > random 7/7 on reward weights) stands as the
+   complementary case: the LLM matters where the search space is semantic.
+4. **Honest framing**: the objective decides which lever "works" (F: proposer; J: none on the
+   level of J, reward shape on its composition). The RL does not beat the fixed model-based
+   reference; its best seeds match it. Every agentic difference under J is inside seed noise at
+   n = 5; what is reportable is the solution class the agent reaches and how often.
 
 ## 12. Combined agent — hyper-parameters and reward in one supervisor (2026-09-12, user: paper centred on the agent)
 
@@ -490,3 +492,22 @@ residual-channel MPC (12.0 / 11.6). Arms: `jcb3t` × 3 seeds, plus the corrected
 Next (plan of 2026-09-12): n = 5 for `jrw3t` / `jg3t` (seeds 3–4), then the agent-loop ablations —
 single-shot without fork verification / history, and the objective-conditioning test (the same
 agent given the F text under J).
+
+## 13. n = 5 for the reward-code agent (2026-09-13 07:00) — the mean effect does not survive
+
+Seeds 3–4 added to `jrw3t` and `jg3t` (same tuned v3 default), held-out S3–S6 / S7–S10:
+
+| arm | n | J S1+S2 | J S3–S6 | J S7–S10 | S3–S6 P / ω / T / B | seeds with all four terms > 0 |
+|---|---|---|---|---|---|---|
+| guard (`jg3t`) | 5 | 7.05 ± 2.71 | 4.86 ± 2.76 | 5.50 ± 2.09 | 17.4 / 19.0 / −17.6 / 0.7 | 0 / 5 |
+| llm_reward (`jrw3t`) | 5 | 9.36 ± 4.75 | 5.30 ± 4.17 | 6.04 ± 4.28 | 6.8 / 10.1 / **+1.5** / 2.7 | **3 / 5** (s0–s2); s3 tower −12 %, s4 the 12.5 m/s collapse |
+
+Paired: +0.44 (S3–S6) / +0.53 (S7–S10), 3/5 seeds, exact p = 0.75 / 0.69, t-test p = 0.8 / 0.7.
+The +2.5 of n = 3 was two good seeds; at n = 5 the reward-code agent and the tuned guard have
+**the same J**. What the agent does change is the *composition* of J: three of five seeds land on
+the balanced solution (every term positive) that no guard seed, no weight search, no λ_T sweep and
+no hyper-parameter arm ever reached, and the arm-mean tower DEL flips from −17.6 % to +1.5 % at
+equal J. Seed 4 wrote a reward that let the 12.5 m/s regulation collapse through (the guard's own
+failure mode) — the agent is a capability, not a guarantee, and its reliability at n = 5 is 3/5.
+
+`docs/tables/table_J_n5.csv`.
