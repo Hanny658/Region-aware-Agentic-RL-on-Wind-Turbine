@@ -77,11 +77,12 @@ def main():
     # supervisor
     ap.add_argument("--supervisor", default="none",
                     choices=["none", "guard", "random", "llm", "llm_fork", "random_fork", "schedule",
-                             "schedule_comp", "llm_hparam", "random_hparam", "llm_reward"],
+                             "schedule_comp", "llm_hparam", "random_hparam", "llm_reward", "llm_combo"],
                     help="none: fixed knobs, no rollback | guard: fixed knobs + rollback-to-best guardrail | "
                          "random / llm: proposals + guardrail | llm_fork: fork-verified reward-weight "
                          "proposals | llm_hparam: fork-verified PPO hyper-parameter proposals | "
-                         "llm_reward: fork-verified LLM-written reward expression")
+                         "llm_reward: fork-verified LLM-written reward expression | "
+                         "llm_combo: one agent proposes reward expression AND PPO hyper-parameters")
     ap.add_argument("--supervise_every", type=int, default=30, help="episodes between evaluations/decisions")
     ap.add_argument("--rollback_drop", type=float, default=ROLLBACK_DROP)
     ap.add_argument("--rollback_after", type=int, default=60, help="no rollback before this episode (grace period)")
@@ -248,11 +249,21 @@ def main():
         print(f"[init] knobs from {args.knobs_json}: " + ", ".join(f"{kk}={v:g}" for kk, v in knobs.items()), flush=True)
     # llm_hparam supervises the LEARNER, not the reward: its knob namespace is the PPO
     # hyper-parameters, which are applied in this process and never sent to the workers.
+    reward_knobs = dict(knobs)                  # the (possibly --knobs_json-tuned) reward namespace
+    hparam_knobs = {"actor_lr": float(ppo_yaml["actor_lr"]), "critic_lr": float(ppo_yaml["critic_lr"]),
+                    "gae_lambda": float(args.gae_lambda if args.gae_lambda is not None else ppo_yaml["gae_lambda"]),
+                    "clip_range": float(ppo_yaml["clip_range"]), "entropy_coef": 0.0,
+                    "policy_std": float(np.exp(args.log_std_init if args.log_std_init is not None else -1.0))}
+    worker_fixed = {}                           # knobs the workers get that no supervisor may touch
     if args.supervisor in ("llm_hparam", "random_hparam"):
-        knobs = {"actor_lr": float(ppo_yaml["actor_lr"]), "critic_lr": float(ppo_yaml["critic_lr"]),
-                 "gae_lambda": float(args.gae_lambda if args.gae_lambda is not None else ppo_yaml["gae_lambda"]),
-                 "clip_range": float(ppo_yaml["clip_range"]), "entropy_coef": 0.0,
-                 "policy_std": float(np.exp(args.log_std_init if args.log_std_init is not None else -1.0))}
+        knobs = dict(hparam_knobs)
+        # the tuned reward weights / bounds still have to reach the workers (before 2026-09-12 they
+        # were silently replaced by the yaml defaults for these two arms: jhp3t / jrhp3t ran untuned)
+        worker_fixed = reward_knobs
+    elif args.supervisor == "llm_combo":
+        # one agent, both namespaces: the learner's hyper-parameters and the reward (weights and,
+        # through reward_code, its shape) — the two levers that were complementary in isolation
+        knobs = {**hparam_knobs, **reward_knobs}
     json.dump({**vars(args), "reward": cfg.reward, "ppo": ppo_yaml, "obs_dim": obs_dim, "knobs0": knobs,
                "episodes": [e.__dict__ for e in episodes], "eval_episodes": [e.__dict__ for e in eval_episodes],
                "curriculum_episodes": [e.__dict__ for e in cur_episodes]},
@@ -335,7 +346,7 @@ def main():
     relabel = float(cfg.turbine["rated_wind_ms"]) if OBJ == "J" else None
     base = baseline_metrics(baseline_dir(args.backend), eval_episodes, dt, wg_rated, relabel_wind=relabel)
     proposes = args.supervisor in ("random", "llm", "schedule", "schedule_comp")
-    forks = args.supervisor in ("llm_fork", "random_fork", "llm_hparam", "random_hparam", "llm_reward")
+    forks = args.supervisor in ("llm_fork", "random_fork", "llm_hparam", "random_hparam", "llm_reward", "llm_combo")
     use_rollback = args.supervisor != "none"
     use_twin = proposes and args.supervisor not in ("schedule", "schedule_comp") and not args.no_dry_run
     if use_twin and args.backend != "toy":
@@ -365,9 +376,10 @@ def main():
         # random_hparam = the same fork verification as llm_hparam with random candidates in the
         # hyper-parameter namespace: the control that separates the proposer from the search
         sup = RandomCandidateSupervisor(seed=args.seed, n_candidates=args.n_candidates)
-    elif args.supervisor in ("llm_hparam", "llm_reward"):
+    elif args.supervisor in ("llm_hparam", "llm_reward", "llm_combo"):
         from llm.client import LLMClient
-        cls = LLMHparamSupervisor if args.supervisor == "llm_hparam" else LLMRewardSupervisor
+        from llm.supervisor import LLMComboSupervisor
+        cls = {"llm_hparam": LLMHparamSupervisor, "llm_reward": LLMRewardSupervisor, "llm_combo": LLMComboSupervisor}[args.supervisor]
         sup = cls(LLMClient(out / "llm_transcript.jsonl", reasoning_effort=args.reasoning_effort),
                   n_candidates=args.n_candidates, objective=OBJ, reward_version=args.reward)
     elif args.supervisor == "schedule":
@@ -397,7 +409,7 @@ def main():
                 l.set_hparams(hp)
             if ipc_learner is not None:
                 ipc_learner.set_hparams({kk: v for kk, v in hp.items() if kk != "gae_lambda"})
-        return {kk: v for kk, v in knobs_.items() if kk not in HPARAM_KEYS}
+        return {**worker_fixed, **{kk: v for kk, v in knobs_.items() if kk not in HPARAM_KEYS}}
 
     def evaluate(pool_, base_, knobs_, ps=None) -> dict:
         ps = ps or policy_set()
@@ -656,6 +668,10 @@ def main():
                                 notes.append(f"reward_code rejected ({e}); kept the previous reward")
                                 if knobs.get("reward_code"):
                                     kc["reward_code"] = knobs["reward_code"]
+                        elif knobs.get("reward_code"):
+                            # a candidate that does not rewrite the reward (hold, or hparams only)
+                            # inherits the expression in use — before 2026-09-12 it silently reverted
+                            kc["reward_code"] = knobs["reward_code"]
                         learners_load(S0)
                         k = k0
                         for _ in range(args.fork_waves):

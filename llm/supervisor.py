@@ -464,6 +464,37 @@ REWARD_VARS_V3 = REWARD_VARS_V2.replace(
     "    (220*(p_ratio - 1) if region == 0 else -20*(d_wg/0.005)**2) - 1.0*load_t - 1.0*load_b - 0.1*act",
     "    (220*(p_ratio - 1) if region == 0 else 0) - (20*(d_wg/0.005)**2 if region_w == 1 else 0) - 1.0*load_t - 1.0*load_b - 0.1*act")
 
+COMBO_PROMPT = """You are a senior reinforcement-learning engineer supervising a PPO experiment on a
+wind-turbine pitch controller. Two residual PPO agents (one per operating region) add a collective
+pitch offset on top of a gain-scheduled PI baseline. You control BOTH the learner and its reward:
+  (a) the PPO hyper-parameters of both learners (actor_lr, critic_lr, gae_lambda, clip_range,
+      entropy_coef, policy_std), and
+  (b) the per-step reward: its weights (w_power, w_speed, lambda_tower, lambda_blade), the residual
+      bounds (dbeta_max_R2, dbeta_max_R3) and, if you provide "reward_code", the whole expression.
+The two levers do different things: the hyper-parameters set the credit-assignment window and the
+step size (they decide whether the learner can find a solution), the reward decides which solution
+it finds. Treat them as such: a candidate may change one lever, or both if you have a reason.
+
+Fixed context you must reason with:
+  * control step 10 ms, discount gamma = 0.998, episodes of 130 scored seconds (13000 steps);
+  * the advantage is GAE, so the effective credit-assignment window is 1/(1 - gamma*lambda) steps
+    = 10 ms / (1 - 0.998*lambda). At lambda = 0.98 that is 0.46 s; the tower fore-aft mode has a
+    period near 3 s and one rotor revolution at rated speed is 5 s;
+  * the critic regresses on standardised targets (v_loss near 1.0 = explains nothing);
+  * networks are 64x64 tanh MLPs, 10 epochs per update, batch 1024, grad-norm clip 0.5.
+
+{OBJECTIVE}
+
+{VARIABLES}
+If you give "reward_code", it replaces the parametric reward entirely (the weight knobs are then
+unused); a candidate without "reward_code" keeps the expression currently in use.
+
+Diagnostics in training_last_window: `<agent>/approx_kl`, `<agent>/clipfrac`, `<agent>/v_loss`,
+`<agent>/std`, pitch_rate_power_tower_band_frac (share of pitch-rate power in the 0.25-0.40 Hz
+tower band). Guidelines: never move a numeric knob by more than a factor of 3 per decision,
+respect the bounds, and use the decision history to avoid repeating moves that did not pay.
+"""
+
 CANDIDATES_TAIL = """
 You will propose K candidates instead of one. Each is trained for a short fork from the same
 checkpoint and evaluated on the ground-truth fitness on several wind seeds; the best fork is kept.
@@ -484,6 +515,50 @@ class LLMHparamSupervisor(LLMCandidateSupervisor):
         tail = CANDIDATES_TAIL.replace("FIELD", '"knobs": {...all the hyper-parameters...}')
         head = HPARAM_PROMPT.replace("{OBJECTIVE}", J_OBJECTIVE_TEXT if objective == "J" else F_OBJECTIVE_TEXT)
         self.system = head + tail.replace("K candidates", f"{n_candidates} candidates")
+
+
+class LLMComboSupervisor(LLMCandidateSupervisor):
+    """One agent over both namespaces: PPO hyper-parameters + reward (weights, bounds, expression).
+    Candidates carry "knobs" (any subset of the numeric knobs) and optionally "reward_code"."""
+    name = "llm_combo"
+
+    def __init__(self, client, n_candidates: int = 3, objective: str = "F", reward_version: str = "v1", **_kw):
+        LLMSupervisor.__init__(self, client)
+        self.K = n_candidates
+        tail = CANDIDATES_TAIL.replace("FIELD", '"knobs": {...the knobs you change...}, "reward_code": "<optional expression>"')
+        head = (COMBO_PROMPT
+                .replace("{OBJECTIVE}", J_OBJECTIVE_TEXT if objective == "J" else F_OBJECTIVE_TEXT)
+                .replace("{VARIABLES}", {"v2": REWARD_VARS_V2, "v3": REWARD_VARS_V3}.get(reward_version, REWARD_VARS_V1)))
+        self.system = head + tail.replace("K candidates", f"{n_candidates} candidates")
+
+    def propose_candidates(self, summary: dict) -> list[dict]:
+        user = (f"Current training summary and decision history with fork outcomes (JSON). Propose "
+                f"{self.K} candidates; each may change hyper-parameters, reward knobs, the reward "
+                f"expression, or several of these.\n\n" + json.dumps(summary, indent=1, ensure_ascii=False))
+        try:
+            out = self.client.ask_json(self.system, user, tag=f"decision_{summary.get('decision_index', 0)}")
+        except Exception as e:  # noqa: BLE001 - an API failure must not end the training run
+            return [{"style": "hold", "knobs": {}, "rationale": f"LLM call failed ({type(e).__name__}); kept everything"}]
+        cands = out.get("candidates") if isinstance(out, dict) else None
+        res = []
+        for c in (cands or []):
+            if not isinstance(c, dict):
+                continue
+            kn = dict(c.get("knobs") or {})
+            src = c.get("reward_code") or kn.get("reward_code")
+            kn.pop("reward_code", None)
+            if isinstance(src, str) and src.strip():
+                kn["reward_code"] = src.strip()
+            if not kn and c.get("style", "") != "hold":
+                continue
+            res.append({"style": str(c.get("style", "?")), "knobs": kn,
+                        "rationale": str(c.get("rationale", ""))[:200],
+                        "analysis": str(out.get("analysis", ""))[:400]})
+            if len(res) >= self.K:
+                break
+        if not res:
+            return [{"style": "hold", "knobs": {}, "rationale": f"no usable candidate in the reply: {str(out)[:160]}"}]
+        return res
 
 
 class LLMRewardSupervisor(LLMCandidateSupervisor):

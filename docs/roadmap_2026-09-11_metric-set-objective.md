@@ -350,7 +350,13 @@ search, 3 seeds, held-out:
    residual and the paper says so.
 
 **Step 2 result (2026-09-12 07:41).** The agentic arms re-run from the J-tuned default (reward v3,
-`configs/knobs_j_v3_tuned.json`), 3 seeds, held-out:
+`configs/knobs_j_v3_tuned.json`), 3 seeds, held-out. **Correction (12:40):** the two hyper-parameter
+arms of this table did *not* receive the tuned default — `--knobs_json` was applied to the reward
+namespace and then discarded when the hyper-parameter namespace replaced it, so `jhp3t` / `jrhp3t`
+ran on the untuned v3 weights (w_speed 20, λ 1, dbeta 0.05); their runs are renamed `jhp3u` /
+`jrhp3u` and their fair comparison is against `jg3` (4.60 / 5.96): +3.6 / +3.9 (llm) and +2.8 / +2.4
+(random). Fixed in train.py (`worker_fixed`); the tuned versions are re-run together with the
+combined agent (§12). `jg3t` and `jrw3t` were tuned as stated.
 
 | arm (reward v3, tuned default) | J S1+S2 | **J S3–S6** | **J S7–S10** | S3–S6 terms P / ω / T / B |
 |---|---|---|---|---|
@@ -438,3 +444,16 @@ step 2 point 2). That closes the fairness campaign.
    hyper-parameters, then reward shape). The RL does not beat the fixed model-based reference;
    its best seeds match it. n = 3 for the J arms is a proof of concept — extend to 5 before
    quoting the agentic differences as effects.
+
+## 12. Combined agent — hyper-parameters and reward in one supervisor (2026-09-12, user: paper centred on the agent)
+
+Decision: keep the agent as a *supervisor* of the RL learner and make the reward-shape lever
+rigorous. First step: `llm_combo` — one agent whose candidates may change the PPO hyper-parameters,
+the reward weights / bounds, and the reward expression (`LLMComboSupervisor`; a candidate without
+`reward_code` inherits the expression in use — before this fix a hold / hparams-only candidate
+silently reverted to the parametric reward). Rationale: in isolation the hyper-parameter lever
+repaired the learner (credit window) and the reward-code lever changed the solution's shape (all
+four terms positive); if the two are complementary the combined agent should approach the
+residual-channel MPC (12.0 / 11.6). Arms: `jcb3t` × 3 seeds, plus the corrected `jhp3t` / `jrhp3t`
+× 3 (tuned default this time). Then: n = 5 for `jrw3t` / `jg3t`, the agent-loop ablations
+(single-shot, objective-conditioning), see the plan agreed on 2026-09-12.
