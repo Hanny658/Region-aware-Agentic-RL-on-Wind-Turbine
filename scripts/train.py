@@ -109,6 +109,12 @@ def main():
     ap.add_argument("--reward", default="v1", choices=["v1", "v2", "v3"],
                     help="v2: quadratic (MSE-matched) speed term + tower AND blade load proxies "
                          "(configs/reward.yaml); v1 is the historical reward")
+    ap.add_argument("--sup_objective", default=None, choices=["F", "J"],
+                    help="ablation: the objective the SUPERVISOR is told about and shown (prompt text, "
+                         "evaluation_now, fork outcomes) — selection and rollback still use --objective")
+    ap.add_argument("--sup_once", action="store_true",
+                    help="ablation: the supervisor proposes once, at the first decision; its first "
+                         "candidate is applied without fork verification and it is never asked again")
     ap.add_argument("--knobs_json", default=None,
                     help="JSON file with initial knob values (reward weights / dbeta bounds) overriding the "
                          "yaml defaults — the J-tuned default of fairness step 2 (scripts/dev/tuned_knobs.py)")
@@ -198,6 +204,7 @@ def main():
     if args.reward in ("v2", "v3"):
         cfg.reward["version"] = args.reward      # v3 = v2 with the speed term gated by the wind label
     OBJ = args.objective
+    SUP_OBJ = args.sup_objective or OBJ        # what the agent reads; OBJ is what the run selects on
     if OBJ == "J":
         # the MSE terms of J are R3-only; label that subset by wind speed (controller-independent)
         # on every row, RL and reference controllers alike — routing still uses the oracle rule
@@ -363,13 +370,13 @@ def main():
         from llm.client import LLMClient
         sup = LLMSupervisor(LLMClient(out / "llm_transcript.jsonl", reasoning_effort=args.reasoning_effort),
                             load_signal=cfg.reward.get("load_signal", "M_oop"), fitness_target=fitness_target,
-                            objective=OBJ, reward_version=args.reward)
+                            objective=SUP_OBJ, reward_version=args.reward)
     elif args.supervisor == "llm_fork":
         from llm.client import LLMClient
         sup = LLMCandidateSupervisor(LLMClient(out / "llm_transcript.jsonl", reasoning_effort=args.reasoning_effort),
                                      n_candidates=args.n_candidates,
                                      load_signal=cfg.reward.get("load_signal", "M_oop"), fitness_target=fitness_target,
-                                     objective=OBJ, reward_version=args.reward)
+                                     objective=SUP_OBJ, reward_version=args.reward)
     elif args.supervisor == "random":
         sup = RandomSupervisor(seed=args.seed)
     elif args.supervisor in ("random_fork", "random_hparam"):
@@ -381,7 +388,7 @@ def main():
         from llm.supervisor import LLMComboSupervisor
         cls = {"llm_hparam": LLMHparamSupervisor, "llm_reward": LLMRewardSupervisor, "llm_combo": LLMComboSupervisor}[args.supervisor]
         sup = cls(LLMClient(out / "llm_transcript.jsonl", reasoning_effort=args.reasoning_effort),
-                  n_candidates=args.n_candidates, objective=OBJ, reward_version=args.reward)
+                  n_candidates=args.n_candidates, objective=SUP_OBJ, reward_version=args.reward)
     elif args.supervisor == "schedule":
         sup = ScheduleSupervisor(args.knob_schedule)
     elif args.supervisor == "schedule_comp":
@@ -420,6 +427,9 @@ def main():
         fit_ = fitness(pool_.run(jobs), base_, target=(fitness_target if pool_ is pool else "blade"))
         fit_["_objective"] = OBJ
         return fit_
+
+    def sup_score(f: dict) -> float:
+        return float(f[SUP_OBJ])
 
     def score(f: dict) -> float:
         """The selection scalar: J or F. `best["F"]` and ckpt_best["F"] hold this score whatever the
@@ -616,7 +626,7 @@ def main():
                        "per_episode": fit["per_episode"]}
                 # outcome of the previous decision
                 if history:
-                    history[-1]["F_after"] = score(fit)
+                    history[-1]["F_after"] = sup_score(fit)
                     history[-1]["outcome"] = {kk: fit[kk] for kk in ("del_red_pct", "energy_loss_pct", "speed_std_ratio")}
                 # guardrail (Lakhani-style supervisor): if F fell by > rollback_drop below the best evaluation
                 # so far, restore the best state (knobs + policies) and continue from there
@@ -646,8 +656,36 @@ def main():
                 print(f"[eval] ep {k}: {OBJ}={score(fit):.2f} F={fit['F']:.2f} DELred={fit['del_red_pct']:.2f}% "
                       f"Eloss={fit['energy_loss_pct']:.2f}% spd={fit['speed_std_ratio']:.3f} "
                       f"tier={fit.get('tier', '?')} F_tol2={fit.get('F_tol2', float('nan')):.2f} ({rec['wall_eval_s']:.0f}s)", flush=True)
-                if forks and k < args.episodes:
-                    summary = build_summary(decision_index, k, args.episodes, knobs, fit,
+                if forks and args.sup_once:
+                    # ablation: one proposal, applied blind, at the first decision; then the run is a guard
+                    if decision_index == 1:
+                        summary = build_summary(decision_index, k, args.episodes, knobs, dict(fit, _objective=SUP_OBJ),
+                                                train_window_stats(window_start), history, args.backend, args.method,
+                                                trends=train_trends(window_start))
+                        t0 = time.time()
+                        c = (sup.propose_candidates(summary) or [{"style": "hold", "knobs": {}}])[0]
+                        kc, notes = clamp_proposal(c.get("knobs", {}), knobs)
+                        src = (c.get("knobs") or {}).get("reward_code")
+                        if src:
+                            try:
+                                compile_reward_code(src, version=args.reward)
+                                kc["reward_code"] = src
+                            except ValueError as e:
+                                notes.append(f"reward_code rejected ({e}); kept the previous reward")
+                        knobs = kc
+                        apply_knobs(knobs)
+                        rec["once"] = {"style": c.get("style"), "knobs": dict(knobs), "notes": notes,
+                                       "rationale": str(c.get("rationale", ""))[:300]}
+                        rec["wall_supervise_s"] = time.time() - t0
+                        history.append({"decision": decision_index, "episode": k, "knobs": dict(knobs), "accepted": True,
+                                        "chosen_style": c.get("style"), "F_before": sup_score(fit),
+                                        "rationale": str(c.get("rationale", ""))[:300]})
+                        print(f"[sup ] {sup.name} (once): {c.get('style')} applied blind; knobs "
+                              + ", ".join(f"{kk}={_knob_str(v)}" for kk, v in knobs.items()) + (f" notes={notes}" if notes else ""), flush=True)
+                    window_start = k
+                    next_decision_at = k + args.supervise_every
+                elif forks and k < args.episodes:
+                    summary = build_summary(decision_index, k, args.episodes, knobs, dict(fit, _objective=SUP_OBJ),
                                             train_window_stats(window_start), history, args.backend, args.method,
                                             trends=train_trends(window_start))
                     t0 = time.time()
@@ -699,8 +737,8 @@ def main():
                     rec["analysis"] = cands[0].get("analysis", "") if cands else ""
                     rec["wall_supervise_s"] = time.time() - t0
                     history.append({"decision": decision_index, "episode": k, "knobs": dict(knobs), "accepted": True,
-                                    "chosen_style": best_c["style"], "F_before": score(fit),
-                                    "candidates": [{"style": o_["style"], "knobs": o_["knobs"], "F": score(o_["fit"]),
+                                    "chosen_style": best_c["style"], "F_before": sup_score(fit),
+                                    "candidates": [{"style": o_["style"], "knobs": o_["knobs"], "F": sup_score(o_["fit"]),
                                                     "tier": o_["fit"].get("tier"), "del_red_pct": o_["fit"]["del_red_pct"],
                                                     "speed_std_ratio": o_["fit"]["speed_std_ratio"],
                                                     "energy_loss_pct": o_["fit"]["energy_loss_pct"],
@@ -712,7 +750,7 @@ def main():
                     window_start = k
                     next_decision_at = k + args.supervise_every
                 elif proposes and k < args.episodes:
-                    summary = build_summary(decision_index, k, args.episodes, knobs, fit,
+                    summary = build_summary(decision_index, k, args.episodes, knobs, dict(fit, _objective=SUP_OBJ),
                                             train_window_stats(window_start), history, args.backend, args.method,
                                             trends=train_trends(window_start))
                     t0 = time.time()
@@ -741,7 +779,7 @@ def main():
                         knobs = new_knobs
                     history.append({"decision": decision_index, "episode": k, "knobs": dict(knobs),
                                     "accepted": accepted, "changed": {kk: v[1] for kk, v in changed.items()},
-                                    "F_before": score(fit), "rationale": str(proposal.get("rationale", ""))[:300]})
+                                    "F_before": sup_score(fit), "rationale": str(proposal.get("rationale", ""))[:300]})
                     print(f"[sup ] {sup.name}: " + (", ".join(f"{kk}: {_knob_str(a)}->{_knob_str(b)}" for kk, (a, b) in changed.items())
                                                   if changed else "no change")
                           + ("" if accepted else "  [REJECTED]") + f" | {str(proposal.get('rationale', ''))[:160]}",
