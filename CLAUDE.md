@@ -17,30 +17,35 @@ because it bounds the supervision claim. **Do not describe research directions b
 in this repo's docs, commits or manuscripts. The IPC/torque code paths stay in the tree (inert at
 `--ipc_max 0` / `--dtau_max 0`) because run configs reference them.
 
-## Final state (campaigns complete; manuscript in preparation)
-- Headline (revised 2026-09-09 after redoing everything on ONE wind bank, roadmap §21): the
-  **proposer** is what matters — llm_fork 17.89 ± 2.02 (7 seeds) beats random_fork 12.36 ± 5.30 in
-  7/7 seeds (paired t p = 0.0196, exact permutation p = 0.0156) and guard 13.93 ± 2.29 (p = 0.041).
-  **Fork verification adds nothing on top of a good proposer** (single-proposal LLM 17.92 ± 1.57,
-  p = 0.76 vs llm_fork), and "unverified LLM supervision is harmful" does NOT replicate. The old
-  §13 "all supervised variants are tied" came from pairing seeds across two wind banks (caveat C1).
-  F1 restated (§22): mono matches spec on load (p = 0.96) but runs at **+0.05 speed-std ratio** in
-  10/10 seeds across two disjoint wind sets (p = 0.0202 / 0.0066) — report that paired ratio, NOT
-  the tier count, which flips (mono 0/5 strict on S3-S6, 4/5 on S7-S10) because those realisations
-  shift every controller's ratio by ~0.05. Mechanism in §21b (`scripts/dev/fork_analysis.py`).
-- **All of it replicates on a second disjoint held-out set** (S7-S10, §22): every paired comparison
-  keeps sign, significance and effect size; absolute F drops 1.4-2.2 for every arm.
-- Baselines: LPV-MPC (§16) wins speed regulation at 150 s and loses tower DEL (−17.6 %), but its
-  advantage is window-dependent — at 600 s its speed ratio crosses 1.0 (§19) — and it is negative in
-  every stress class (§17). ROSCO's own tower damper reaches no strict configuration at any gain
-  (§18). Every supervised spec variant Pareto-dominates both. R2 torque residual: clear seed-paired
-  negative (§15). Robustness: the residual's tower gain is invariant TI8→TI22 and 41/42 stress
-  evaluations stay strict, but it vanishes at U18 (no R2 to peak-shave) (§17).
-- Data: run artifacts, wind bank and paired GSPI baselines live in WSL at
-  `~/wtrl/{exp,wind,baselines/openfast}`, with a copy outside the repo at `../wtrl-data/`.
-  Derived tables are in `docs/tables/` (rebuild: `scripts/dev/build_tables.py`); provenance, the run
-  inventory and the reporting caveats C1–C12 are in `docs/RESULTS_2026-09-10_data-and-caveats.md`.
-  **Never regenerate the wind bank**, or historical F values stop being seed-paired (caveat C1).
+## Final state (2026-09-12; manuscript in preparation)
+Objective: **J** = mean of the baseline paper's four % reductions vs paired GSPI (power MSE,
+gen-speed MSE, tower DEL, blade DEL; per-episode clipped ±100), −20 per % energy loss over 1 %, no
+tiers, wind-labelled R3 subsets (`docs/roadmap_2026-09-11_metric-set-objective.md`, decisions D1–D6).
+F (tower-DEL priority with constraint tiers) stays computable for the historical tables.
+- **The model-based reference is the strongest controller on J**: the 3-state LPV-MPC with its cost
+  re-scaled so the tower term works (`--scale v2`, qt = 3) scores 12.4 / 14.1 on the two held-out
+  sets wide-open and **12.0 / 11.6 through the RL's own ±2.9° residual channel**, every term
+  positive, F strict 15.8 / 18.3. The F-era "MPC loses tower DEL −17.6 %" (§16) was a cost-scaling
+  artefact (speed term O(1e-5) vs tower term O(1)). The tower damper and the regulation-only MPC are
+  below GSPI on J.
+- **RL under J, fair default** (reward v3 = speed term gated by the wind label; weights J-tuned;
+  n = 3 each): guard 5.8 / 6.8, llm_hparam 8.2 / 9.9, random_hparam 7.4 / 8.3, llm_reward 8.3 / 9.2.
+  Agentic gains are +1.5…+3 J (not significant at n = 3); the LLM proposer equals random search in
+  the hyper-parameter namespace; **llm_reward is the only RL arm positive on all four terms**
+  (saturated speed term, centred bounded load terms — a change of reward shape the weight search
+  cannot reach). Best RL seeds match the residual-channel MPC; means are ≈ 3 J behind.
+- **Objective decides the lever** (roadmap v2 §9 vs 08-30 §21): on F the reward-weight *proposer*
+  mattered (llm_fork > random_fork 7/7); on J the untuned default collapsed into a rollback loop
+  (12.5 m/s speed-MSE), hyper-parameter search repaired it (+6…+8, proposer-agnostic), and once the
+  default is fixed the effect shrinks. Mechanism chain: critic scale (`--value_norm`), credit window
+  (γλ), reward gating by the objective's own subset.
+- F-era headline, kept as history (08-30 roadmap §21–§23, REPORT_2026-09-01): llm_fork 17.89 ± 2.02
+  (7 seeds) > random_fork 12.36 ± 5.30 in 7/7 seeds (exact p = 0.0156); fork verification adds nothing
+  on top of the LLM proposer; every paired comparison replicates on S7–S10; F1 = mono runs at +0.05
+  speed-std ratio in 10/10 seeds. All of it is one wind bank (caveat C1); never regenerate it.
+- Data: WSL `~/wtrl/{exp,wind,baselines/openfast}`, copy at `../wtrl-data/`; J tables via
+  `scripts/dev/j_table.py [--csv]`, F-era tables in `docs/tables/` (`scripts/dev/build_tables.py`);
+  provenance and caveats C1–C12 in `docs/RESULTS_2026-09-10_data-and-caveats.md`.
 
 ## Environment / how to run
 - Linux/WSL: `WTRL_SKIP_WIND=1 bash scripts/wsl/bootstrap.sh` from the repo root inside WSL

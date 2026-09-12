@@ -33,7 +33,9 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--arms", nargs="+", default=["jg2", "jg1", "jhp", "jrhp", "jrw"])
 ap.add_argument("--ref", default="jg2")
 ap.add_argument("--seeds", nargs="+", type=int, default=None)
+ap.add_argument("--csv", default=None, help="also write per-run rows + arm aggregates + paired tests to this CSV")
 a = ap.parse_args()
+csv_rows = []
 
 runs = {}   # (arm, seed) -> dict
 for arm in a.arms:
@@ -57,6 +59,14 @@ for (arm, seed), r in sorted(runs.items(), key=lambda kv: (a.arms.index(kv[0][0]
         cells.append(f"{j['J']:7.2f} {j['J_power_mse_red_pct']:6.1f} {j['J_gen_speed_mse_red_pct']:6.1f} "
                      f"{j['J_TwrBsMyt_DEL_red_pct']:6.1f} {j['J_RootMyc1_DEL_red_pct']:6.1f} {j['energy_loss_pct']:5.2f}" if j else f"{'-':>41}")
     print(" | ".join(cells))
+    rec = {"kind": "run", "run": f"{arm}_s{seed}", "arm": arm, "label": LABEL.get(arm, arm), "seed": seed, "J_train_S1S2": round(r["train"], 3)}
+    for k in TAGS:
+        j = r.get(k)
+        if j:
+            rec |= {f"J_{k}": round(j["J"], 3), f"P_{k}": round(j["J_power_mse_red_pct"], 2), f"w_{k}": round(j["J_gen_speed_mse_red_pct"], 2),
+                    f"T_{k}": round(j["J_TwrBsMyt_DEL_red_pct"], 2), f"B_{k}": round(j["J_RootMyc1_DEL_red_pct"], 2),
+                    f"E_{k}": round(j["energy_loss_pct"], 3), f"F_{k}": round(j["F"], 3)}
+    csv_rows.append(rec)
 
 print(f"\n{'arm':>34} {'n':>2} {'J_S1S2':>12} {'J_S3-S6':>12} {'J_S7-S10':>12} {'P_S3-6':>7} {'w_S3-6':>7} {'T_S3-6':>7} {'B_S3-6':>7}")
 for arm in a.arms:
@@ -69,6 +79,12 @@ for arm in a.arms:
     def term(key):
         v = [r["S3-S6"][key] for r in rs if "S3-S6" in r]
         return f"{mean(v):7.1f}" if v else f"{'-':>7}"
+    csv_rows.append({"kind": "arm", "arm": arm, "label": LABEL.get(arm, arm), "n": len(rs),
+                     "J_train_S1S2": ms([r["train"] for r in rs]).strip(),
+                     "J_S3-S6": ms([r["S3-S6"]["J"] for r in rs if "S3-S6" in r]).strip(),
+                     "J_S7-S10": ms([r["S7-S10"]["J"] for r in rs if "S7-S10" in r]).strip(),
+                     "P_S3-S6": term("J_power_mse_red_pct").strip(), "w_S3-S6": term("J_gen_speed_mse_red_pct").strip(),
+                     "T_S3-S6": term("J_TwrBsMyt_DEL_red_pct").strip(), "B_S3-S6": term("J_RootMyc1_DEL_red_pct").strip()})
     print(f"{LABEL.get(arm, arm):>34} {len(rs):2d} {ms([r['train'] for r in rs]):>12} "
           f"{ms([r['S3-S6']['J'] for r in rs if 'S3-S6' in r]):>12} {ms([r['S7-S10']['J'] for r in rs if 'S7-S10' in r]):>12} "
           f"{term('J_power_mse_red_pct')} {term('J_gen_speed_mse_red_pct')} {term('J_TwrBsMyt_DEL_red_pct')} {term('J_RootMyc1_DEL_red_pct')}")
@@ -83,3 +99,13 @@ for x, y in pairs:
             continue
         wins = sum(1 for v in d if v > 0)
         print(f"  {x:>5} - {y:<5} {k:>6}: mean {mean(d):+6.2f}  wins {wins}/{len(d)}  exact p {perm_p(d):.3f}  paired-t p {paired_t(d):.3f}  diffs {[round(v, 1) for v in d]}")
+        csv_rows.append({"kind": "paired", "comparison": f"{x} - {y}", "wind_set": k, "n": len(d), "mean_diff": round(mean(d), 3),
+                         "wins": wins, "exact_p": round(perm_p(d), 4), "paired_t_p": round(paired_t(d), 4), "diffs": " ".join(f"{v:.2f}" for v in d)})
+if a.csv:
+    import csv as _csv
+    keys = []
+    for r in csv_rows:
+        keys += [k for k in r if k not in keys]
+    with open(os.path.expanduser(a.csv), "w", newline="", encoding="utf-8") as f:
+        w = _csv.DictWriter(f, fieldnames=keys); w.writeheader(); w.writerows(csv_rows)
+    print("->", a.csv)
