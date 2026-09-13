@@ -95,6 +95,9 @@ def main():
     ap.add_argument("--wc_v", nargs="+", type=float, default=[0.25], help="wind LPF corner(s) [rad/s]")
     ap.add_argument("--r", nargs="+", type=float, default=[1.0], help="pitch-rate weight(s); >1 value = sweep")
     ap.add_argument("--fitness_target", default="tower", choices=["tower", "blade"])
+    ap.add_argument("--mm_cp", type=float, default=1.0, help="model mismatch: Cp/Ct scale in the controller model")
+    ap.add_argument("--mm_ft", type=float, default=1.0, help="model mismatch: tower frequency scale in the controller model")
+    ap.add_argument("--mm_m", type=float, default=1.0, help="model mismatch: tower modal-mass scale in the controller model")
     ap.add_argument("--residual", action="store_true",
                     help="drive the plant through the RL agents' bounded, damped residual channel "
                          "(same authority as the RL) instead of the wide-open channel")
@@ -126,8 +129,10 @@ def main():
     from itertools import product
     scale_kw = dict(err_ref=0.005, dbeta_ref=0.002) if args.scale == "v2" else {}
     for N_h, r_w, qt_w, wcv in product(args.horizon, args.r, args.qt, args.wc_v):
-        mpc_kw = dict(horizon=N_h, ts=args.ts, q=args.q, r=r_w, qt=qt_w, wc_v=wcv, **scale_kw)
-        rtag = f"{args.tag}_N{N_h}q{args.q:g}r{r_w:g}qt{qt_w:g}w{wcv:g}"
+        mpc_kw = dict(horizon=N_h, ts=args.ts, q=args.q, r=r_w, qt=qt_w, wc_v=wcv, **scale_kw,
+                      cp_scale=args.mm_cp, ftower_scale=args.mm_ft, mass_scale=args.mm_m)
+        mm = "" if (args.mm_cp, args.mm_ft, args.mm_m) == (1.0, 1.0, 1.0) else f"_cp{args.mm_cp:g}ft{args.mm_ft:g}m{args.mm_m:g}"
+        rtag = f"{args.tag}_N{N_h}q{args.q:g}r{r_w:g}qt{qt_w:g}w{wcv:g}{mm}"
         if (out / f"eval_{rtag}.json").exists():      # grids are resumable: a finished point is kept
             print(f"mpc [{rtag}] skip (exists)", flush=True)
             continue

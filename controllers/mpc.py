@@ -38,7 +38,8 @@ M_MODAL = 4.37e5             # kg: rotor+nacelle (350 t) + 0.25 x tower mass (34
 class LPVMPC:
     def __init__(self, tb: dict, cp_table_path: str, horizon: int = 20, ts: float = 0.1,
                  q: float = 1.0, r: float = 1.0, qt: float = 0.0, wc_v: float = 0.25,
-                 err_ref: float = 1.0, dbeta_ref: float = 0.1, xd_ref: float = 0.2):
+                 err_ref: float = 1.0, dbeta_ref: float = 0.1, xd_ref: float = 0.2,
+                 cp_scale: float = 1.0, ftower_scale: float = 1.0, mass_scale: float = 1.0):
         import osqp
         import scipy.sparse as sp
         from scipy.linalg import expm
@@ -56,8 +57,13 @@ class LPVMPC:
         self.N, self.Ts = int(horizon), float(ts)
         self.q, self.r, self.qt = float(q), float(r), float(qt)
         self.err_ref, self.dbeta_ref, self.xd_ref = float(err_ref), float(dbeta_ref), float(xd_ref)
-        self.k_t = M_MODAL * (2 * np.pi * F1_TOWER_HZ) ** 2
-        self.c_t = 2 * ZETA_STRUCT * M_MODAL * (2 * np.pi * F1_TOWER_HZ)
+        # model-mismatch study (2026-09-13): the controller's model may deviate from the plant in
+        # aerodynamic efficiency (Cp/Ct scale), tower frequency and modal mass; the plant is unchanged
+        self.cp_scale = float(cp_scale)
+        self.m_t = M_MODAL * float(mass_scale)
+        f1 = F1_TOWER_HZ * float(ftower_scale)
+        self.k_t = self.m_t * (2 * np.pi * f1) ** 2
+        self.c_t = 2 * ZETA_STRUCT * self.m_t * (2 * np.pi * f1)
         # tower state estimator (leaky double integration of measured fa_acc)
         self.leak = 2 * np.pi * 0.03
         self.xd_hat = 0.0
@@ -89,8 +95,8 @@ class LPVMPC:
         v = max(v, 0.5)
         lam = np.clip(w * self.R / v, 1e-3, 25.0)
         A = 0.5 * self.rho * np.pi * self.R ** 2
-        cp = self.Cp(np.rad2deg(beta_rad), lam)
-        ct = self.Ct(np.rad2deg(beta_rad), lam)
+        cp = self.Cp(np.rad2deg(beta_rad), lam) * self.cp_scale
+        ct = self.Ct(np.rad2deg(beta_rad), lam) * self.cp_scale
         return A * cp * v ** 3 / max(w, 0.05), A * ct * v ** 2
 
     def solve(self, w: float, beta: float, v_est: float, floor: float) -> float:
@@ -112,7 +118,7 @@ class LPVMPC:
         Tg0 = min(K_lss * w * w, self.tq_rated_lss)
         Tgw = 2 * K_lss * w if w < 0.98 * self.w_rated else 0.0
         # states s = [w, x, xd] (absolute), input beta:  ds/dt = Ac s + Bc beta + cc
-        J, m = self.J, M_MODAL
+        J, m = self.J, self.m_t
         Ac = np.array([[(Tw - Tgw) / J, 0.0, -Tv / J],
                        [0.0, 0.0, 1.0],
                        [Fw / m, -self.k_t / m, -(self.c_t + Fv) / m]])
