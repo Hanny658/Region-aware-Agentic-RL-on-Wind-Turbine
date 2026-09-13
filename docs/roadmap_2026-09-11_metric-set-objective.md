@@ -566,3 +566,25 @@ to aerodynamic-model error**: +-15 % on Cp/Ct takes it from 12 to GSPI level or 
 over the RL arms is therefore a *perfect-aero-model* ceiling: the manuscript's reference row is
 "LPV-MPC with an exact aerodynamic model", and the model-error rows go in the same table.
 `docs/manuscript/figures/fig4_reference.png` (b).
+
+## 16. Overnight supplements (2026-09-14): A ablations to n = 5, C aero-model error at +-5 %
+
+**A (03:00).** Seeds 3-4 added to the told-F and single-shot arms (tuned v3 default), held-out:
+
+| arm | n | J S3-S6 | J S7-S10 | S3-S6 P / w / T / B | all-positive seeds | vs guard (n = 5) |
+|---|---|---|---|---|---|---|
+| guard (`jg3t`) | 5 | 4.86 +- 2.76 | 5.50 +- 2.09 | 17.4 / 19.0 / -17.6 / 0.7 | 0/5 | - |
+| llm_reward, told J (`jrw3t`, s13) | 5 | 5.30 +- 4.17 | 6.04 +- 4.28 | 6.8 / 10.1 / +1.5 / 2.7 | 3/5 | +0.4 / +0.5 (3/5, p 0.75 / 0.69) |
+| llm_reward, told F, J selects (`jrwF3t`) | 5 | 7.00 +- 2.12 | 8.33 +- 2.38 | 9.5 / 14.6 / +0.9 / 3.0 | 3/5 | +2.1 / +2.8 (4/5, exact p 0.31 / 0.19, t p 0.26 / 0.10) |
+| llm_reward, single blind proposal (`jrwO3t`) | 5 | 4.97 +- 1.90 | 6.66 +- 2.75 | 11.6 / 13.3 / -5.5 / 0.5 | 1/5 | +0.1 / +1.2 (2/5, 3/5; p ~ 1) |
+
+The n = 3 picture survives in kind, not in size: the prompt's objective still does not matter
+(told F is, if anything, the better arm: 4/5 wins, the only RL arm with a positive tower mean),
+and the loop still does (single-shot 1/5 all-positive, level = guard). Pooled over the two
+looped arms (told J + told F, n = 10, same agent, same loop): all-positive 6/10, paired
++1.3 / +1.7 J vs guard; without the loop 1/5; guard 0/5.
+
+**C (02:57).** MPC-v2 (residual channel) with the aerodynamic model off by +-5 %: Cp/Ct x0.95 ->
+J 5.42 (P +1.4, w +7.8, T +8.3), x1.05 -> J 3.10 (P -9.1, w -0.1, T +17.0). Even a 5 % aero
+error halves to quarters the MPC's J; with +-15 % it is at or below GSPI (s15). The reference
+row is a perfect-aero-model ceiling in the strict sense.

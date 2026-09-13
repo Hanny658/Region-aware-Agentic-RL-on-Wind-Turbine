@@ -311,7 +311,8 @@ def fig_reference():
     # (b) MPC model mismatch and stress classes
     ax = axes[1]
     base = "eval_mmJ2r_s3456_N20q1r0.3qt3w0.35"
-    variants = [("", "exact model"), ("_cp0.85ft1m1", "Cp/Ct ×0.85"), ("_cp1.15ft1m1", "Cp/Ct ×1.15"),
+    variants = [("", "exact model"), ("_cp0.85ft1m1", "Cp/Ct ×0.85"), ("_cp0.95ft1m1", "Cp/Ct ×0.95"),
+                ("_cp1.05ft1m1", "Cp/Ct ×1.05"), ("_cp1.15ft1m1", "Cp/Ct ×1.15"),
                 ("_cp1ft0.9m1", "tower f ×0.9"), ("_cp1ft1.1m1", "tower f ×1.1"), ("_cp1ft1m0.8", "modal mass ×0.8"), ("_cp1ft1m1.2", "modal mass ×1.2")]
     labels, vals = [], []
     for suf, lab in variants:
