@@ -240,9 +240,10 @@ Three observations.
    (F 20.7 vs J −0.1 on one), and J won each time because J selects. Asked once and applied
    blind, the same agent is the guard (4.7 / 6.1, 0/3 all-positive): its first expressions are
    of the right family, but without verification two of three seeds keep the guard's tower
-   trade. Combining the reward lever with the hyper-parameter lever in one agent is worse than
-   the reward lever alone (6.3 / 8.1, 0/3): the combined agent raised learning rates and wrote
-   quadratic terms with linear load penalties — one question per agent is the better design.
+   trade. Combining the reward lever with the hyper-parameter lever in one agent loses the
+   composition effect (6.3 / 8.1 on J, but 0/3 all-positive, tower −8 %): the combined agent
+   raised learning rates and wrote quadratic terms with linear load penalties — one question per
+   agent is the better design.
 
 ### 3.4 The reference: a model-based ceiling, and what it is conditional on (Fig. 4)
 
