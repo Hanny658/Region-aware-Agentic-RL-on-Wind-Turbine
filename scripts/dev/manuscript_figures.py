@@ -329,8 +329,11 @@ def fig_reference():
     ax.axvline(0, color="k", lw=0.6); ax.set_xlabel("J, LPV-MPC (residual channel)")
     ax.set_title("(b) LPV-MPC: model error, off-design winds")
     for i, v in enumerate(vals):
-        ax.annotate(f"{v:.1f}", (v, i), textcoords="offset points", xytext=(4 if v >= 0 else -4, 0),
-                    ha="left" if v >= 0 else "right", va="center", fontsize=7)
+        if v >= 0:
+            ax.annotate(f"{v:.1f}", (v, i), textcoords="offset points", xytext=(4, 0), ha="left", va="center", fontsize=7)
+        else:
+            ax.annotate(f"{v:.1f}", (min(v + 0.5, -0.5), i), textcoords="offset points", xytext=(3, 0), ha="left",
+                        va="center", fontsize=7, color="white" if v < -6 else "black")
     fig.tight_layout()
     fig.savefig(os.path.join(a.out, "fig4_reference.png"))
     plt.close(fig)
