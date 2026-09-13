@@ -71,6 +71,8 @@ wind speed (`docs/roadmap_2026-09-11_metric-set-objective.md`). Held-out on two 
 | **LPV-MPC, tower term active, through the RL's ±2.9° residual channel** | **11.97** | **11.61** | 8.5 / 20.5 / 13.2 / 5.6 |
 | LPV-MPC, same cost, wide-open channel | 12.40 | 14.10 | 8.9 / 19.8 / 15.8 / 5.1 |
 | llm_reward (LLM-written reward, reward v3, J-tuned default; n = 5) | 5.30 ± 4.17 | 6.04 ± 4.28 | 6.8 / 10.1 / **+1.5** / **2.7** (3/5 seeds all-positive) |
+| llm_reward told F while J selects (ablation) | 8.58 ± 0.59 | 9.89 ± 0.31 | 10.0 / 16.6 / 3.5 / 4.3 (2/3 all-positive) |
+| llm_reward single blind proposal, no fork loop (ablation) | 4.70 ± 2.34 | 6.14 ± 2.33 | 14.4 / 14.0 / −8.6 / −1.0 |
 | llm_combo (hyper-parameters + reward in one agent) | 6.28 ± 1.95 | 8.07 ± 1.12 | 15.9 / 16.4 / −8.1 / 0.9 |
 | llm_hparam (LLM tunes PPO hyper-parameters, tuned default) | 5.26 ± 2.39 | 7.13 ± 3.05 | 17.1 / 20.7 / −18.1 / 1.2 |
 | random_hparam (same fork search, random candidates, tuned default) | 4.93 ± 2.02 | 5.96 ± 2.17 | 15.1 / 17.0 / −13.2 / 0.8 |
@@ -93,7 +95,9 @@ What changed relative to the F-era results below:
   additive; reward code +0.4 / +0.5 at n = 5, p ≈ 0.7), but the LLM-written reward is the only RL
   variant that reaches the balanced solution (all four terms positive, 3 of 5 seeds; a saturated
   speed term and centred, bounded load terms) — a solution the weight search, a heavier tower
-  weight λ_T ∈ {3, 10, 30}, the hyper-parameter search and the combined agent never reach.
+  weight λ_T ∈ {3, 10, 30}, the hyper-parameter search and the combined agent never reach. Ablations:
+  the objective text the agent is told does not matter (told F, selected by J: same shapes, same
+  result), the verification loop does (a single blind proposal is the guard).
 - Tables: `docs/tables/table_J_stage3.csv`, `table_J_fairness.csv` (`scripts/dev/j_table.py --csv`).
 
 ## Headline results under F (CPC + region-aware, held-out wind S3–S6, best checkpoint) — historical

@@ -511,3 +511,34 @@ equal J. Seed 4 wrote a reward that let the 12.5 m/s regulation collapse through
 failure mode) — the agent is a capability, not a guarantee, and its reliability at n = 5 is 3/5.
 
 `docs/tables/table_J_n5.csv`.
+
+## 14. Agent-loop ablations of the reward-code agent (2026-09-13 11:04; n = 3, tuned v3 default)
+
+| arm | what differs | J S1+S2 | J S3–S6 | J S7–S10 | S3–S6 P / ω / T / B | all-positive seeds |
+|---|---|---|---|---|---|---|
+| guard (`jg3t`, s0–2) | no agent | 8.22 ± 2.40 | 5.76 ± 1.76 | 6.81 ± 1.29 | 18.2 / 21.1 / −17.3 / 1.1 | 0/3 |
+| llm_reward (`jrw3t`, s0–2) | full loop, told J | 13.13 ± 1.44 | 8.30 ± 1.93 | 9.17 ± 1.13 | 9.3 / 15.7 / 4.3 / 3.9 | 3/3 |
+| **told F, J selects** (`jrwF3t`) | prompt, evaluation_now and fork outcomes show **F**; checkpoint / fork / rollback use J | 11.39 ± 1.43 | **8.58 ± 0.59** | **9.89 ± 0.31** | 10.0 / 16.6 / 3.5 / 4.3 | 2/3 |
+| **single blind proposal** (`jrwO3t`) | one call at decision 1, applied without a fork, no history afterwards | 8.79 ± 1.98 | 4.70 ± 2.34 | 6.14 ± 2.33 | 14.4 / 14.0 / −8.6 / −1.0 | 0/3 |
+
+Paired vs guard (S3–S6 / S7–S10): told-F +2.8 / +3.1 (3/3, t p = 0.16 / 0.11); single-shot
+−1.1 / −0.7 (1/3). Paired vs the J-told agent: told-F +0.3 / +0.7 (inside noise).
+
+1. **The objective text the agent reads does not matter.** Told F — a tower-priority objective
+   with a speed *constraint* — the agent wrote the same saturated-speed / bounded-load shapes
+   (`tanh(d_wg/.005)**2`, `tanh((1−load)/(1+load))`, `min(load, 3)`) and, with J doing the
+   selection, landed on the balanced solution as often and with a third of the variance. The
+   fork picks show it choosing between candidates whose F and J disagreed (e.g. F 20.7 vs J −0.1)
+   — J won every time because J does the selecting. The agent's contribution is a *structural
+   prior* on reward shape; the objective is enforced by the verification loop, not by the prompt.
+2. **The loop is what makes the prior pay.** The same agent asked once, applied blind, is the
+   guard (4.7 / 6.1, tower −8.6 %): its first expressions are of the same family, but without
+   verification and iteration two of three seeds keep the guard's tower trade. Fork verification
+   against the objective, not the proposal, turns the prior into the balanced solution.
+3. Read with §13 (n = 5: no mean effect): the reward-code agent is a *shape prior plus a
+   verification loop*; the loop is necessary (single-shot fails), the prompt's objective is not
+   (told-F works), and the level gain over a tuned fixed reward is inside seed noise while the
+   composition change (all four terms positive) is what it reliably-enough produces (3/5, 2/3, 3/3
+   across the three arms that had the loop; 0/3 without it, 0/5 for the guard).
+
+`docs/tables/table_J_ablations.csv`. The two arms live in `campaign_j_core.sh` (`jrwF3t`, `jrwO3t`).

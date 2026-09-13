@@ -21,7 +21,8 @@ LABEL = {"jg2": "guard-v2 (fixed hparams, reward v2)", "jg1": "guard-v1 (reward 
          "jg3t": "guard-v3 tuned default", "jhp3t": "llm_hparam (v3, tuned)", "jrhp3t": "random_hparam (v3, tuned)",
          "jrw3t": "llm_reward (v3, tuned)", "jg3L3": "guard-v3 tuned, lambda_tower 3", "jg3L10": "guard-v3 tuned, lambda_tower 10",
          "jg3L30": "guard-v3 tuned, lambda_tower 30", "jcb3t": "llm_combo (hparams + reward, v3, tuned)",
-         "jhp3u": "llm_hparam (v3, untuned default)", "jrhp3u": "random_hparam (v3, untuned default)"}
+         "jhp3u": "llm_hparam (v3, untuned default)", "jrhp3u": "random_hparam (v3, untuned default)",
+         "jrwF3t": "llm_reward told F, J selects", "jrwO3t": "llm_reward single blind proposal"}
 
 
 def perm_p(d):
