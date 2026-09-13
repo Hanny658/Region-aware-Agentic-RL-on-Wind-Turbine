@@ -17,6 +17,8 @@ Supervisors:
 from __future__ import annotations
 
 import json
+
+from envs.reward import compile_reward_code   # validation of random / LLM reward expressions
 import math
 
 import numpy as np
@@ -559,6 +561,58 @@ class LLMComboSupervisor(LLMCandidateSupervisor):
         if not res:
             return [{"style": "hold", "knobs": {}, "rationale": f"no usable candidate in the reply: {str(out)[:160]}"}]
         return res
+
+
+class RandomRewardSupervisor:
+    """Random STRUCTURAL control for llm_reward (2026-09-14): candidates are reward expressions
+    drawn from a fixed grammar — the term shapes the LLM agent has used (quadratic / absolute /
+    saturated speed terms; linear / capped / centred-bounded load terms; optional power-deviation
+    term) with log-uniform weights — and verified by the same fork loop. If this arm reaches the
+    balanced solution as often as the LLM, the agent's contribution is efficiency, not the prior."""
+    name = "random_reward"
+
+    SPEED = ["(d_wg/0.005)**2", "abs(d_wg)/0.005", "tanh(abs(d_wg)/0.005)", "tanh((d_wg/0.005)**2)", "sqrt(abs(d_wg)/0.005)"]
+    LOAD = ["{L}", "min({L},3)", "tanh({L}-1)", "tanh({L})", "max(0,{L}-1)", "log(1+{L})"]
+    POWER_R2 = ["(p_ratio-1)", "tanh(3*(p_ratio-1))", "tanh(6*(p_ratio-1))"]
+    POWER_R3 = [None, "tanh(6*abs(p_ratio-1))", "abs(p_ratio-1)", "tanh(30*abs(p_ratio-1))"]
+    ACT = ["act", "tanh(act)"]
+
+    def __init__(self, seed: int = 0, n_candidates: int = 3, reward_version: str = "v3", **_kw):
+        self.rng = np.random.default_rng(seed)
+        self.K = n_candidates
+        self.gate = "region_w==1" if reward_version == "v3" else "region==1"
+
+    def get_state(self) -> dict:
+        return {"rng": self.rng.bit_generator.state}
+
+    def set_state(self, st: dict):
+        if st.get("rng"):
+            self.rng.bit_generator.state = st["rng"]
+
+    def _lu(self, lo, hi):
+        return float(np.exp(self.rng.uniform(np.log(lo), np.log(hi))))
+
+    def _sample(self) -> str:
+        r = self.rng
+        p2 = f"{self._lu(30, 300):.3g}*{r.choice(self.POWER_R2)}*(region==0)"
+        sp = f"-{self._lu(5, 150):.3g}*{r.choice(self.SPEED)}*({self.gate})"
+        p3 = r.choice(self.POWER_R3)
+        p3 = f"-{self._lu(5, 100):.3g}*{p3}*({self.gate})" if p3 else ""
+        lt = f"-{self._lu(0.2, 5):.3g}*" + r.choice(self.LOAD).format(L="load_t")
+        lb = f"-{self._lu(0.2, 5):.3g}*" + r.choice(self.LOAD).format(L="load_b")
+        act = f"-{self._lu(0.02, 0.5):.3g}*{r.choice(self.ACT)}"
+        return p2 + sp + p3 + lt + lb + act
+
+    def propose_candidates(self, summary: dict) -> list[dict]:
+        out = [{"style": "hold", "knobs": {}, "rationale": "keep the current reward"}]
+        while len(out) < self.K:
+            src = self._sample()
+            try:
+                compile_reward_code(src, version="v3" if "region_w" in self.gate else "v2")
+            except ValueError:
+                continue
+            out.append({"style": "random", "knobs": {"reward_code": src}, "rationale": "random grammar sample"})
+        return out
 
 
 class LLMRewardSupervisor(LLMCandidateSupervisor):

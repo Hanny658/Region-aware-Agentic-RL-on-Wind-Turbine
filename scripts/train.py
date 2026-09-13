@@ -77,7 +77,7 @@ def main():
     # supervisor
     ap.add_argument("--supervisor", default="none",
                     choices=["none", "guard", "random", "llm", "llm_fork", "random_fork", "schedule",
-                             "schedule_comp", "llm_hparam", "random_hparam", "llm_reward", "llm_combo"],
+                             "schedule_comp", "llm_hparam", "random_hparam", "llm_reward", "llm_combo", "random_reward"],
                     help="none: fixed knobs, no rollback | guard: fixed knobs + rollback-to-best guardrail | "
                          "random / llm: proposals + guardrail | llm_fork: fork-verified reward-weight "
                          "proposals | llm_hparam: fork-verified PPO hyper-parameter proposals | "
@@ -353,7 +353,7 @@ def main():
     relabel = float(cfg.turbine["rated_wind_ms"]) if OBJ == "J" else None
     base = baseline_metrics(baseline_dir(args.backend), eval_episodes, dt, wg_rated, relabel_wind=relabel)
     proposes = args.supervisor in ("random", "llm", "schedule", "schedule_comp")
-    forks = args.supervisor in ("llm_fork", "random_fork", "llm_hparam", "random_hparam", "llm_reward", "llm_combo")
+    forks = args.supervisor in ("llm_fork", "random_fork", "llm_hparam", "random_hparam", "llm_reward", "llm_combo", "random_reward")
     use_rollback = args.supervisor != "none"
     use_twin = proposes and args.supervisor not in ("schedule", "schedule_comp") and not args.no_dry_run
     if use_twin and args.backend != "toy":
@@ -379,6 +379,9 @@ def main():
                                      objective=SUP_OBJ, reward_version=args.reward)
     elif args.supervisor == "random":
         sup = RandomSupervisor(seed=args.seed)
+    elif args.supervisor == "random_reward":
+        from llm.supervisor import RandomRewardSupervisor
+        sup = RandomRewardSupervisor(seed=args.seed, n_candidates=args.n_candidates, reward_version=args.reward)
     elif args.supervisor in ("random_fork", "random_hparam"):
         # random_hparam = the same fork verification as llm_hparam with random candidates in the
         # hyper-parameter namespace: the control that separates the proposer from the search
