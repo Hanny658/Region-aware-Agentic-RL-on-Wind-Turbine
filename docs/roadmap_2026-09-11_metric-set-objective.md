@@ -542,3 +542,27 @@ Paired vs guard (S3–S6 / S7–S10): told-F +2.8 / +3.1 (3/3, t p = 0.16 / 0.11
    across the three arms that had the loop; 0/3 without it, 0/5 for the guard).
 
 `docs/tables/table_J_ablations.csv`. The two arms live in `campaign_j_core.sh` (`jrwF3t`, `jrwO3t`).
+
+## 15. Robustness of the MPC-v2 reference (2026-09-13 13:03; residual channel, J-selected weights)
+
+The controller's *model* is perturbed, the plant never (`mpc_baseline.py --mm_cp/--mm_ft/--mm_m`);
+held-out S3-S6. Stress classes as in the 08-30 roadmap s17 (RL rows there are F-era runs).
+
+| variant | J | P / w / T / B | reading |
+|---|---|---|---|
+| exact model | 11.97 | 8.5 / 20.5 / 13.2 / 5.6 | reference |
+| Cp/Ct x0.85 | -0.37 | -3.8 / -2.8 / 2.6 / 2.5 | regulation gone, tier degraded (spd 1.030) |
+| Cp/Ct x1.15 | -27.53 | -58.2 / -74.2 / 16.5 / 5.7 | over-estimated aero torque: regulation collapses, tower gain stays |
+| tower frequency x0.9 | 6.91 | 2.4 / 11.7 / 10.1 / 3.5 | halved |
+| tower frequency x1.1 | 10.63 | 6.1 / 17.8 / 13.7 / 4.9 | minor |
+| modal mass x0.8 | 11.00 | 3.7 / 16.8 / 19.2 / 4.3 | minor |
+| modal mass x1.2 | 12.22 | 12.1 / 22.2 / 9.5 / 5.0 | none |
+| TI 14 % (S3-S4) | 10.43 | -8.4 / 21.7 / 18.0 / 10.3 | holds |
+| TI 22 %, U15 (S3-S4) | 12.31 | -1.9 / 20.7 / 31.0 / -0.5 | holds |
+| U18 (S3-S4) | 22.45 | 44.9 / 44.9 / -0.6 / 0.6 | regulation only (no R2, no tower gain) |
+
+The MPC is robust to structural-model errors of 10-20 % and to off-design turbulence, and **fragile
+to aerodynamic-model error**: +-15 % on Cp/Ct takes it from 12 to GSPI level or far below. Its lead
+over the RL arms is therefore a *perfect-aero-model* ceiling: the manuscript's reference row is
+"LPV-MPC with an exact aerodynamic model", and the model-error rows go in the same table.
+`docs/manuscript/figures/fig4_reference.png` (b).
