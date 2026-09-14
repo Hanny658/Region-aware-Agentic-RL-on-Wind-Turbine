@@ -1,0 +1,218 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{caption}
+\usepackage{microtype}
+\usepackage{url}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=blue!60!black,urlcolor=blue!60!black]{hyperref}
+\captionsetup{font=small,labelfont=bf}
+\graphicspath{{figures/}}
+\newcommand{\J}{\ensuremath{J}}
+\newcommand{\pending}[1]{\textcolor{red!70!black}{[#1]}}
+
+\title{Where should a language-model agent act when it supervises a learning controller?\\
+\large Levers and verification on a wind-turbine pitch-control benchmark}
+\author{\pending{authors}}
+\date{Preprint. \today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Large-language-model (LLM) agents increasingly supervise reinforcement-learning (RL) controllers---writing reward functions, tuning weights, choosing hyper-parameters. We ask two questions such systems rarely answer: at which \emph{layer} does the agent add value, and what does the \emph{verification loop} around it guarantee? We answer them with a controlled study on collective-pitch control of the NREL~5\,MW turbine in OpenFAST. A region-aware residual PPO policy is supervised every 30 training episodes by an agent that may act on one of three levers---the reward's weights, the learner's hyper-parameters, or the reward's expression---and is scored on the metric set of a published RL pitch-control study (power MSE, generator-speed MSE, tower-base and blade-root fatigue). Every lever is paired with a random-search control, every arm starts from a tuned fixed-reward default, results are held out on two disjoint sets of wind realisations, and a linear-parameter-varying MPC is the model-based reference. Three results follow. (i)~Numeric levers are worth nothing on a tuned default: LLM and random hyper-parameter search are indistinguishable from the fixed reward, and a weight search cannot reach a heavier fatigue weight because a 30-episode verification horizon is myopic for fatigue. (ii)~Only the agent that rewrites the reward's \emph{shape} reaches the balanced solution in which all four metrics improve (3 of 5 seeds); it does so when told the wrong objective, because verification selects on the true one; it does not do so without the loop; and its effect on the \emph{level} of the objective is inside seed noise. (iii)~An MPC whose cost is correctly scaled is the strongest controller on the metric set ($\J\approx12$ on both held-out sets), but only with an exact aerodynamic model: a 5\,\% error on the power coefficient halves its score and 15\,\% removes its lead entirely. We distil the findings into design rules for agentic supervision: put the agent on structural decisions, verify against the true objective rather than trusting the prompt, one lever per agent, and report the composition and reliability of the solution, not only its mean.
+\end{abstract}
+
+\section{Introduction}
+
+Reward design and hyper-parameter tuning are the two chores of applied RL, and LLM agents now do both: Eureka evolves reward code against a task score~\citep{Ma2024eureka}; Language-to-Rewards and Text2Reward map instructions to reward parameters or dense reward programs~\citep{Yu2023l2r,Xie2024text2reward}; DrEureka adds the design of domain randomisation~\citep{Ma2024dreureka}; agentic reward designers close the loop with semantic feedback on trajectories~\citep{Lee2026rda}. These systems share an outer loop---propose, train briefly, score, keep the best---and leave open two questions that decide whether the agent is doing useful work or merely expensive search.
+
+\paragraph{Which layer?} The same loop can be pointed at numeric knobs (reward weights, learning rates) or at structure (which terms a reward has, what shape they take). A proposer that understands the problem should matter more where the search space is semantic and less where a log-uniform perturbation already covers it. This has not been measured on one problem with matched controls.
+
+\paragraph{What does verification guarantee?} If proposals are scored on the true objective, the prompt's description of the objective may not matter at all; conversely, an unverified proposal may be no better than the default.
+
+Wind-turbine collective-pitch control above rated wind is a good place to ask. The objective is genuinely multi-criteria (speed regulation, power quality, tower and blade fatigue), strong model-based references exist~\citep{Bossanyi2000,Soliman2011mpc,Koerber2013mpc,Schlipf2013nmpc,Evans2015rmpc}, RL pitch controllers have been reported~\citep{SierraGarcia2020,Xie2023rlpitch,Coquelet2022ipc}, and a recent RL study on the IEA~15\,MW turbine defines a metric set and an MPC comparison~\citep{Baseline2026} that we adopt and test.
+
+\paragraph{Contributions.}
+(a)~A controlled protocol for agentic supervision---three levers, a random-search control for every numeric lever, seed pairing, two disjoint held-out wind sets, exact permutation tests, and a tuned fixed-reward default---applied to a residual PPO pitch controller on the NREL~5\,MW turbine.
+(b)~The finding that numeric levers are worth nothing on a sound default, while the reward's shape is the one lever that changes what the solution is made of; and the ablations that show the agent's contribution is a structural prior made real by verification against the true objective, not by the prompt.
+(c)~A corrected model-based reference: the same three-state LPV-MPC that ``loses tower fatigue'' under a naively scaled cost is, with its cost terms scaled to $O(1)$, positive on all four metrics and ahead of every RL arm---with an exact aerodynamic model, and only then.
+
+\section{Setup}
+
+\subsection{Plant, reference controller, wind}
+NREL~5\,MW onshore turbine~\citep{Jonkman2009nrel5mw} in OpenFAST~4.2.1~\citep{OpenFAST}, controlled by ROSCO~2.10.5~\citep{Abbas2022rosco} through a patched ZeroMQ interface at the 10\,ms control step. The ROSCO configuration is the gain-scheduled PI (GSPI) with peak shaving on and every other load-mitigation feature off, constant torque above rated; it is the pairing reference for every metric. Wind fields: TurbSim, 8, 12.5 and 15\,m/s mean hub wind, TI~8\,\%, 150\,s episodes of which 130\,s are scored. Realisations S1--S2 are the supervisor's evaluation winds; S3--S6 and S7--S10 are two disjoint held-out sets. Fatigue is the damage-equivalent load from rainflow counting~\citep{fatpack,IEC61400}.
+
+\subsection{Residual RL controller}
+Two PPO~\citep{Schulman2017ppo} agents---one per operating region, selected by an oracle rule on ROSCO's native pitch command---add a bounded collective-pitch offset ($|\Delta\beta|\le0.05$\,rad, second-order damped) to the GSPI command. Observations: generator-speed error and its rate, measured pitch, hub wind speed, blade-root out-of-plane moment, tower-top fore-aft acceleration. $\gamma=0.998$, GAE $\lambda=0.98$~\citep{Schulman2016gae}, $64\times64$ tanh networks, 300 training episodes per run; the critic's regression target is standardised by a running estimate of the return scale~\citep{vanHasselt2016popart}. The per-step reward is region-conditional,
+\begin{equation}
+r_t = \mathbb{1}[\mathrm{R2}]\,w_P\!\left(\tfrac{P}{P_{\mathrm{GSPI}}}-1\right)
+      - \mathbb{1}[v_{\mathrm{hub}}>v_{\mathrm{rated}}]\,w_\omega\!\left(\tfrac{\delta\omega}{0.005}\right)^{2}
+      - \lambda_T\,\ell_T - \lambda_B\,\ell_B - \lambda_A\,(\Delta\beta/\kappa)^2 ,
+\label{eq:reward}
+\end{equation}
+where $\ell_T,\ell_B$ are fatigue proxies (growth of the 10\,s peak-to-peak range of tower acceleration and of blade-root moment, normalised to $\approx1$ per step under GSPI) and the speed term is gated by the wind label---the subset on which the objective's regulation metrics are scored (Appendix~\ref{app:gating} shows why this matters). The six coefficients $\{w_P,w_\omega,\lambda_T,\lambda_B\}$ and the two residual bounds are the \emph{knobs}; their default is tuned on S1--S2 by the objective (Appendix~\ref{app:weights}).
+
+\subsection{The supervision loop and its levers}
+Every 30 episodes the policy is evaluated on S1--S2 and a supervisor may act. The agent (an OpenAI-compatible reasoning model in JSON mode, about five calls per run) receives the training diagnostics, the evaluation, the decision history with outcomes, and the objective's definition; it returns $K=3$ candidates. Each candidate is trained for a 30-episode fork from the same checkpoint, the forks are evaluated on S1--S2, and the best fork continues (\emph{fork verification}). A guardrail rolls the run back to its best checkpoint when the objective drops by more than five points or energy loss exceeds 1\,\%. The levers are:
+\begin{itemize}\setlength\itemsep{0pt}
+\item \textbf{weights}: the six knobs of \eqref{eq:reward}, with a log-uniform random search as control;
+\item \textbf{hyper-parameters}: actor and critic learning rates, GAE $\lambda$, clip range, entropy coefficient, policy standard deviation, with a random search as control;
+\item \textbf{reward expression}: a sandboxed Python expression over (region, wind label, speed error, power ratio, both fatigue proxies, actuation) that replaces \eqref{eq:reward} entirely, in the manner of Eureka~\citep{Ma2024eureka}; its control is a random \emph{structural} search that samples expressions from a fixed grammar of the same term shapes with log-uniform coefficients and passes them through the same loop.
+\end{itemize}
+Fixed-knob training under the same guardrail is the \emph{fixed-reward} baseline. Two ablations of the loop: the agent asked once at the first decision and applied without a fork (\emph{single-shot}), and the agent told a different objective than the one that selects (\S\ref{sec:shape}).
+
+\subsection{Objective and statistics}
+The objective is the metric set of \citep{Baseline2026} as one scalar,
+\begin{equation}
+\J = \tfrac14\!\sum_{m\in\{P,\omega,T,B\}}\!\mathrm{clip}_{\pm100}\big(\Delta m\,[\%]\big)\;-\;20\,\max\!\big(0,\;E_{\mathrm{loss}}[\%]-1\big),
+\label{eq:J}
+\end{equation}
+the mean of the per-episode-clipped percentage reductions, relative to paired GSPI, of power MSE and generator-speed MSE on wind-labelled above-rated steps and of tower-base and blade-root fatigue, minus a penalty for energy loss beyond 1\,\%. Every selection (fork winner, best checkpoint, rollback) uses \J; every reported number is a held-out evaluation of the best checkpoint by the supervisor-side \J. For the objective-conditioning ablation we also define $F$, a load-priority objective (tower-fatigue reduction with speed regulation and energy as penalised constraints); no results are reported under $F$, it is only what one agent is \emph{told}. Seeds are paired across arms; differences are reported as mean, wins$/n$, the exact two-sided sign-flip permutation $p$ (floor $2/2^n$: 0.0625 at $n=5$, 0.25 at $n=3$), and a paired $t$-test. Arms with $n=3$ are proofs of concept and are labelled as such.
+
+\subsection{The model-based reference}
+A three-state LPV-MPC (rotor, first tower fore-aft mode) linearised every 0.1\,s from the Cp/Ct tables, horizon 2\,s, OSQP~\citep{Stellato2020osqp} (3.6\,ms per solve), pitch within the live peak-shaving floor and the rate limit, wind held at ROSCO's low-passed estimate (no preview, unlike~\citep{Schlipf2013nmpc,Koerber2013mpc}), torque native. Cost: speed error, tower-top velocity, pitch increment, each scaled to $O(1)$ at its typical value (Appendix~\ref{app:mpc}). Its weights are selected on S1--S2 by \J---the same rule as the RL arms---and it is evaluated both with full pitch authority and through the RL's own bounded, damped residual channel.
+
+\section{Results}
+
+\begin{figure}[t]
+\centering\includegraphics[width=\linewidth]{fig1_levers.png}
+\caption{Seed-paired difference of \J\ between each supervised arm and the tuned fixed reward, on both held-out wind sets (mean $\pm$ s.e., dots are seeds, labels are wins$/n$). No arm moves the level of \J\ outside seed noise; the differences between arms are in what the solution is made of (Fig.~\ref{fig:composition}).}
+\label{fig:levers}
+\end{figure}
+
+\begin{table}[t]
+\centering\small
+\caption{Held-out \J\ (mean $\pm$ s.d.) and the composition of \J\ on S3--S6 (power MSE / speed MSE / tower fatigue / blade fatigue, \% reduction vs.\ GSPI) for every arm on the tuned fixed-reward default. ``Balanced'' counts seeds on which all four metrics improve. Paired differences are against the fixed reward on the same seeds.}
+\label{tab:main}
+\begin{tabular}{llcccccc}
+\toprule
+arm & $n$ & \J\ S3--S6 & \J\ S7--S10 & P\,/\,$\omega$\,/\,T\,/\,B & balanced & $\Delta\J$ vs.\ fixed (wins, exact $p$) \\
+\midrule
+fixed reward (tuned)                     & 5 & $4.86\pm2.76$ & $5.50\pm2.09$ & 17.4 / 19.0 / $-$17.6 / 0.7 & 0/5 & --- \\
+LLM hyper-parameters                     & 3 & $5.26\pm2.39$ & $7.13\pm3.05$ & 17.1 / 20.7 / $-$18.1 / 1.2 & 0/3 & $-0.5$ / $+0.3$ (2/3, 1.0) \\
+random hyper-parameters                  & 3 & $4.93\pm2.02$ & $5.96\pm2.17$ & 15.1 / 17.0 / $-$13.2 / 0.8 & 0/3 & $-0.8$ / $-0.9$ (2/3, 1.0) \\
+LLM hyper-parameters $+$ reward, one agent & 3 & $6.28\pm1.95$ & $8.07\pm1.12$ & 15.9 / 16.4 / $-$8.1 / 0.9 & 0/3 & $+0.5$ / $+1.3$ (2/3, 0.75) \\
+\textbf{LLM reward expression}           & 5 & $5.30\pm4.17$ & $6.04\pm4.28$ & 6.8 / 10.1 / $\mathbf{+1.5}$ / 2.7 & \textbf{3/5} & $+0.4$ / $+0.5$ (3/5, 0.75 / 0.69) \\
+LLM reward expression, told $F$, selected by \J & 5 & $7.00\pm2.12$ & $8.33\pm2.38$ & 9.5 / 14.6 / $+0.9$ / 3.0 & 3/5 & $+2.1$ / $+2.8$ (4/5, 0.31 / 0.19) \\
+random reward structure, same loop       & 3 & \pending{running} & \pending{running} & \pending{running} & \pending{--} & \pending{--} \\
+LLM reward expression, single-shot, no loop & 5 & $4.97\pm1.90$ & $6.66\pm2.75$ & 11.6 / 13.3 / $-$5.5 / 0.5 & 1/5 & $+0.1$ / $+1.2$ (2/5, 3/5; $\approx1$) \\
+\midrule
+LPV-MPC, exact aero model, residual channel & --- & 11.97 & 11.61 & 8.5 / 20.5 / 13.2 / 5.6 & yes & \\
+LPV-MPC, exact aero model, full authority   & --- & 12.40 & 14.10 & 8.9 / 19.8 / 15.8 / 5.1 & yes & \\
+LPV-MPC, regulation-only cost               & --- & $-1.64$ & $-8.08$ & 7.5 / 4.2 / $-$17.6 / $-$0.7 & no & \\
+ROSCO tower damper, best gain               & --- & $-0.06$ & $-0.26$ & $\approx0$ & --- & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Numeric levers are worth nothing on a tuned default}
+\label{sec:numeric}
+Table~\ref{tab:main} and Fig.~\ref{fig:levers}: on the tuned default the hyper-parameter agent is worth $-0.5$\,/\,$+0.3$\,\J\ (S3--S6\,/\,S7--S10) and random hyper-parameter search $-0.8$\,/\,$-0.9$; every difference is within noise and the two proposers are indistinguishable. The weight search (Appendix~\ref{app:weights}) raises \J\ by about two points over an untuned start and never keeps a candidate with a heavier fatigue weight: fatigue responds over tens of episodes, regulation within one fork, so a 30-episode verification horizon is structurally myopic for that knob (Fig.~\ref{fig:mechanism}b). A sweep of the tower weight confirms that the balanced region is not on that axis at all---$\lambda_T=3,\,10,\,30$ give $\J=1.4,\,-2.9$ and no learning, against $5.0$ at $\lambda_T=1$---because a scaled-up range-increment proxy is load noise, not the MPC's tower-velocity cost. Numeric levers, LLM or random, do not change what the fixed reward already finds.
+
+\subsection{The structural lever: reward shape}
+\label{sec:shape}
+\begin{figure}[t]
+\centering\includegraphics[width=\linewidth]{fig2_composition.png}
+\caption{What each controller's \J\ is made of (held-out S3--S6, arm means). Every fixed-reward and hyper-parameter arm buys regulation with tower fatigue; the reward-expression agent and the correctly scaled MPC are the rows with every term positive.}
+\label{fig:composition}
+\end{figure}
+
+\paragraph{The level of \J\ does not move.} Every RL arm on the tuned default sits between 4.7 and 8.6 on S3--S6; the reward-expression agent's paired difference to the fixed reward is $+0.4$\,/\,$+0.5$ (3/5 seeds, exact $p=0.75$\,/\,$0.69$). Its effect on the level of the objective is inside seed noise.
+
+\paragraph{The composition of \J\ does.} Every fixed-reward and hyper-parameter arm buys regulation with tower fatigue ($-13$ to $-18$\,\%): under the objective's two-to-one pricing of regulation that is net positive, but it is the opposite of what a residual load controller is for. The reward-expression agent is the only RL arm whose mean tower fatigue improves ($+1.5$\,\%) and the only one with seeds on which all four metrics improve (Fig.~\ref{fig:composition}). Its balanced seeds share one structure: a \emph{saturated} speed term $\tanh(|\delta\omega|/0.005)$ on the wind-labelled subset---steep near zero where the quadratic is flat, bounded where it explodes---and centred, bounded load terms of the form $\tanh(\ell-1)$ that penalise only above-baseline load and cannot be swamped by regulation (Appendix~\ref{app:expressions}). That is a change of shape, not of weight, and \S\ref{sec:numeric} showed that the weight axis cannot reach it.
+
+\paragraph{The prior needs the loop; the loop does not need the prompt.} Told $F$---a load-priority objective with speed as a constraint---the same agent writes the same shapes and, with \J\ doing the selection, reaches the balanced solution as often (3/5) with a smaller spread and the largest paired gain of any arm ($+2.1$\,/\,$+2.8$, 4/5); its fork records show it choosing between candidates whose $F$ and \J\ disagreed ($F=20.7$ against $\J=-0.1$ on one), and \J\ won each time because \J\ selects. Asked once and applied blind, the same agent is the fixed reward ($+0.1$\,/\,$+1.2$, 1/5 balanced): its first expressions are of the right family, but without verification four of five seeds keep the fixed reward's tower trade. Pooled over the two looped arms (told \J\ or $F$; same agent, same loop, $n=10$) the balanced solution appears in 6 of 10 seeds, in 1 of 5 without the loop, and in 0 of 5 fixed-reward seeds. Whether the prior itself matters---or any structural search through the same loop would do---is the random-structure control in Table~\ref{tab:main} (\pending{result pending, three seeds running}). Combining the reward lever with the hyper-parameter lever in one agent loses the composition effect (0/3 balanced, tower $-8$\,\%): the combined agent raised learning rates and wrote quadratic terms with linear load penalties; one question per agent is the better design.
+
+\subsection{The reference: a model-based ceiling, and what it is conditional on}
+\label{sec:reference}
+\begin{figure}[t]
+\centering\includegraphics[width=\linewidth]{fig4_reference.png}
+\caption{(a) \J\ of every controller on both held-out wind sets (mean $\pm$ s.e., dots are seeds). (b) The MPC through the RL's residual channel when only its internal model is perturbed (plant unchanged) and on off-design wind classes.}
+\label{fig:reference}
+\end{figure}
+A naively scaled MPC cost reproduces the published verdict that MPC ``wins regulation and loses tower fatigue'' ($-17.6$\,\% here): with the speed error normalised by rated speed the speed term is $O(10^{-5})$ at a typical error of 0.5\,\% while a tower-velocity term is $O(1)$, so any tower weight above zero out-weighs regulation by four orders of magnitude and the optimum feathers the rotor. With the terms scaled to $O(1)$ the tower weight can act, and the \J-selected point is positive on every metric on both wind sets: 12.4\,/\,14.1 with full authority and \textbf{12.0\,/\,11.6 through the RL's own residual channel}---authority explains at most 2.5 points of its lead. The best RL seeds of Table~\ref{tab:main} come within one to two points of it; the arm means do not.
+
+The lead is conditional on the model. Perturbing only the controller's model (Fig.~\ref{fig:reference}b, Appendix~\ref{app:mpc}): tower frequency $\pm10$\,\% and modal mass $\pm20$\,\% cost 0--5 points, off-design turbulence (TI~14\,\%, 22\,\%) nothing, but an error on the power and thrust coefficients of $\pm5$\,\% takes the MPC to 5.4\,/\,3.1 and $\pm15$\,\% to $-0.4$\,/\,$-27.5$. The reference row of Table~\ref{tab:main} is therefore ``LPV-MPC with an exact aerodynamic model''; a model-free residual policy trained on the plant has no such exposure, and an MPC with an identified model would sit between the rows.
+
+\section{Design rules for agentic supervision}
+\begin{enumerate}\setlength\itemsep{2pt}
+\item \textbf{Put the agent on structural decisions; give numeric ones to random search.} No numeric lever, LLM or random, moved a sound default; the one lever with a qualitative effect was the reward's shape.
+\item \textbf{Verification against the true objective is the guarantee; the prompt is not.} The agent told the wrong objective produced the right solution because the loop selected on the true one; the agent asked once without verification produced the default. Score every proposal on the objective the paper reports.
+\item \textbf{One lever per agent.} The combined agent lost what each of its parts could do.
+\item \textbf{Align the reward's subsets and the cost's scales with the objective before crediting the agent.} A speed term gated on a different subset than the objective's metric (Appendix~\ref{app:gating}) and an MPC cost with terms four orders of magnitude apart (Appendix~\ref{app:mpc}) each moved the comparison by more than any agent did.
+\item \textbf{Report composition and reliability, not only means.} The agent's real contribution---a solution class no other lever reaches, in three of five seeds---is invisible in a table of mean \J.
+\end{enumerate}
+
+\section{Limitations}
+Seed budgets are five for the core arms and three for the proofs of concept; no agentic difference in \J\ is significant. One plant, one training turbulence intensity, two held-out sets of four realisations. The MPC has no preview, a crude tower-state estimator and a two-second horizon; longer horizons were worse with this linearisation, a property of the model rather than of MPC. The residual policy observes the simulator's hub wind where the MPC uses ROSCO's estimate. The agent is one reasoning model with one prompt family. An individual-pitch extension of the same supervisor was attempted and did not win on any of its levers; the boundary of the present claims is collective pitch.
+
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+\appendix
+
+\section{Objective, metrics and the tuned default}
+\label{app:weights}
+The four metrics of \eqref{eq:J} are computed per episode against the paired GSPI run on the same wind realisation: power MSE and generator-speed MSE relative to rated on the steps where hub wind exceeds rated (12.5 and 15\,m/s episodes; the 8\,m/s episodes contribute no regulation term), and damage-equivalent loads of tower-base fore-aft moment and blade-root out-of-plane moment over all episodes. Each episode's reduction is clipped to $\pm100$\,\% before averaging so that a single blown regulation episode cannot own the objective. Energy is the total over all episodes.
+
+The tuned default of \eqref{eq:reward} is the per-knob geometric median of the best checkpoints of a three-seed random-search arm over the six knobs (fork-verified, \J-selected on S1--S2): $w_P=220$, $w_\omega=25.2$, $\lambda_T=1$, $\lambda_B=1.31$, residual bounds 0.074\,rad (below rated) and 0.05\,rad (above). That search raised held-out \J\ from $4.60\pm2.38$\,/\,$5.96\pm2.02$ (untuned) to $6.70\pm2.12$\,/\,$7.89\pm2.21$ but never kept a candidate with $\lambda_T>1$ (Fig.~\ref{fig:mechanism}b). The tower-weight sweep from the tuned default (seed 0, held-out S3--S6\,/\,S7--S10): $\lambda_T=1$: 5.0\,/\,5.9; 3: 1.4\,/\,3.7; 10: $-2.9$\,/\,$-3.3$; 30: the policy never left its initial state.
+
+\section{Why the reward's speed term is gated by the wind label}
+\label{app:gating}
+\begin{figure}[t]
+\centering\includegraphics[width=\linewidth]{fig3_mechanism.png}
+\caption{(a) Measured \J\ on the supervisor winds at every decision of a fixed-reward run whose speed term is gated by the router's region (red) and of the tuned default gated by the wind label (blue); crosses mark rollbacks. (b) Every fork candidate's tower weight against the \J\ of its 30-episode fork in the weight search; no candidate with $\lambda_T>1$ is ever kept.}
+\label{fig:mechanism}
+\end{figure}
+The objective's regulation metrics are scored on the steps where hub wind exceeds rated, whatever the controller does. If the reward's speed term is instead gated by the router's region---the natural choice for a region-aware residual---the transition steps at 12.5\,m/s, on which the router says ``below rated'' and the objective says ``above'', carry no speed penalty, and the policy is rewarded there for load reduction that the objective scores as regulation loss. Under that gating every fixed-reward run found an early optimum and then rolled back at every later decision (Fig.~\ref{fig:mechanism}a): held-out \J\ $1.59\pm0.87$\,/\,$0.97\pm1.37$ ($n=3$). On that default, hyper-parameter supervision appears valuable---$+5.7$\,/\,$+8.0$ for the LLM and $+5.8$\,/\,$+7.5$ for random search, both by lengthening the credit window (GAE $\lambda$ 0.98$\to$0.995) and slowing the actor, which lets the learner escape the loop. Gating the speed term by the wind label removes the loop without any agent (Fig.~\ref{fig:mechanism}a, blue), and on that default the same hyper-parameter arms are worth nothing (\S\ref{sec:numeric}). We report the aligned gating throughout the main text; the lesson is design rule~4.
+
+\section{The MPC: cost scaling, selection, authority, robustness}
+\label{app:mpc}
+The controller model is $J\dot\omega=T_{\mathrm{aero}}(v-\dot x,\omega,\beta)-T_{\mathrm{gen}}(\omega)$, $m\ddot x=F_{\mathrm{thrust}}(v-\dot x,\omega,\beta)-c\dot x-kx$ with the first tower fore-aft mode at 0.324\,Hz, modal mass 437\,t and structural damping ratio 0.01, linearised at the operating point from the Cp/Ct tables every 0.1\,s and discretised exactly; tower states are estimated by leaky double integration of the measured nacelle acceleration; the wind input is ROSCO's estimate low-passed at 0.35\,rad/s. The condensed QP over $N=20$ steps minimises
+$\sum_k q\,(\delta\omega_k/(0.005\,\omega_{\mathrm{rated}}))^2 + q_t(\dot x_k/0.2)^2 + r\,(\Delta\beta_k/0.002)^2$
+subject to the live pitch floor, the pitch limit and the rate limit. The reference scales (0.005 relative speed error, 0.2\,m/s, 0.002\,rad per step) make all three terms $O(1)$ at their typical values; with the speed error normalised by $\omega_{\mathrm{rated}}$ instead, the speed term is $O(10^{-5})$ and any $q_t>0$ feathers the rotor. Selection on S1--S2 by \J\ over $N\in\{20,40\}\times r\in\{0.1,0.3,1,3\}\times q_t\in\{0,0.1,0.3,1,3\}\times$ two wind-filter corners (82 points) gives $N=20$, $r=0.3$, $q_t=3$; $N=40$ is worse everywhere. Through the RL's residual channel the same weights are re-selected. Held-out results and the model-error study are in Table~\ref{tab:mpc}.
+
+\begin{table}[h]
+\centering\small
+\caption{LPV-MPC (\J-selected weights) on the held-out sets and under perturbation of its internal model only.}
+\label{tab:mpc}
+\begin{tabular}{lcccl}
+\toprule
+variant & \J\ S3--S6 & \J\ S7--S10 & P / $\omega$ / T / B (S3--S6) & note \\
+\midrule
+full authority, exact model & 12.40 & 14.10 & 8.9 / 19.8 / 15.8 / 5.1 & F-strict 15.8 / 18.3 \\
+residual channel ($\pm0.05$\,rad, damped), exact model & 11.97 & 11.61 & 8.5 / 20.5 / 13.2 / 5.6 & reference row \\
+regulation-only cost ($q_t=0$, unscaled) & $-1.64$ & $-8.08$ & 7.5 / 4.2 / $-$17.6 / $-$0.7 & the published verdict \\
+\midrule
+residual channel, Cp/Ct $\times0.85$ & $-0.37$ & & $-$3.8 / $-$2.8 / 2.6 / 2.5 & regulation lost \\
+residual channel, Cp/Ct $\times0.95$ & 5.42 & & 1.4 / 7.8 / 8.3 / -- & \\
+residual channel, Cp/Ct $\times1.05$ & 3.10 & & $-$9.1 / $-$0.1 / 17.0 / -- & \\
+residual channel, Cp/Ct $\times1.15$ & $-27.53$ & & $-$58.2 / $-$74.2 / 16.5 / 5.7 & regulation collapses \\
+residual channel, tower frequency $\times0.9$ / $\times1.1$ & 6.91 / 10.63 & & & \\
+residual channel, modal mass $\times0.8$ / $\times1.2$ & 11.00 / 12.22 & & & \\
+residual channel, TI 14\,\% / TI 22\,\% (15\,m/s) / 18\,m/s & 10.43 / 12.31 / 22.45 & & & off-design winds \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Reward expressions written by the agent}
+\label{app:expressions}
+Best-checkpoint expressions of the reward-expression agent (variables: \texttt{region} = router region, \texttt{region\_w} = wind label, \texttt{d\_wg} = relative speed error, \texttt{p\_ratio} = power over paired GSPI power, \texttt{load\_t}, \texttt{load\_b} = fatigue proxies, \texttt{act} = actuation cost).
+\begin{itemize}\setlength\itemsep{1pt}\small
+\item seed 0 (told \J): \texttt{180*tanh(15*(p\_ratio-1))} in R2; \texttt{-40*sqrt(tanh(abs(d\_wg)/.005)**2 + tanh(60*abs(p\_ratio-1))**2)} on the wind-labelled subset; \texttt{-.9*tanh(log((2+load\_t+load\_b)/4)) -.1*tanh(act)}.
+\item seed 1 (told $F$): \texttt{155*tanh(p\_ratio-1)} in R2; \texttt{-26*tanh(abs(d\_wg)/.005)} on the wind-labelled subset; \texttt{-(1.4 if region==0 else .5)*tanh(load\_t) -(1.0 if region==0 else 1.5)*tanh(load\_b) -.1*tanh(act)}.
+\item seed 0 (told $F$): \texttt{130*tanh(6*(p\_ratio-1))*(region==0) -24*tanh(d\_wg/.005)**2*(region\_w==1) +1.0*tanh((1-load\_t)/(1+load\_t)) +1.1*tanh((1-load\_b)/(1+load\_b)) -.04*tanh(act)}.
+\end{itemize}
+The random structural control samples expressions of the same families (speed term in $\{x^2, |x|, \tanh|x|, \tanh(x^2), \sqrt{|x|}\}$ of $x=\delta\omega/0.005$; load terms in $\{\ell, \min(\ell,3), \tanh(\ell-1), \tanh\ell, \max(0,\ell-1), \log(1+\ell)\}$; optional power-deviation term) with log-uniform coefficients spanning the ranges the agent used.
+
+\section{Compute and reproducibility}
+\label{app:compute}
+One 300-episode training run takes 65--85 minutes on 16 CPU cores (8 OpenFAST workers, two runs in parallel); a supervised run makes about five LLM calls. The MPC solves in 3.6\,ms. All runs write rolling checkpoints and can be paused and resumed; every number in this paper is regenerated by the scripts in the repository from the run artefacts, and the figures by a single script.
+
+\end{document}
