@@ -50,6 +50,8 @@ arm_args() {  # prefix -> train.py arguments
     # one blind proposal at the first decision, no fork verification, no history
     jrwF3t) echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS --sup_objective F" ;;
     jrwO3t) echo "--supervisor llm_reward    --reward v3 --n_candidates 1 --knobs_json $KNOBS --sup_once" ;;
+    # random structural control (2026-09-14): reward expressions from a fixed grammar, same fork loop
+    jrr3t)  echo "--supervisor random_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS" ;;
     # the RL analogue of the MPC's qt grid: the tuned default with the tower weight at 3 / 10 / 30
     # (the 30-episode fork search never keeps a higher lambda_tower — tower DEL responds too slowly)
     jg3L3)  echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT3.json" ;;

@@ -604,3 +604,9 @@ lands: same level, positive tower mean, the balanced solution in 1/3 seeds, and 
 expressions are the saturated forms (tanh speed terms). The agent's contribution is therefore the
 **vocabulary of shapes**; given it, verification finds the balanced solution without an LLM.
 Reliability (6/10 vs 1/3) is not separable at these n. Manuscript 3.2 and the design rules say so.
+
+**D (11:13).** Combined agent `jcb3t` at n = 5: 6.37 +- 2.94 / 8.65 +- 2.60; vs guard +1.5 / +3.2
+(4/5, exact p 0.31 / 0.13); composition 15.9 / 16.3 / -7.6 / 0.9, all-positive 0/5. It raises the
+level a little (not significant) and never the composition: two levers in one prompt buy
+regulation the way the hyper-parameter arms do. Final tables: `docs/tables/table_J_final.csv`;
+manuscript Table 1 updated. All supplements A-D done; machine idle.
