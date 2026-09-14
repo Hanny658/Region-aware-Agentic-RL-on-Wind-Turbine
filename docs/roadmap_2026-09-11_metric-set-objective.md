@@ -588,3 +588,19 @@ looped arms (told J + told F, n = 10, same agent, same loop): all-positive 6/10,
 J 5.42 (P +1.4, w +7.8, T +8.3), x1.05 -> J 3.10 (P -9.1, w -0.1, T +17.0). Even a 5 % aero
 error halves to quarters the MPC's J; with +-15 % it is at or below GSPI (s15). The reference
 row is a perfect-aero-model ceiling in the strict sense.
+
+**B (09:45).** Random structural control `jrr3t` (`RandomRewardSupervisor`: expressions from a fixed
+grammar of the term families the agent uses, log-uniform coefficients, same fork loop; 3 seeds,
+tuned v3 default), held-out:
+
+| arm | n | J S3-S6 | J S7-S10 | S3-S6 P / w / T / B | all-positive | vs guard |
+|---|---|---|---|---|---|---|
+| random reward structure + loop (`jrr3t`) | 3 | 6.13 +- 0.52 | 7.06 +- 1.35 | 9.5 / 10.5 / +2.1 / 2.5 | 1/3 | +0.4 / +0.3 (2/3, 1/3; p ~ 1) |
+| llm_reward told J (`jrw3t`) | 5 | 5.30 +- 4.17 | 6.04 +- 4.28 | 6.8 / 10.1 / +1.5 / 2.7 | 3/5 | +0.4 / +0.5 |
+| llm_reward told F (`jrwF3t`) | 5 | 7.00 +- 2.12 | 8.33 +- 2.38 | 9.5 / 14.6 / +0.9 / 3.0 | 3/5 | +2.1 / +2.8 |
+
+The random draw from the agent's own vocabulary, verified by the same loop, lands where the agent
+lands: same level, positive tower mean, the balanced solution in 1/3 seeds, and its kept
+expressions are the saturated forms (tanh speed terms). The agent's contribution is therefore the
+**vocabulary of shapes**; given it, verification finds the balanced solution without an LLM.
+Reliability (6/10 vs 1/3) is not separable at these n. Manuscript 3.2 and the design rules say so.
