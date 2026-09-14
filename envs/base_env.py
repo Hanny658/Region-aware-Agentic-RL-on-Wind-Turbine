@@ -54,6 +54,10 @@ class EnvConfig:
     ipc_max_rad: float = 0.0             # R3 dq-frame cyclic-pitch bound [rad]; 0 disables (+2 act, +2 obs)
     ipc_hold_s: float = 0.0              # >0: rotation-held IPC (rollout samples the dq action every
                                          # ipc_hold_s from a separate slow actor; Coquelet-style)
+    base_ctrl: str = "gspi"              # "gspi": residual on ROSCO's PI command | "mpc": residual on
+                                         # the LPV-MPC target (2026-09-14); zero residual == wide-open MPC
+    mpc_kw: dict = field(default_factory=dict)   # LPVMPC(**mpc_kw) when base_ctrl == "mpc"
+    obs_base: bool = False               # append the base controller's pitch target to the observation
     region_label_by_wind: bool = False    # metrics only: label R3 by v_hub > rated instead of the
                                          # oracle rule. Needed whenever a *non-residual* controller
                                          # changes ROSCO's own pitch command (MPC override, ROSCO's
@@ -113,8 +117,17 @@ class ResidualPitchEnv(gym.Env):
         self._dq = np.zeros(2)
 
         self.load_key = "fa_acc" if cfg.reward.get("load_signal", "M_oop") == "fa_acc" else "M_oop"
+        # ---- base controller: ROSCO's PI (default) or the LPV-MPC running inside the worker
+        self.mpc = None
+        self._beta_base = None
+        if cfg.base_ctrl == "mpc":
+            from controllers.mpc import LPVMPC
+            cp_path = os.path.expanduser(os.environ.get("WTRL_HOME", "~/wtrl")) + "/runs/toy_discon/Cp_Ct_Cq.NREL5MW.txt"
+            self.mpc = LPVMPC(self.tb, cp_path, **cfg.mpc_kw)
+            self.mpc_hold = max(1, int(round(self.mpc.Ts / self.dt)))
+            self._k_base = 0
         n_obs = (5 + (2 if cfg.region_flag_in_obs else 0) + (1 if cfg.obs_fa_acc else 0)
-                 + (2 if cfg.ipc_max_rad > 0.0 else 0))
+                 + (2 if cfg.ipc_max_rad > 0.0 else 0) + (1 if cfg.obs_base else 0))
         n_act = 1 + (1 if cfg.dtau_max_nm > 0.0 else 0) + (2 if cfg.ipc_max_rad > 0.0 else 0)
         self.observation_space = gym.spaces.Box(-np.inf, np.inf, (n_obs,), np.float32)
         self.action_space = gym.spaces.Box(-1.0, 1.0, (n_act,), np.float32)
@@ -150,6 +163,18 @@ class ResidualPitchEnv(gym.Env):
         tb, Pb = self._baseline
         return float(np.interp(t, tb, Pb))
 
+    def _base_offset(self, m: dict) -> float:
+        """Pitch offset of the base controller relative to ROSCO's command (0 for the GSPI base).
+        The MPC observes every step and re-solves every mpc_hold steps from the latest measurement."""
+        if self.mpc is None:
+            return 0.0
+        fa = m.get("fa_acc", 0.0)
+        self.mpc.observe(fa if fa == fa else 0.0, self.dt, w_meas=m["rot_speed"], v_meas=m["v_est"])
+        if self._k_base % self.mpc_hold == 0 or self._beta_base is None:
+            self._beta_base = self.mpc.solve(m["rot_speed"], m["beta_meas"], m["v_est"], m["min_pit"])
+        self._k_base += 1
+        return float(self._beta_base - m["beta_native"])
+
     def _obs(self, m: dict, region: int) -> np.ndarray:
         d_wg = (m["gen_speed"] - self.wg_rated) / self.wg_rated
         d_wg_dot = (d_wg - self._prev_dwg) / self.dt if self._prev_dwg is not None else 0.0
@@ -158,6 +183,8 @@ class ResidualPitchEnv(gym.Env):
              m["v_hub"] / self.cfg.obs_scales["v"], m["M_oop"] / self.M_scale]
         if self.cfg.obs_fa_acc:
             o.append(m.get("fa_acc", 0.0))
+        if self.cfg.obs_base:
+            o.append(float(self._beta_base) if self._beta_base is not None else m["beta_meas"])
         if self.cfg.ipc_max_rad > 0.0:
             o += [self._dq[0] / self.M_scale, self._dq[1] / self.M_scale]
         if self.cfg.region_flag_in_obs:
@@ -188,6 +215,10 @@ class ResidualPitchEnv(gym.Env):
         self._dq = np.zeros(2)
         self.safety.reset()
         self.reward_fn.reset()
+        if self.mpc is not None:
+            self.mpc.reset()
+            self._beta_base = None
+            self._k_base = 0
         m = self._sim_reset(self.spec_ep)
         self.router.reset(R3 if self.spec_ep.mean_wind > self.tb["rated_wind_ms"] else R2)
         self.region = self.router.update(m["beta_native"], m["min_pit"])
@@ -195,7 +226,7 @@ class ResidualPitchEnv(gym.Env):
         # warm-up: zero residual, no reward, not part of the RL trajectory
         while m["t"] < self.spec_ep.warmup_s - 1e-9:
             m_prev = m
-            m = self._sim_step(0.0)
+            m = self._sim_step(self._base_offset(m))       # warm-up runs the base controller alone
             region = self.region
             self.region = self.router.update(m["beta_native"], m["min_pit"])
             r, info = self.reward_fn(region, m["P"], self._P_base(m["t"], m["P"]), m["gen_speed"],
@@ -214,7 +245,9 @@ class ResidualPitchEnv(gym.Env):
     def step(self, action):
         m_prev = self._m
         region = self.region
-        dbeta = self.safety.apply(float(action[0]), region, m_prev["beta_native"], m_prev["min_pit"])
+        base_off = self._base_offset(m_prev)
+        # the residual is bounded and damped on top of the base command; the pitch limits apply to the sum
+        dbeta = self.safety.apply(float(action[0]), region, m_prev["beta_native"] + base_off, m_prev["min_pit"])
         i = 1
         dtau = 0.0
         if self.cfg.dtau_max_nm > 0.0:
@@ -228,7 +261,7 @@ class ResidualPitchEnv(gym.Env):
             # apply at the azimuth of THIS step (measurement is one step old: advance by omega*dt)
             psi = m_prev["azimuth"] + m_prev["rot_speed"] * self.dt
             ipc3 = coleman_inverse(theta_d, theta_q, psi)
-        m = self._sim_step(dbeta, dtau, ipc3)
+        m = self._sim_step(base_off + dbeta, dtau, ipc3)
         # exact rotor-KE flux (electrical-equivalent) so the torque channel cannot profit from
         # draining/storing kinetic energy; None when the channel is off (pitch-only runs unchanged)
         ke_dot = None
@@ -245,7 +278,7 @@ class ResidualPitchEnv(gym.Env):
             md, mq = coleman((m["M_oop"], m["M_oop2"], m["M_oop3"]), m["azimuth"])
             self._dq += self._dq_alpha * (np.array([md, mq]) - self._dq)
         self._log(m, region, dbeta, r, {**info, "warmup": 0, "dtau": dtau,
-                                        "theta_d": theta_d, "theta_q": theta_q})
+                                        "theta_d": theta_d, "theta_q": theta_q, "beta_base_off": base_off})
         # region for the *next* decision uses the fresh ROSCO command
         self.region = self.router.update(m["beta_native"], m["min_pit"])
         self._m = m

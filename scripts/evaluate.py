@@ -62,6 +62,10 @@ def main():
                 "ipc_max_rad": float(cfg_run.get("ipc_max", 0.0) or 0.0),
                 "ipc_hold_s": float(cfg_run.get("ipc_hold", 0.0) or 0.0),
                 "region_label_by_wind": bool(args.relabel_wind)}
+    if cfg_run.get("base") == "mpc":
+        from envs.factory import mpc_base_kw
+        cfg_over |= {"base_ctrl": "mpc", "mpc_kw": mpc_base_kw(float(cfg_run.get("base_mm_cp", 1.0))), "obs_base": True}
+        print(f"base controller: LPV-MPC in the worker (Cp/Ct scale {float(cfg_run.get('base_mm_cp', 1.0)):g})")
 
     if args.gspi:
         ps = {R2: None, R3: None}

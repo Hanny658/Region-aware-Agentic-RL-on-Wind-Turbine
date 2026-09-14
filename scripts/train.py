@@ -115,6 +115,11 @@ def main():
     ap.add_argument("--sup_once", action="store_true",
                     help="ablation: the supervisor proposes once, at the first decision; its first "
                          "candidate is applied without fork verification and it is never asked again")
+    ap.add_argument("--base", default="gspi", choices=["gspi", "mpc"],
+                    help="base controller the residual sits on: ROSCO's PI (gspi) or the J-selected LPV-MPC "
+                         "running in the worker (mpc; zero residual == wide-open MPC, beta_mpc in the observation)")
+    ap.add_argument("--base_mm_cp", type=float, default=1.0,
+                    help="with --base mpc: Cp/Ct scale of the MPC's internal model (aerodynamic mismatch)")
     ap.add_argument("--knobs_json", default=None,
                     help="JSON file with initial knob values (reward weights / dbeta bounds) overriding the "
                          "yaml defaults — the J-tuned default of fairness step 2 (scripts/dev/tuned_knobs.py)")
@@ -209,9 +214,13 @@ def main():
         # the MSE terms of J are R3-only; label that subset by wind speed (controller-independent)
         # on every row, RL and reference controllers alike — routing still uses the oracle rule
         cfg_over["region_label_by_wind"] = True
+    if args.base == "mpc":
+        from envs.factory import mpc_base_kw
+        cfg.base_ctrl, cfg.mpc_kw, cfg.obs_base = "mpc", mpc_base_kw(args.base_mm_cp), True
+        cfg_over["base_ctrl"], cfg_over["mpc_kw"], cfg_over["obs_base"] = "mpc", cfg.mpc_kw, True
     cfg_over["reward"] = cfg.reward
     obs_dim = (5 + (2 if cfg.region_flag_in_obs else 0) + (1 if cfg.obs_fa_acc else 0)
-               + (2 if args.ipc_max > 0.0 else 0))
+               + (2 if args.ipc_max > 0.0 else 0) + (1 if cfg.obs_base else 0))
     # with rotation-held IPC the dq dims move to a separate slow learner
     act_dim = 1 + (1 if args.dtau_max > 0.0 else 0) + (2 if args.ipc_max > 0.0 and args.ipc_hold <= 0.0 else 0)
     dt, wg_rated = float(cfg.turbine["dt_ctrl_s"]), float(cfg.turbine["rated_gen_speed_rads"])
@@ -529,6 +538,10 @@ def main():
         fit = evaluate(pool, base, knobs)
         record_eval(0, fit, "init")
         best = {"episode": 0, "F": score(fit), "knobs": dict(knobs), "state": learners_state()}
+        # the episode-0 policy is a valid best checkpoint (on an MPC base it is the MPC plus the
+        # untrained residual); without this file a run that never improves cannot be evaluated
+        torch.save({"episode": 0, "F": score(fit), "objective": OBJ, "knobs": dict(knobs), "state": best["state"]},
+                   out / "ckpt_best.pt")
         log_decision({"index": 0, "episode": 0, "type": "init", "knobs": knobs,
                       "fit": {kk: v for kk, v in fit.items() if kk != "per_episode"}, "per_episode": fit["per_episode"]})
         print(f"[init] {OBJ}={score(fit):.2f} F={fit['F']:.2f} DELred={fit['del_red_pct']:.2f}% "
