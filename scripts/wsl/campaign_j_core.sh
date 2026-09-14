@@ -20,6 +20,9 @@
 #        ARMS="jg2 jhp" ~/wtrl/run.sh bash scripts/wsl/campaign_j_core.sh 0 1 2
 set -u
 EXP=~/wtrl/exp
+# multiprocessing listener sockets live in TMPDIR; /tmp is purged nightly on this box (two runs died
+# at 00:26 on 2026-09-15 with FileNotFoundError on /tmp/pymp-*/listener-*), so keep them under ~/wtrl
+export TMPDIR=$HOME/wtrl/tmp; mkdir -p "$TMPDIR"
 FILT='init\|resume\]\|\[eval\]\|\[sup \]\|done in\|Traceback\|Error\|retries'
 SEEDS=${*:-0 1 2}
 ARMS=${ARMS:-jg2 jhp jrhp jg1 jrw}
