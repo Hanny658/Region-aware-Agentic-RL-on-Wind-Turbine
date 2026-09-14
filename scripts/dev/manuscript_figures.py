@@ -59,34 +59,12 @@ def paired(x: dict, y: dict, k: str) -> list[float]:
 
 # ------------------------------------------------------------------ fig 1: lever x objective
 def fig_levers():
-    fig, axes = plt.subplots(1, 2, figsize=(11.5, 3.8), gridspec_kw={"width_ratios": [1, 1.8]})
-    # --- F era: from docs/tables/table_paired_stats.csv (seed-paired differences of F_tol2)
-    rows = list(csv.DictReader(open(os.path.join(REPO, "docs", "tables", "table_paired_stats.csv"), encoding="utf-8")))
-    want = [("llm_fork - random_fork", "LLM proposer\nvs random"),
-            ("llm_fork - guard", "LLM weights\nvs fixed"),
-            ("llm_fork - llm_single", "verified\nvs single-shot")]
-    ax = axes[0]
-    for i, (comp, label) in enumerate(want):
-        for j, ws in enumerate(("S3-S6", "S7-S10")):
-            r = next((r for r in rows if r["comparison"] == comp and r["wind_set"] == ws), None)
-            if r is None:
-                continue
-            m, sd, n = float(r["mean_diff"]), float(r["std_diff"]), int(r["n"])
-            ax.errorbar(i + (j - 0.5) * 0.22, m, yerr=sd / np.sqrt(n), fmt="o", color=C[ws], capsize=3,
-                        label=ws if i == 0 else None)
-            ax.annotate(f"{r['n_positive']}/{n}, p={float(r['exact_perm_p']):.3f}", (i + (j - 0.5) * 0.22, m),
-                        textcoords="offset points", xytext=(-8 if j == 0 else 8, 0), ha="right" if j == 0 else "left",
-                        va="center", fontsize=6.5, color=C[ws])
-    ax.axhline(0, color="k", lw=0.6)
-    ax.set_xticks(range(len(want))); ax.set_xticklabels([w[1] for w in want]); ax.set_xlim(-0.9, len(want) - 0.3)
-    ax.set_ylabel("paired difference of F (held-out)")
-    ax.set_title("(a) objective F (load priority)")
-    ax.legend(loc="upper right", frameon=False)
-    # --- J era, tuned default: paired vs guard (jg3t)
+    """Seed-paired differences of J against the tuned fixed reward, both held-out sets."""
+    fig, ax = plt.subplots(figsize=(8.6, 3.6))
     guard = load_J("jg3t")
     arms = [("jhp3t", "LLM\nhyper-params"), ("jrhp3t", "random\nhyper-params"), ("jcb3t", "LLM hparams\n+ reward"),
-            ("jrw3t", "LLM reward\ncode (n=5)"), ("jrwF3t", "reward code\ntold F"), ("jrwO3t", "reward code\nsingle-shot")]
-    ax = axes[1]
+            ("jrw3t", "LLM reward\nexpression"), ("jrwF3t", "LLM reward,\ntold F"), ("jrr3t", "random reward\nstructure"),
+            ("jrwO3t", "LLM reward,\nsingle-shot")]
     for i, (arm, label) in enumerate(arms):
         x = load_J(arm)
         for j, ws in enumerate(("S3-S6", "S7-S10")):
@@ -101,8 +79,8 @@ def fig_levers():
                         xytext=(-7 if j == 0 else 7, 0), ha="right" if j == 0 else "left", va="center", fontsize=6.5, color=C[ws])
     ax.axhline(0, color="k", lw=0.6)
     ax.set_xticks(range(len(arms))); ax.set_xticklabels([w[1] for w in arms], fontsize=8)
-    ax.set_ylabel("paired difference of J vs fixed reward")
-    ax.set_title("(b) objective J (paper's metric set), tuned default")
+    ax.set_ylabel("paired difference of J vs. fixed reward")
+    ax.legend(frameon=False, loc="upper left")
     fig.tight_layout()
     fig.savefig(os.path.join(a.out, "fig1_levers.png"))
     plt.close(fig)
@@ -147,9 +125,9 @@ def fig_composition():
         j = mpc_json(tag)
         if j:
             items.append((label, terms(j), 1, j["J"]))
-    for arm, label in (("jrw3t", "LLM reward code"), ("jrwF3t", "reward code, told F"), ("jrwO3t", "reward code, single-shot"),
-                       ("jcb3t", "LLM hparams + reward"), ("jhp3t", "LLM hyper-parameters"), ("jrhp3t", "random hyper-parameters"),
-                       ("jg3t", "fixed reward v3 (tuned)"), ("jg2", "fixed reward v2 (untuned)")):
+    for arm, label in (("jrw3t", "LLM reward expression"), ("jrwF3t", "LLM reward, told F"), ("jrr3t", "random reward structure"),
+                       ("jrwO3t", "LLM reward, single-shot"), ("jcb3t", "LLM hparams + reward"), ("jhp3t", "LLM hyper-parameters"),
+                       ("jrhp3t", "random hyper-parameters"), ("jg3t", "fixed reward (tuned)")):
         runs = load_J(arm)
         t, n = arm_terms(runs)
         if t is not None:
@@ -223,38 +201,21 @@ def critic_stats(run: str):
 
 
 def fig_mechanism():
-    fig, axes = plt.subplots(1, 3, figsize=(11.5, 3.5))
-    # (a) critic: diagnostics of the R3 value function with and without target normalisation
+    fig, axes = plt.subplots(1, 2, figsize=(8.6, 3.4))
+    # (a) rollback loop: measured J per decision, untuned reward (speed term by router region) vs tuned v3
     ax = axes[0]
-    st = [(critic_stats(run), lab) for run, lab in (("tq_off_s0", "raw value target"), ("vnorm_s0", "normalised target"))]
-    st = [(d, lab) for d, lab in st if d]
-    if st:
-        names = ["V std", "layer-2 saturation", "corr(V, −|δω|)"]
-        keys = ["V_std", "L2_sat", "corr"]
-        scale = [1.0, 1.0 / 100.0, 1.0]
-        w = 0.35
-        for i, (d, lab) in enumerate(st):
-            ax.bar(np.arange(3) + (i - 0.5) * w, [d[k] * sc for k, sc in zip(keys, scale)], w,
-                   color=["#C44E52", "#4C72B0"][i], label=lab)
-            for x, (k, sc) in enumerate(zip(keys, scale)):
-                ax.annotate(f"{d[k]:.2f}" if k != "L2_sat" else f"{d[k]:.0f}%", (x + (i - 0.5) * w, d[k] * sc),
-                            textcoords="offset points", xytext=(0, 3), ha="center", fontsize=7)
-        ax.set_xticks(range(3)); ax.set_xticklabels(names, fontsize=7.5)
-        ax.set_title("(a) the R3 critic: raw vs normalised target"); ax.legend(frameon=False, fontsize=7)
-        ax.set_ylabel("value (saturation as a fraction)")
-    # (b) rollback loop: measured J per decision, reward v2 vs v3 (seed 0)
-    ax = axes[1]
-    for run, label, col in (("jg2_s0", "reward v2", "#C44E52"), ("jg3t_s0", "reward v3, tuned", "#4C72B0")):
+    for run, label, col in (("jg2_s0", "speed term gated by the router's region", "#C44E52"),
+                            ("jg3t_s0", "speed term gated by the wind label (tuned)", "#4C72B0")):
         ep, J, rb = measured_J(run)
         if ep:
             ax.plot(ep, J, "-o", ms=3, lw=0.9, color=col, label=label)
             ax.scatter([e for e, r in zip(ep, rb) if r], [j for j, r in zip(J, rb) if r], marker="x", s=40, color=col, zorder=3)
     ax.axhline(0, color="k", lw=0.6)
     ax.set_xlabel("training episode"); ax.set_ylabel("measured J (supervisor winds)")
-    ax.set_title("(b) the rollback loop (× = rolled back)")
+    ax.set_title("(a) the rollback loop (× = rolled back)")
     ax.legend(frameon=False, fontsize=7, loc="upper left")
-    # (c) fork myopia: lambda_tower of every candidate vs its fork J, chosen marked
-    ax = axes[2]
+    # (b) fork myopia: lambda_tower of every candidate vs its fork J, chosen marked
+    ax = axes[1]
     rng = np.random.default_rng(0)
     for d in sorted(glob.glob(f"{EXP}/jwf3_s*")):
         for l in open(f"{d}/decisions.jsonl", encoding="utf-8"):
@@ -268,8 +229,8 @@ def fig_mechanism():
                 kept = i == r["fork"]["chosen"]
                 ax.scatter(lt * (1 + 0.02 * rng.standard_normal()), c["fit"]["J"], s=30 if kept else 14,
                            color="#4C72B0" if kept else "0.55", marker="o" if kept else "x", zorder=3 if kept else 2)
-    ax.set_xlabel("candidate λ_tower"); ax.set_ylabel("J of the 30-episode fork")
-    ax.set_title("(c) fork search: every λ_tower > 1 rejected")
+    ax.set_xlabel("candidate tower weight λ_T"); ax.set_ylabel("J of the 30-episode fork")
+    ax.set_title("(b) fork search: no λ_T > 1 is ever kept")
     ax.scatter([], [], s=30, color="#4C72B0", label="kept"); ax.scatter([], [], s=14, marker="x", color="0.55", label="rejected")
     ax.legend(frameon=False, fontsize=7, loc="lower right")
     fig.tight_layout()
@@ -288,15 +249,15 @@ def fig_reference():
         ja, jb = mpc_json(tag_a), mpc_json(tag_b)
         if ja and jb:
             rows.append((label, [ja["J"]], [jb["J"]]))
-    for arm, label in (("jrw3t", "LLM reward code"), ("jrwF3t", "reward code, told F"), ("jrwO3t", "reward code, single-shot"),
-                       ("jcb3t", "LLM hparams + reward"), ("jhp3t", "LLM hyper-parameters"), ("jrhp3t", "random hyper-parameters"),
-                       ("jg3t", "fixed reward v3 (tuned)"), ("jg2", "fixed reward v2 (untuned)")):
+    for arm, label in (("jrw3t", "LLM reward expression"), ("jrwF3t", "LLM reward, told F"), ("jrr3t", "random reward structure"),
+                       ("jrwO3t", "LLM reward, single-shot"), ("jcb3t", "LLM hparams + reward"), ("jhp3t", "LLM hyper-parameters"),
+                       ("jrhp3t", "random hyper-parameters"), ("jg3t", "fixed reward (tuned)")):
         runs = load_J(arm)
         A = [r["S3-S6"]["J"] for r in runs.values() if "S3-S6" in r]
         B = [r["S7-S10"]["J"] for r in runs.values() if "S7-S10" in r]
         if A:
             rows.append((f"{label} (n={len(A)})", A, B))
-    rows.append(("GSPI (reference, by construction)", [0.0], [0.0]))
+    rows.append(("GSPI (pairing reference)", [0.0], [0.0]))
     for i, (label, A, B) in enumerate(rows):
         for j, (vals, ws) in enumerate(((A, "S3-S6"), (B, "S7-S10"))):
             if not vals:
@@ -307,7 +268,7 @@ def fig_reference():
             ax.scatter(vals, [y] * len(vals), s=9, color=C[ws], alpha=0.35)
     ax.set_yticks(range(len(rows))); ax.set_yticklabels([r[0] for r in rows], fontsize=7.5); ax.invert_yaxis()
     ax.axvline(0, color="k", lw=0.6); ax.set_xlabel("J (held-out; mean ± s.e., dots = seeds)")
-    ax.set_title("(a) every controller on both held-out wind sets"); ax.legend(frameon=False, loc="lower right")
+    ax.set_title("(a) every controller, both held-out wind sets"); ax.legend(frameon=False, loc="lower right")
     # (b) MPC model mismatch and stress classes
     ax = axes[1]
     base = "eval_mmJ2r_s3456_N20q1r0.3qt3w0.35"

@@ -51,8 +51,8 @@ NREL~5\,MW onshore turbine~\citep{Jonkman2009nrel5mw} in OpenFAST~4.2.1~\citep{O
 \subsection{Residual RL controller}
 Two PPO~\citep{Schulman2017ppo} agents---one per operating region, selected by an oracle rule on ROSCO's native pitch command---add a bounded collective-pitch offset ($|\Delta\beta|\le0.05$\,rad, second-order damped) to the GSPI command. Observations: generator-speed error and its rate, measured pitch, hub wind speed, blade-root out-of-plane moment, tower-top fore-aft acceleration. $\gamma=0.998$, GAE $\lambda=0.98$~\citep{Schulman2016gae}, $64\times64$ tanh networks, 300 training episodes per run; the critic's regression target is standardised by a running estimate of the return scale~\citep{vanHasselt2016popart}. The per-step reward is region-conditional,
 \begin{equation}
-r_t = \mathbb{1}[\mathrm{R2}]\,w_P\!\left(\tfrac{P}{P_{\mathrm{GSPI}}}-1\right)
-      - \mathbb{1}[v_{\mathrm{hub}}>v_{\mathrm{rated}}]\,w_\omega\!\left(\tfrac{\delta\omega}{0.005}\right)^{2}
+r_t = \mathbf{1}[\mathrm{R2}]\,w_P\!\left(\tfrac{P}{P_{\mathrm{GSPI}}}-1\right)
+      - \mathbf{1}[v_{\mathrm{hub}}>v_{\mathrm{rated}}]\,w_\omega\!\left(\tfrac{\delta\omega}{0.005}\right)^{2}
       - \lambda_T\,\ell_T - \lambda_B\,\ell_B - \lambda_A\,(\Delta\beta/\kappa)^2 ,
 \label{eq:reward}
 \end{equation}
@@ -90,6 +90,7 @@ A three-state LPV-MPC (rotor, first tower fore-aft mode) linearised every 0.1\,s
 \centering\small
 \caption{Held-out \J\ (mean $\pm$ s.d.) and the composition of \J\ on S3--S6 (power MSE / speed MSE / tower fatigue / blade fatigue, \% reduction vs.\ GSPI) for every arm on the tuned fixed-reward default. ``Balanced'' counts seeds on which all four metrics improve. Paired differences are against the fixed reward on the same seeds.}
 \label{tab:main}
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llcccccc}
 \toprule
 arm & $n$ & \J\ S3--S6 & \J\ S7--S10 & P\,/\,$\omega$\,/\,T\,/\,B & balanced & $\Delta\J$ vs.\ fixed (wins, exact $p$) \\
@@ -108,7 +109,7 @@ LPV-MPC, exact aero model, full authority   & --- & 12.40 & 14.10 & 8.9 / 19.8 /
 LPV-MPC, regulation-only cost               & --- & $-1.64$ & $-8.08$ & 7.5 / 4.2 / $-$17.6 / $-$0.7 & no & \\
 ROSCO tower damper, best gain               & --- & $-0.06$ & $-0.26$ & $\approx0$ & --- & \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \subsection{Numeric levers are worth nothing on a tuned default}
@@ -182,6 +183,7 @@ subject to the live pitch floor, the pitch limit and the rate limit. The referen
 \centering\small
 \caption{LPV-MPC (\J-selected weights) on the held-out sets and under perturbation of its internal model only.}
 \label{tab:mpc}
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lcccl}
 \toprule
 variant & \J\ S3--S6 & \J\ S7--S10 & P / $\omega$ / T / B (S3--S6) & note \\
@@ -191,25 +193,38 @@ residual channel ($\pm0.05$\,rad, damped), exact model & 11.97 & 11.61 & 8.5 / 2
 regulation-only cost ($q_t=0$, unscaled) & $-1.64$ & $-8.08$ & 7.5 / 4.2 / $-$17.6 / $-$0.7 & the published verdict \\
 \midrule
 residual channel, Cp/Ct $\times0.85$ & $-0.37$ & & $-$3.8 / $-$2.8 / 2.6 / 2.5 & regulation lost \\
-residual channel, Cp/Ct $\times0.95$ & 5.42 & & 1.4 / 7.8 / 8.3 / -- & \\
-residual channel, Cp/Ct $\times1.05$ & 3.10 & & $-$9.1 / $-$0.1 / 17.0 / -- & \\
+residual channel, Cp/Ct $\times0.95$ & 5.42 & & 1.4 / 7.8 / 8.3 / 4.1 & \\
+residual channel, Cp/Ct $\times1.05$ & 3.10 & & $-$9.1 / $-$0.1 / 17.0 / 4.5 & \\
 residual channel, Cp/Ct $\times1.15$ & $-27.53$ & & $-$58.2 / $-$74.2 / 16.5 / 5.7 & regulation collapses \\
 residual channel, tower frequency $\times0.9$ / $\times1.1$ & 6.91 / 10.63 & & & \\
 residual channel, modal mass $\times0.8$ / $\times1.2$ & 11.00 / 12.22 & & & \\
 residual channel, TI 14\,\% / TI 22\,\% (15\,m/s) / 18\,m/s & 10.43 / 12.31 / 22.45 & & & off-design winds \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \section{Reward expressions written by the agent}
 \label{app:expressions}
 Best-checkpoint expressions of the reward-expression agent (variables: \texttt{region} = router region, \texttt{region\_w} = wind label, \texttt{d\_wg} = relative speed error, \texttt{p\_ratio} = power over paired GSPI power, \texttt{load\_t}, \texttt{load\_b} = fatigue proxies, \texttt{act} = actuation cost).
-\begin{itemize}\setlength\itemsep{1pt}\small
-\item seed 0 (told \J): \texttt{180*tanh(15*(p\_ratio-1))} in R2; \texttt{-40*sqrt(tanh(abs(d\_wg)/.005)**2 + tanh(60*abs(p\_ratio-1))**2)} on the wind-labelled subset; \texttt{-.9*tanh(log((2+load\_t+load\_b)/4)) -.1*tanh(act)}.
-\item seed 1 (told $F$): \texttt{155*tanh(p\_ratio-1)} in R2; \texttt{-26*tanh(abs(d\_wg)/.005)} on the wind-labelled subset; \texttt{-(1.4 if region==0 else .5)*tanh(load\_t) -(1.0 if region==0 else 1.5)*tanh(load\_b) -.1*tanh(act)}.
-\item seed 0 (told $F$): \texttt{130*tanh(6*(p\_ratio-1))*(region==0) -24*tanh(d\_wg/.005)**2*(region\_w==1) +1.0*tanh((1-load\_t)/(1+load\_t)) +1.1*tanh((1-load\_b)/(1+load\_b)) -.04*tanh(act)}.
-\end{itemize}
-The random structural control samples expressions of the same families (speed term in $\{x^2, |x|, \tanh|x|, \tanh(x^2), \sqrt{|x|}\}$ of $x=\delta\omega/0.005$; load terms in $\{\ell, \min(\ell,3), \tanh(\ell-1), \tanh\ell, \max(0,\ell-1), \log(1+\ell)\}$; optional power-deviation term) with log-uniform coefficients spanning the ranges the agent used.
+Seed 0, told \J\ (R2 power term; wind-labelled regulation term; joint load term):
+\begin{small}\begin{verbatim}
+  180*tanh(15*(p_ratio-1))                                    if region==0
+  -40*sqrt(tanh(abs(d_wg)/.005)**2 + tanh(60*abs(p_ratio-1))**2)   if region_w==1
+  -.9*tanh(log((2+load_t+load_b)/4)) - .1*tanh(act)
+\end{verbatim}\end{small}
+Seed 1, told $F$ (a saturated absolute speed term; region-dependent bounded load terms):
+\begin{small}\begin{verbatim}
+  155*tanh(p_ratio-1)                                          if region==0
+  -26*tanh(abs(d_wg)/.005)                                     if region_w==1
+  -(1.4 if region==0 else .5)*tanh(load_t)
+  -(1.0 if region==0 else 1.5)*tanh(load_b) - .1*tanh(act)
+\end{verbatim}\end{small}
+Seed 0, told $F$ (centred load terms that reward below-baseline load):
+\begin{small}\begin{verbatim}
+  130*tanh(6*(p_ratio-1))*(region==0) - 24*tanh(d_wg/.005)**2*(region_w==1)
+  + 1.0*tanh((1-load_t)/(1+load_t)) + 1.1*tanh((1-load_b)/(1+load_b)) - .04*tanh(act)
+\end{verbatim}\end{small}
+The random structural control samples expressions of the same families with log-uniform coefficients spanning the ranges the agent used. Speed terms, in $x=\delta\omega/0.005$: $x^2$, $|x|$, $\tanh|x|$, $\tanh(x^2)$, $\sqrt{|x|}$. Load terms, in $\ell\in\{\ell_T,\ell_B\}$: $\ell$, $\min(\ell,3)$, $\tanh(\ell-1)$, $\tanh\ell$, $\max(0,\ell-1)$, $\log(1+\ell)$. An optional power-deviation term on the wind-labelled subset.
 
 \section{Compute and reproducibility}
 \label{app:compute}
