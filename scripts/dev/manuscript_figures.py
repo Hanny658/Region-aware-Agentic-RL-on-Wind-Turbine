@@ -129,19 +129,17 @@ def arm_terms(runs: dict, ws="S3-S6"):
 
 def fig_composition():
     items = []
-    for tag, label in (("eval_base0_s3456", "LPV-MPC (exact model)"),
-                       ("eval_base0_regonly_s3456", "LPV-MPC,\nregulation-only cost")):
+    for tag, label in (("eval_base0_s3456", "LPV-MPC alone\n(for scale)"),):
         j = mpc_json(tag)
         if j:
             items.append((label, terms(j), 1, j["J"]))
-    for arm, label in (("jrw3t", "LLM reward expression"), ("jrwF3t", "LLM reward, told load-priority obj."), ("jrr3t", "random reward structure"),
-                       ("jrwO3t", "LLM reward, single-shot"), ("jcb3t", "LLM hyper-params + reward"), ("jhp3t", "LLM hyper-parameters"),
-                       ("jrhp3t", "random hyper-parameters"), ("jg3t", "fixed reward (tuned)")):
+    for arm, label in (("jg3t", "fixed reward,\nno agent"), ("jrw3t", "agent-written reward,\nverified loop"),
+                       ("jrwO3t", "agent asked once,\nno verification"), ("jrr3t", "random structure from\nthe agent's vocabulary")):
         runs = load_J(arm)
         t, n = arm_terms(runs)
         if t is not None:
-            items.append((f"{label} (n={n})", list(t), n, mean(r["S3-S6"]["J"] for r in runs.values() if "S3-S6" in r)))
-    fig, ax = plt.subplots(figsize=(9.2, 3.6))
+            items.append((label + chr(10) + f"(n={n})", list(t), n, mean(r["S3-S6"]["J"] for r in runs.values() if "S3-S6" in r)))
+    fig, ax = plt.subplots(figsize=(8.4, 3.6))
     w = 0.2
     names = ["power MSE", "speed MSE", "tower fatigue", "blade fatigue"]
     cols = ["#4C72B0", "#55A868", "#C44E52", "#8172B2"]
@@ -150,7 +148,7 @@ def fig_composition():
     for i, it in enumerate(items):
         ax.annotate(f"J={it[3]:.1f}", (i, max(it[1]) + 1.5), ha="center", fontsize=7)
     ax.axhline(0, color="k", lw=0.6)
-    ax.set_xticks(range(len(items))); ax.set_xticklabels([it[0] for it in items], rotation=25, ha="right", fontsize=7.5)
+    ax.set_xticks(range(len(items))); ax.set_xticklabels([it[0] for it in items], fontsize=7.5)
     ax.set_ylabel("% reduction vs GSPI\n(held-out wind seeds 3–6)")
     ax.legend(ncol=4, frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0))
     fig.tight_layout()
@@ -334,7 +332,7 @@ def fig_mpcbase():
         ja, jb = mpc_json(tag_a), mpc_json(tag_b)
         if ja and jb:
             rows.append((label, [ja["J"]], [jb["J"]], terms(ja)))
-    for arm, label in (("mg3t", "MPC + residual, fixed reward"), ("mrw3t", "MPC + residual, LLM reward")):
+    for arm, label in (("mrw3t", "MPC + agent-supervised residual"), ("mg3t", "MPC + residual, fixed reward (ablation)")):
         runs = load_J(arm)
         A = [r["S3-S6"]["J"] for r in runs.values() if "S3-S6" in r]; B = [r["S7-S10"]["J"] for r in runs.values() if "S7-S10" in r]
         t, n = arm_terms(runs)
@@ -344,7 +342,7 @@ def fig_mpcbase():
         ja, jb = mpc_json(tag_a), mpc_json(tag_b)
         if ja and jb:
             rows.append((label, [ja["J"]], [jb["J"]], terms(ja)))
-    for arm, label in (("mgC3t", "×0.95 MPC + residual, fixed reward"), ("mrwC3t", "×0.95 MPC + residual, LLM reward")):
+    for arm, label in (("mrwC3t", "×0.95 MPC + agent-supervised residual"), ("mgC3t", "×0.95 MPC + residual, fixed reward (ablation)")):
         runs = load_J(arm)
         A = [r["S3-S6"]["J"] for r in runs.values() if "S3-S6" in r]; B = [r["S7-S10"]["J"] for r in runs.values() if "S7-S10" in r]
         t, n = arm_terms(runs)
@@ -361,7 +359,7 @@ def fig_mpcbase():
             ax.scatter(vals, [y] * len(vals), s=10, color=C[ws], alpha=0.4)
     ax.set_yticks(range(len(rows))); ax.set_yticklabels([r[0] for r in rows], fontsize=8); ax.invert_yaxis()
     ax.axvline(0, color="k", lw=0.6); ax.set_xlabel("J (held-out; mean ± s.e., dots = seeds)")
-    ax.set_title("(a) the residual on the MPC, exact and mismatched model"); ax.legend(frameon=False, loc="upper left")
+    ax.set_title("(a) held-out J, exact and mismatched MPC model"); ax.legend(frameon=False, loc="upper left")
     ax = axes[1]
     w = 0.2
     names = ["power MSE", "speed MSE", "tower fatigue", "blade fatigue"]
@@ -369,7 +367,7 @@ def fig_mpcbase():
     for k in range(4):
         ax.bar(np.arange(len(rows)) + (k - 1.5) * w, [r[3][k] for r in rows], w, color=cols[k], label=names[k])
     ax.axhline(0, color="k", lw=0.6)
-    short = ["MPC\nexact", "+ resid.\nfixed rew.", "+ resid.\nLLM rew.", "MPC\n$C_P$ ×0.95", "+ resid.\nfixed rew.", "+ resid.\nLLM rew."][:len(rows)]
+    short = ["MPC\nexact", "+ agent\nresidual", "+ fixed\nreward", "MPC\n$C_P$ ×0.95", "+ agent\nresidual", "+ fixed\nreward"][:len(rows)]
     ax.set_xticks(range(len(rows))); ax.set_xticklabels(short, fontsize=7.5)
     ax.set_ylabel("% reduction vs GSPI (wind seeds 3–6)"); ax.set_title("(b) what the J is made of", pad=22)
     ax.legend(ncol=4, frameon=False, fontsize=7, loc="lower center", bbox_to_anchor=(0.5, 1.0))
@@ -400,16 +398,16 @@ def _ep_metrics(d):
 
 
 def fig_trajectory():
-    rows = [("GSPI base", [("GSPI", lambda k: f"{BASE_DIR}/U15_TI8_S{k}.npz", "0.45"),
-                           ("+ residual, fixed reward", lambda k: f"{EXP}/jg3t_s0/logs_traj_s3456/U15_TI8_S{k}.npz", "#4C72B0"),
-                           ("+ residual, agent-written reward", lambda k: f"{EXP}/jrw3t_s0/logs_traj_s3456/U15_TI8_S{k}.npz", "#DD8452")]),
-            ("MPC base, $C_P/C_T$ ×0.95 in its model", [("MPC ×0.95 alone", lambda k: f"{EXP}/mpc/logs_base0_cp0.95_s3456/U15_TI8_S{k}.npz", "0.45"),
-                           ("+ residual, fixed reward", lambda k: f"{EXP}/mgC3t_s2/logs_traj_s3456/U15_TI8_S{k}.npz", "#4C72B0"),
-                           ("+ residual, agent-written reward", lambda k: f"{EXP}/mrwC3t_s1/logs_traj_s3456/U15_TI8_S{k}.npz", "#DD8452")])]
+    rows = [("MPC base, $C_P/C_T$ ×0.95 in its model", [("MPC ×0.95 alone", lambda k: f"{EXP}/mpc/logs_base0_cp0.95_s3456/U15_TI8_S{k}.npz", "0.45"),
+                           ("+ agent-supervised residual", lambda k: f"{EXP}/mrwC3t_s1/logs_traj_s3456/U15_TI8_S{k}.npz", "#DD8452"),
+                           ("+ residual, fixed reward", lambda k: f"{EXP}/mgC3t_s2/logs_traj_s3456/U15_TI8_S{k}.npz", "#4C72B0")]),
+            ("ablation base: GSPI", [("GSPI", lambda k: f"{BASE_DIR}/U15_TI8_S{k}.npz", "0.45"),
+                           ("+ agent-supervised residual", lambda k: f"{EXP}/jrw3t_s0/logs_traj_s3456/U15_TI8_S{k}.npz", "#DD8452"),
+                           ("+ residual, fixed reward", lambda k: f"{EXP}/jg3t_s0/logs_traj_s3456/U15_TI8_S{k}.npz", "#4C72B0")])]
     # episode: the 15 m/s realisation on which the GSPI-base arms' tower-fatigue difference is closest to its mean over the four
     diffs = {}
     for k in (3, 4, 5, 6):
-        pa, pb = rows[0][1][1][1](k), rows[0][1][2][1](k)
+        pa, pb = rows[1][1][2][1](k), rows[1][1][1][1](k)
         if os.path.exists(pa) and os.path.exists(pb):
             diffs[k] = _ep_metrics(np.load(pa))[1] - _ep_metrics(np.load(pb))[1]
     if not diffs:

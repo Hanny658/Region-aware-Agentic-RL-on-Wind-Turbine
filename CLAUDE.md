@@ -17,7 +17,7 @@ because it bounds the supervision claim. **Do not describe research directions b
 in this repo's docs, commits or manuscripts. The IPC/torque code paths stay in the tree (inert at
 `--ipc_max 0` / `--dtau_max 0`) because run configs reference them.
 
-## Final state (2026-09-15; manuscript v3, agent-centred)
+## Final state (2026-09-15; manuscript v4, MPC + agent-supervised residual main line)
 Objective: **J** = mean of the baseline paper's four % reductions vs paired GSPI (power MSE,
 gen-speed MSE, tower DEL, blade DEL; per-episode clipped ±100), −20 per % energy loss over 1 %, no
 tiers, wind-labelled R3 subsets (`docs/roadmap_2026-09-11_metric-set-objective.md`, decisions D1–D6).
@@ -41,9 +41,12 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   (saturated speed term, centred bounded load terms — a change of reward shape the weight search
   cannot reach). Final n = 5: fixed 4.86 / 5.50, llm_reward 5.30 / 6.04 (+0.4 / +0.5, 3/5 balanced),
   told-F 7.00 / 8.33, combo 6.37 / 8.65 (0/5 balanced), random reward structure (n = 3) 6.13 / 7.06.
-  **Manuscript (docs/manuscript/main.tex, v3) is agent-centred**: the agent's contribution is a
-  vocabulary of reward shapes realised by verification, no level effect on either base; the MPC
-  base is one subsection (strong-base test), not a co-headline. No development shorthand in the paper.
+  **Manuscript (docs/manuscript/main.tex, v4, user instruction 2026-09-15)**: main line = the agent-supervised
+  residual improves the MPC (+1.0 / +1.6, all terms positive) and repairs its x0.95 model (8.5 / 3.6 ->
+  12.7 / 18.3); the agent's reward shapes (saturated speed + power terms, bounded/centred fatigue terms).
+  Negative results only in the Ablations section (fixed reward on the MPC base ~ same level; GSPI base:
+  single-shot, random vocabulary) or in appendices never cited from the main text (hyper-parameter /
+  combined / told-F arms, gating defect). arXiv style `docs/manuscript/arxiv.sty`. No development shorthand.
 - **Objective decides the lever** (roadmap v2 §9 vs 08-30 §21): on F the reward-weight *proposer*
   mattered (llm_fork > random_fork 7/7); on J the untuned default collapsed into a rollback loop
   (12.5 m/s speed-MSE), hyper-parameter search repaired it (+6…+8, proposer-agnostic), and once the

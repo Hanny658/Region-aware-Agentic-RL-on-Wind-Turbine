@@ -16,30 +16,32 @@
 \newcommand{\J}{\ensuremath{J}}
 \newcommand{\pending}[1]{\textcolor{red!70!black}{[#1]}}
 
-\title{What does a language-model supervisor contribute to a learning controller?\\
-\large A controlled study of agentic reward and hyper-parameter supervision for residual pitch control of a wind turbine}
+\title{An agent-supervised learned residual on model predictive pitch control of a wind turbine\\
+\large the residual adds to the strongest controller and repairs its model; a language-model agent writes its reward}
 % authors: one block per author, \And between authors, \\ for affiliation and e-mail lines, e.g.
 % \author{First Author \\ Affiliation \\ \texttt{mail} \And Second Author \\ Affiliation \\ \texttt{mail}}
 \author{\pending{authors}}
 \date{\today}
-\renewcommand{\shorttitle}{LLM supervision of a learning controller}
+\renewcommand{\shorttitle}{Agent-supervised residual on MPC pitch control}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Language-model agents now write and tune the rewards of reinforcement-learning controllers. We ask what such an agent contributes when the controller is a bounded residual on an engineered pitch controller of the NREL~5\,MW turbine, and we answer with one protocol run to the end: every 30 training episodes the agent proposes candidates, each is verified by a 30-episode fork, the best continues, and a guardrail rolls back; three levers (reward weights, PPO hyper-parameters, the reward expression itself) each get a random-search control; the loop is ablated (agent asked once and applied blind; agent told an objective other than the one that selects); the whole study is repeated on two base controllers, the gain-scheduled PI and a linear-parameter-varying MPC that is the strongest controller on the objective, exact and with a 5\,\% error in its aerodynamic model; every number is a seed-paired held-out evaluation on two disjoint wind sets with exact permutation tests. On a tuned default the numeric levers are worth nothing, for the agent and for random search alike. The reward expression is the one lever that changes what a solution is made of: the agent's rewards reach a balanced solution, every metric improved including tower fatigue, in 3 of 5 seeds where no fixed-reward or weight-searched run reaches it in any, but they do not change the level of the objective ($+0.4$\,/\,$+0.5$ points, within seed noise). A random draw from the agent's own vocabulary of term shapes, verified by the same loop, reaches the same composition; the agent without the loop is the fixed reward; the agent told the wrong objective, selected by the right one, is as good as the agent told the right one. On the MPC base the residual has little left to add ($+0.3$ with the fixed reward, $+1.0$ with the agent's) and, when the MPC's model is 5\,\% wrong, repairs it; the agent's reward is again not distinguishable from the fixed one. The agent's contribution is a vocabulary of reward structures, made real by verification against the true objective---not a search, not a prompt, and not a level. Four protocol defects, each worth more than any agent, are documented as rules for such studies.
+Model predictive control (MPC) of wind-turbine pitch is only as good as its model, and a learned controller is only as good as its reward. We combine the two on collective-pitch control of the NREL~5\,MW turbine in OpenFAST: a linear-parameter-varying MPC, which with a correctly scaled cost is the strongest controller on the metric set of a published reinforcement-learning pitch-control study (power MSE, generator-speed MSE, tower-base and blade-root fatigue), carries a bounded residual policy trained by PPO, and a language-model agent supervises the residual's reward during training---every 30 episodes it writes candidate reward expressions, each is verified by a 30-episode fork against the objective, the best continues, and a guardrail rolls back. On two disjoint held-out wind sets the supervised residual adds 1.0 and 1.6 points to the exact-model MPC with all four metrics improved in every seed, and when the MPC's power and thrust coefficients are 5\,\% wrong in its model it restores the controller from 8.5\,/\,3.6 to 12.7\,/\,18.3, above the exact-model MPC on one set: the residual learns what the model gets wrong. Ablations delimit the agent's part. A fixed, tuned reward reaches a level within seed noise of the agent's on the MPC base; what the agent demonstrably changes is the reward's structure, visible on the weaker gain-scheduled-PI base where the residual has more to do: its rewards reach a balanced solution with every metric improved, including tower fatigue, in 3 of 5 seeds where no fixed-reward or weight-searched run reaches it in any, the agent asked once without verification does not, and a random search over the agent's own vocabulary of term shapes, verified by the same loop, does. Every MPC-alone number is the MPC run as the residual's base controller, through the same code path as the residual runs.
 \end{abstract}
 
 \section{Introduction}
 
-Reinforcement learning (RL) has been proposed for wind-turbine pitch control as a model-free alternative to model predictive control (MPC)~\citep{SierraGarcia2020,Xie2023rlpitch,Coquelet2022ipc,Baseline2026}, and its reward is its design problem. Language-model (LLM) agents are the newest answer to that problem: Eureka evolves reward code against a task score~\citep{Ma2024eureka}, Language-to-Rewards and Text2Reward map instructions to reward parameters and programs~\citep{Yu2023l2r,Xie2024text2reward}, DrEureka adds domain-randomisation design~\citep{Ma2024dreureka}, and agentic reward designers close the loop with semantic feedback~\citep{Lee2026rda}. These systems are evaluated by the policy they produce. What the agent itself contributes---beyond a search that any verification loop could run, and beyond the prior a control engineer would write down---is rarely separated out, and for a physical plant with a strong engineered baseline the answer decides whether the agent belongs in the loop at all.
+Above rated wind speed a turbine's collective pitch regulates rotor speed and power while limiting fatigue of the tower and the blades. Model predictive control (MPC) handles the trade-off explicitly and is a standard reference for the problem~\citep{Bossanyi2000,Soliman2011mpc,Koerber2013mpc,Schlipf2013nmpc,Evans2015rmpc}; reinforcement learning (RL) has been proposed as a model-free alternative~\citep{SierraGarcia2020,Xie2023rlpitch,Coquelet2022ipc,Baseline2026}. Each has a dependency the other does not: the MPC depends on its model, the learned controller on its reward. Residual learning addresses the first---a bounded policy on top of the model-based controller can learn what the model gets wrong---and language-model (LLM) agents are the newest answer to the second: Eureka evolves reward code against a task score~\citep{Ma2024eureka}, Language-to-Rewards and Text2Reward map instructions to reward parameters and programs~\citep{Yu2023l2r,Xie2024text2reward}, DrEureka adds domain-randomisation design~\citep{Ma2024dreureka}, and agentic reward designers close the loop with semantic feedback~\citep{Lee2026rda}.
 
-We separate it out on one benchmark. The controller is a bounded residual on top of a base pitch controller of the NREL~5\,MW turbine in OpenFAST, trained by PPO; the objective is the metric set of a published RL pitch-control study (power MSE, generator-speed MSE, tower-base and blade-root fatigue, paired against the gain-scheduled PI); the agent supervises training every 30 episodes. The study is designed so that each of the agent's possible contributions has a control: three \emph{levers} (reward weights, hyper-parameters, reward expression), each with a random-search control of the same shape; the verification \emph{loop} ablated (asked once, no fork; told a different objective than the one that selects); the agent's \emph{prior} ablated (a random structural search over expressions drawn from the agent's own vocabulary of term shapes, passed through the same loop); and two \emph{base controllers}, the PI and the strongest controller on the objective, an LPV-MPC with a correctly scaled cost, exact and with a 5\,\% model error, so that the agent is tested where the residual has much to do and where it has little.
+This paper puts the two together on one plant and measures what each part is worth. The controller is an LPV-MPC of the NREL~5\,MW turbine whose cost is scaled so that its tower term works, which makes it the strongest controller we know of on the objective; a bounded PPO residual sits on its target; a reasoning-model agent supervises the residual's reward during training under fork verification against the objective. The objective is the metric set of a published RL pitch-control study~\citep{Baseline2026}---power MSE, generator-speed MSE, tower-base and blade-root fatigue, each as a paired percentage reduction against the gain-scheduled PI (GSPI)---and every number is a held-out evaluation on two disjoint wind sets with seed pairing and exact permutation tests.
 
-\paragraph{Findings.} Numeric levers are worth nothing on a tuned default, whoever proposes. The reward expression changes the composition of the solution---the agent's rewards reach a balanced solution with every metric improved, including tower fatigue, in 3 of 5 seeds, where no fixed-reward or weight-searched run reaches it in any---but not the level of the objective. The loop is necessary and the prompt is not: asked once, the agent produces the fixed reward; told the wrong objective and selected by the right one, it produces the balanced solution as often. A random draw from the agent's vocabulary, verified by the same loop, reaches the same composition. On the MPC base the residual adds $+0.3$ (fixed reward) and $+1.0$ (agent) to a controller that is already positive on every metric; when the MPC's aerodynamic model is 5\,\% wrong the residual repairs it and the agent's reward is once more indistinguishable from the fixed one. Along the way four protocol defects were found, each moving the comparison by more than any agent: the subset on which the reward's speed term is gated, the scale of the critic's target, the scale of the MPC's cost terms, and the channel through which a reference controller is evaluated.
+\paragraph{Results.} The supervised residual adds $+1.0$\,/\,$+1.6$ points to the exact-model MPC on the two held-out sets, above the MPC in five of six seed--set pairs, with all four metrics improved in every seed. When the MPC's power and thrust coefficients are 5\,\% low in its internal model---the controller alone falls from 16.3\,/\,17.2 to 8.5\,/\,3.6---the residual restores 12.7\,/\,18.3, above the exact-model MPC alone on one set. The agent's rewards share a structure no weight of a conventional reward can express: saturated speed and power terms on the above-rated subset, and bounded fatigue terms.
 
-\paragraph{Contributions.} (a)~A controlled protocol for agentic supervision of a learning controller---levers with matched random controls, loop and prior ablations, two bases, seed pairing, exact permutation tests---that any such study can reuse. (b)~Its outcome: the agent's contribution is a vocabulary of reward structures realised by verification against the true objective, with no measurable effect on the level of the objective on either base. (c)~Design and protocol rules distilled from the defects that mattered more than the agent.
+\paragraph{Ablations.} A fixed, tuned reward on the same MPC base reaches a level within seed noise of the agent's ($+0.3$\,/\,$+0.8$ over the MPC; difference to the agent $+0.6$\,/\,$+0.8$, two of three seeds, $n=3$), so the agent's contribution is not a level effect on this base. It is a structural one, which shows where the residual has more to do: on the GSPI base the agent's rewards reach a balanced solution---every metric improved, tower fatigue included---in 3 of 5 seeds where no fixed-reward or weight-searched run reaches it in any; the agent asked once and applied without verification is the fixed reward; and a random search over the agent's own vocabulary of term shapes, verified by the same loop, reaches the same balanced solution. The agent supplies the vocabulary; verification against the objective makes it real.
+
+\paragraph{Contributions.} (a)~An MPC with a supervised learned residual, evaluated on held-out winds: it adds to the strongest controller on the objective and repairs a model error. (b)~A corrected model-based reference: the MPC must be evaluated as the residual's base controller, not through the learner's action channel, and with $O(1)$ cost terms it is positive on every metric where the published verdict has it losing tower fatigue. (c)~Ablations with matched controls that delimit the agent's role to the structure of the reward.
 
 \section{Setup}
 
@@ -50,133 +52,130 @@ NREL~5\,MW onshore turbine~\citep{Jonkman2009nrel5mw} in OpenFAST~4.2.1~\citep{O
 \J = \tfrac14\!\sum_{m\in\{P,\omega,T,B\}}\!\mathrm{clip}_{\pm100}\big(\Delta m\,[\%]\big)\;-\;20\,\max\!\big(0,\;E_{\mathrm{loss}}[\%]-1\big),
 \label{eq:J}
 \end{equation}
-the mean of the per-episode-clipped percentage reductions, relative to paired GSPI, of power MSE and generator-speed MSE on above-rated steps (labelled by hub wind, whatever the controller does) and of tower-base and blade-root fatigue, minus a penalty for energy loss beyond 1\,\% (Appendix~\ref{app:weights}). Every selection in the loop (fork winner, best checkpoint, rollback) uses \J\ on wind seeds 1--2; every reported number is a held-out evaluation of the best checkpoint. Seeds are paired across arms; differences are reported as mean, wins$/n$, the exact two-sided sign-flip permutation $p$ (floor $2/2^n$: 0.0625 at $n=5$, 0.25 at $n=3$) and a paired $t$-test. A seed is \emph{balanced} when all four metrics improve on a held-out set. Arms with $n=3$ are proofs of concept and are labelled as such.
+the mean of the per-episode-clipped percentage reductions, relative to paired GSPI, of power MSE and generator-speed MSE on above-rated steps (labelled by hub wind, whatever the controller does) and of tower-base and blade-root fatigue, minus a penalty for energy loss beyond 1\,\%. Every selection during training (fork winner, best checkpoint, rollback) uses \J\ on wind seeds 1--2; every reported number is a held-out evaluation of the best checkpoint. Seeds are paired across arms; differences are reported as mean, wins$/n$ and the exact two-sided sign-flip permutation $p$ (floor $2/2^n$: 0.0625 at $n=5$, 0.25 at $n=3$). A seed is \emph{balanced} when all four metrics improve on a held-out set.
 
-\subsection{The residual and its two bases}
+\subsection{The model-based controller and what it depends on}
+\label{sec:mpc}
+A three-state LPV-MPC (rotor, first tower fore-aft mode) linearised every 0.1\,s from the $C_P$/$C_T$ tables, horizon 2\,s, OSQP~\citep{Stellato2020osqp} (3.6\,ms per solve), pitch within the live peak-shaving floor and the rate limit, wind held at ROSCO's low-passed estimate (no preview), torque native. Its cost has three terms---speed error, tower-top velocity, pitch increment---each scaled to $O(1)$ at its typical value, and its weights are selected on wind seeds 1--2 by \J, the same rule as every learned arm. The scaling is what makes it strong: with the speed error normalised by rated speed instead, the speed term is $O(10^{-5})$ at a typical error of 0.5\,\% while the tower term is $O(1)$, any tower weight out-weighs regulation by four orders of magnitude, the optimum feathers the rotor, and the best such MPC has no tower term and loses tower fatigue ($-22$\,\%)---the published verdict. With $O(1)$ terms the same MPC is positive on every metric: 16.3\,/\,17.2 on the two held-out sets.
+
+\begin{figure}[t]
+\centering\includegraphics[width=0.7\linewidth]{fig_mpc_error.png}
+\caption{The MPC is conditional on its aerodynamic model. Held-out \J\ (wind seeds 3--6) of the MPC when only its internal model is perturbed; the plant is unchanged. Errors on the tower model cost a few points; errors on the power and thrust coefficients cost the controller.}
+\label{fig:mpc_error}
+\end{figure}
+
+That lead is conditional on the model (Fig.~\ref{fig:mpc_error}): tower frequency $\pm10$\,\% and modal mass $-20$\,\% cost 3--4 points, but the power and thrust coefficients 5\,\% low or high take the controller to 8.5 and 5.7, and $\pm15$\,\% to $-24$, its regulation collapsing. An identified aerodynamic model will not be exact. This is what a learned residual has to repair, and the 5\,\% case is the one we train on.
+
+\paragraph{How the MPC is evaluated.} Every MPC-alone number in this paper is the MPC run as the residual's base controller with a zero residual, i.e.\ through exactly the code path of the residual runs. An earlier version sent its command through the residual channel of the RL agents instead; that channel carries a rule written for the learned residual---below rated, by the router's region, the offset is non-negative---which zeroed the MPC's negative offsets during region transitions at 12.5\,m/s and produced pitch discontinuities: on one held-out episode the tower-base fatigue was 11.6\,MN\,m through the channel and 7.3\,MN\,m for the same MPC as the base controller, against 19.4 for GSPI; on the held-out sets the difference was four points of \J. A reference controller has to be evaluated as itself.
+
+\subsection{The learned residual}
 \label{sec:residual}
-Two PPO~\citep{Schulman2017ppo} agents---one per operating region, selected by an oracle rule on ROSCO's native pitch command---add a bounded collective-pitch offset ($|\Delta\beta|\le0.05$\,rad, second-order damped) to the base command; the pitch limits apply to the sum. Observations: generator-speed error and its rate, measured pitch, hub wind speed, blade-root out-of-plane moment, tower-top fore-aft acceleration, and on the MPC base the base's target. $\gamma=0.998$, GAE $\lambda=0.98$~\citep{Schulman2016gae}, $64\times64$ tanh networks, 300 training episodes per run; the critic's regression target is standardised by a running estimate of the return scale~\citep{vanHasselt2016popart}. The per-step reward is region-conditional,
+Two PPO~\citep{Schulman2017ppo} agents---one per operating region, selected by an oracle rule on ROSCO's native pitch command---add a bounded collective-pitch offset ($|\Delta\beta|\le0.05$\,rad, second-order damped) to the MPC's target; the pitch limits apply to the sum. Observations: generator-speed error and its rate, measured pitch, hub wind speed, blade-root out-of-plane moment, tower-top fore-aft acceleration, and the MPC's target. $\gamma=0.998$, GAE $\lambda=0.98$~\citep{Schulman2016gae}, $64\times64$ tanh networks, 300 training episodes per run; the critic's regression target is standardised by a running estimate of the return scale~\citep{vanHasselt2016popart}. With zero residual the controller is the MPC itself, so the episode-0 policy is the MPC and the best checkpoint is selected against it. The fixed reward used as a control is region-conditional,
 \begin{equation}
 r_t = \mathbf{1}[\text{Region 2}]\,w_P\!\left(\tfrac{P}{P_{\mathrm{GSPI}}}-1\right)
       - \mathbf{1}[v_{\mathrm{hub}}>v_{\mathrm{rated}}]\,w_\omega\!\left(\tfrac{\delta\omega}{0.005}\right)^{2}
       - \lambda_T\,\ell_T - \lambda_B\,\ell_B - \lambda_A\,(\Delta\beta/\kappa)^2 ,
 \label{eq:reward}
 \end{equation}
-with fatigue proxies $\ell_T,\ell_B$ (growth of the 10\,s peak-to-peak range of tower acceleration and of blade-root moment, $\approx1$ per step under GSPI) and the speed term gated by the wind label, the subset on which the objective's regulation metrics are scored (Appendix~\ref{app:gating}). Its six coefficients and the two residual bounds are the \emph{knobs}; their default is tuned once on wind seeds 1--2 by \J\ (Appendix~\ref{app:weights}) and is the same on both bases.
+with fatigue proxies $\ell_T,\ell_B$ (growth of the 10\,s peak-to-peak range of tower acceleration and of blade-root moment, $\approx1$ per step under GSPI) and the speed term gated by the wind label, the subset on which the objective's regulation metrics are scored; its six coefficients and the two residual bounds were tuned once on wind seeds 1--2 by \J\ and are the same everywhere.
 
-\emph{GSPI base}: the residual sits on ROSCO's PI command. \emph{MPC base}: a three-state LPV-MPC (rotor, first tower fore-aft mode; linearised every 0.1\,s from the $C_P$/$C_T$ tables; horizon 2\,s; OSQP~\citep{Stellato2020osqp}; no wind preview) runs inside the environment, the residual is added to its target, and its target is in the observation. Its cost terms are scaled to $O(1)$, which is what makes it the strongest controller on \J: with the speed error normalised by rated speed instead, the tower term out-weighs regulation by four orders of magnitude and the optimum feathers the rotor, reproducing the published verdict that MPC ``wins regulation and loses tower fatigue'' (Appendix~\ref{app:mpc}). With zero residual the controller is the MPC itself, so the episode-0 policy is the MPC. The MPC is also run with the power and thrust coefficients scaled by 0.95 in its internal model only (the plant is unchanged), the case in which the residual has a model error to repair. All MPC-alone numbers are the MPC as the base controller with a zero residual, evaluated through the same code path as every residual run (Appendix~\ref{app:mpc} records why this matters).
-
-\subsection{The supervision loop, its levers and their controls}
-\label{sec:loop}
-Every 30 episodes the policy is evaluated on wind seeds 1--2 and a supervisor may act. The agent (an OpenAI-compatible reasoning model in JSON mode, about five calls per run) receives the training diagnostics, the evaluation, the decision history with outcomes and the objective's definition, and returns $K=3$ candidates. Each candidate is trained for a 30-episode fork from the same checkpoint, the forks are evaluated on wind seeds 1--2, and the best fork continues (\emph{fork verification}). A guardrail rolls the run back to its best checkpoint when the objective drops by more than five points or energy loss exceeds 1\,\%. Levers: the six \textbf{weights} of \eqref{eq:reward}, with log-uniform random search as control; the PPO \textbf{hyper-parameters} (learning rates, GAE $\lambda$, entropy, clip), with random search as control; the \textbf{reward expression}, a sandboxed Python expression over (region, wind label, speed error, power ratio, both fatigue proxies, actuation) that replaces \eqref{eq:reward} in the manner of Eureka~\citep{Ma2024eureka}, with as control a random \emph{structural} search over expressions drawn from a fixed grammar of the same term shapes with log-uniform coefficients, passed through the same loop; and both namespaces in \textbf{one agent} (hyper-parameters and reward expression). Fixed-knob training under the same guardrail is the \emph{fixed-reward} baseline. Loop ablations: the agent asked once at the first decision and applied without a fork (\emph{single-shot}); the agent told a different objective than the one that selects (a load-priority objective with speed regulation as a penalised constraint; only what the agent is \emph{told} changes, \J\ still selects every fork and checkpoint).
+\subsection{The supervising agent}
+\label{sec:agent}
+Every 30 episodes the policy is evaluated on wind seeds 1--2 and the agent (an OpenAI-compatible reasoning model in JSON mode, about five calls per run) receives the training diagnostics, the evaluation, the decision history with outcomes and the objective's definition. It returns $K=3$ candidate \emph{reward expressions}---sandboxed Python over (region, wind label, speed error, power ratio, both fatigue proxies, actuation) that replace \eqref{eq:reward}, in the manner of Eureka~\citep{Ma2024eureka}. Each candidate is trained for a 30-episode fork from the same checkpoint, the forks are evaluated on wind seeds 1--2, and the best fork continues (\emph{fork verification}); a guardrail rolls the run back to its best checkpoint when the objective drops by more than five points or energy loss exceeds 1\,\%. The controls used in the ablations run through the same loop: the fixed reward \eqref{eq:reward} with no agent; the agent asked once at the first decision and applied without a fork; and a random \emph{structural} search over expressions drawn from a fixed grammar of the agent's own term shapes with log-uniform coefficients.
 
 \section{Results}
 
-\subsection{Levers: numeric ones are worth nothing, the reward's shape changes the composition}
-\label{sec:levers}
+\subsection{The supervised residual on the MPC}
+\label{sec:main}
 
 \begin{table}[t]
 \centering\small
-\caption{The supervision study on the GSPI base (held-out \J, mean $\pm$ s.d.; composition on wind seeds 3--6 as power MSE / speed MSE / tower fatigue / blade fatigue, \% reduction vs.\ GSPI; ``balanced'' counts seeds on which all four metrics improve; paired differences against the tuned fixed reward with wins and exact $p$ on wind seeds 3--6 / 7--10).}
-\label{tab:levers}
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{llcccccc}
-\toprule
-arm & $n$ & \J\ seeds 3--6 & \J\ seeds 7--10 & P\,/\,$\omega$\,/\,T\,/\,B & balanced & $\Delta\J$ vs.\ fixed (wins, exact $p$) \\
-\midrule
-fixed reward (tuned)                     & 5 & $4.86\pm2.76$ & $5.50\pm2.09$ & 17.4 / 19.0 / $-$17.6 / 0.7 & 0/5 & --- \\
-LLM hyper-parameters                     & 3 & $5.26\pm2.39$ & $7.13\pm3.05$ & 17.1 / 20.7 / $-$18.1 / 1.2 & 0/3 & $-0.5$ / $+0.3$ (2/3, 1.0) \\
-random hyper-parameters                  & 3 & $4.93\pm2.02$ & $5.96\pm2.17$ & 15.1 / 17.0 / $-$13.2 / 0.8 & 0/3 & $-0.8$ / $-0.9$ (2/3, 1.0) \\
-LLM hyper-parameters $+$ reward, one agent & 5 & $6.37\pm2.94$ & $8.65\pm2.60$ & 15.9 / 16.3 / $-$7.6 / 0.9 & 0/5 & $+1.5$ / $+3.2$ (4/5, 0.31 / 0.13) \\
-\textbf{LLM reward expression}           & 5 & $5.30\pm4.17$ & $6.04\pm4.28$ & 6.8 / 10.1 / $\mathbf{+1.5}$ / 2.7 & \textbf{3/5} & $+0.4$ / $+0.5$ (3/5, 0.75 / 0.69) \\
-LLM reward expression, told a load-priority objective & 5 & $7.00\pm2.12$ & $8.33\pm2.38$ & 9.5 / 14.6 / $+0.9$ / 3.0 & 3/5 & $+2.1$ / $+2.8$ (4/5, 0.31 / 0.19) \\
-random reward structure, same loop       & 3 & $6.13\pm0.52$ & $7.06\pm1.35$ & 9.5 / 10.5 / $+2.1$ / 2.5 & 1/3 & $+0.4$ / $+0.3$ (2/3, 1/3; $\approx1$) \\
-LLM reward expression, single-shot, no loop & 5 & $4.97\pm1.90$ & $6.66\pm2.75$ & 11.6 / 13.3 / $-$5.5 / 0.5 & 1/5 & $+0.1$ / $+1.2$ (2/5, 3/5; $\approx1$) \\
-\bottomrule
-\end{tabular}}
-\end{table}
-
-\begin{figure}[t]
-\centering\includegraphics[width=0.9\linewidth]{fig1_levers.png}
-\caption{Seed-paired difference of held-out \J\ between each supervised arm and the tuned fixed reward on the GSPI base, both held-out wind sets (mean $\pm$ s.e., dots are seeds, labels are wins$/n$). No arm is significantly above zero.}
-\label{fig:levers}
-\end{figure}
-
-\begin{figure}[t]
-\centering\includegraphics[width=\linewidth]{fig2_composition.png}
-\caption{What each controller's held-out \J\ is made of (wind seeds 3--6, arm means), with the MPC rows for scale. Every fixed-reward and hyper-parameter arm buys regulation with tower fatigue; the reward-expression agent, the random draw from its vocabulary and the correctly scaled MPC are the rows with every term positive.}
-\label{fig:composition}
-\end{figure}
-
-On the GSPI base the residual is the whole controller's improvement, so the levers have room to matter. Table~\ref{tab:levers} and Figs.~\ref{fig:levers}--\ref{fig:composition} give the outcome, all on the tuned default and both held-out sets.
-
-\paragraph{Numeric levers.} The hyper-parameter agent is worth $-0.5$\,/\,$+0.3$ and random hyper-parameter search $-0.8$\,/\,$-0.9$: the two proposers are indistinguishable and neither moves the fixed reward. The weight search (Appendix~\ref{app:weights}) raises \J\ by about two points over an untuned start---that is the tuning the default already contains---and never keeps a candidate with a heavier fatigue weight: fatigue responds over tens of episodes, regulation within one fork, so a 30-episode verification horizon is myopic for that knob (Fig.~\ref{fig:mechanism}b), and a sweep of the tower weight confirms the balanced region is not on that axis at all ($\lambda_T=3,10,30$: 1.4, $-2.9$, no learning).
-
-\paragraph{The reward's shape.} Every fixed-reward and hyper-parameter arm buys regulation with tower fatigue ($-13$ to $-18$\,\%), the opposite of what a residual load controller is for. The reward-expression agent is the only lever whose mean tower fatigue improves and the only one with balanced seeds (3/5); its balanced seeds share a \emph{saturated} speed term $\tanh(|\delta\omega|/0.005)$ on the wind-labelled subset and centred, bounded load terms $\tanh(\ell-1)$ that penalise only above-baseline load (Appendix~\ref{app:expressions})---a change of reward shape that no weight of \eqref{eq:reward} can express. Its effect on the level of \J\ is $+0.4$\,/\,$+0.5$ (3/5, $p=0.75$\,/\,$0.69$), inside seed noise. Combining the reward lever with the hyper-parameter lever in one agent raises the level ($+1.5$\,/\,$+3.2$, 4/5, $p=0.31$\,/\,$0.13$) but never the composition (0/5 balanced): it buys regulation the way the hyper-parameter arms do.
-
-\subsection{The loop is necessary, the prompt is not, and the prior is a vocabulary}
-\label{sec:loop_results}
-
-\paragraph{Loop.} Asked once at the first decision and applied without a fork, the same agent is the fixed reward ($+0.1$\,/\,$+1.2$, 1/5 balanced). Told a load-priority objective, with \J\ still selecting its forks, it writes the same shapes and reaches the balanced solution as often (3/5), with the largest paired gain of any arm ($+2.1$\,/\,$+2.8$, 4/5, $p=0.31$\,/\,$0.19$); its fork records show it choosing between candidates whose told objective and \J\ disagreed, and \J\ won each time because \J\ selects. Pooled over the two looped reward-expression arms the balanced solution appears in 6 of 10 seeds, in 1 of 5 without the loop and in 0 of 5 fixed-reward seeds.
-
-\paragraph{Prior.} A random search over expressions drawn from a fixed grammar of the term families the agent uses, verified by the same loop, lands where the agent lands: $6.13\pm0.52$\,/\,$7.06\pm1.35$, a positive mean tower fatigue, the balanced solution in 1 of 3 seeds, and the saturated forms kept. Once the vocabulary is written down, verification against the objective finds the balanced solution without an LLM; whether the agent finds it more reliably (6/10 against 1/3) is not separable at these seed counts. The agent's contribution, then, is the vocabulary: it wrote, unprompted, the saturated and centred forms that the grammar of the control was built from.
-
-\subsection{What the compositions look like: one held-out episode}
-\label{sec:episode}
-
-\begin{figure}[t]
-\centering\includegraphics[width=0.92\linewidth]{fig_trajectory.png}
-\caption{One held-out above-rated episode, both bases: how close each controller holds power to rated, and what it costs the tower. Rows: electrical power over the scored window (rated dashed); the same, 60--100\,s; tower-base fore-aft moment. Columns: the GSPI base with GSPI, the fixed-reward residual and the agent-reward residual (one seed each, the seed nearest its arm's mean); the MPC with the 5\,\% model error alone and with the two residuals. The legend gives the episode's power MSE on above-rated steps and its tower-base fatigue; above rated the generator torque is constant, so the generator-speed trace is the power trace scaled and its MSE is the same number. The episode is the 15\,m/s realisation on which the two GSPI-base arms' tower-fatigue difference is closest to its mean over the four held-out realisations.}
-\label{fig:trajectory}
-\end{figure}
-
-Fig.~\ref{fig:trajectory} shows the two compositions in time on one held-out episode chosen by a stated rule. On the GSPI base both residuals hold power closer to rated than GSPI (power MSE 1.9 and 2.1 against $2.9\times10^{-5}$); the fixed-reward residual buys it by driving the tower harder (tower-base fatigue 13.4 against 9.2\,MN\,m), the agent-reward residual does not (10.0), which is the difference between $-17.6$\,\% and $+1.5$\,\% tower fatigue in Table~\ref{tab:levers} at the same \J. On the MPC base with the model error, the MPC alone under-pitches for the plant it actually controls and its speed sits above rated for tens of seconds; both residuals correct it, at a small cost in tower fatigue, and the two residuals are indistinguishable.
-
-\subsection{The strong base: little left to add, a model to repair, and the same verdict on the agent}
-\label{sec:mpcbase}
-
-\begin{table}[t]
-\centering\small
-\caption{The residual on the MPC base (held-out; mean $\pm$ s.d.; composition on wind seeds 3--6; $n=3$, proof of concept). The MPC-alone rows are the MPC as the base controller with a zero residual. Energy is within $\pm0.2$\,\% of GSPI in every row.}
-\label{tab:mpcbase}
+\caption{The supervised residual on the MPC base (held-out; mean $\pm$ s.d.\ over $n=3$ seeds; composition on wind seeds 3--6 as power MSE / speed MSE / tower fatigue / blade fatigue, \% reduction vs.\ GSPI; difference to the MPC alone with wins on wind seeds 3--6 / 7--10). Energy is within $\pm0.2$\,\% of GSPI in every row.}
+\label{tab:main}
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{llcccc}
 \toprule
 controller & $n$ & \J\ seeds 3--6 & \J\ seeds 7--10 & P\,/\,$\omega$\,/\,T\,/\,B (seeds 3--6) & $\Delta\J$ vs.\ MPC alone (wins) \\
 \midrule
-LPV-MPC alone, exact model                        & --- & 16.28 & 17.22 & 11.0 / 22.3 / 24.1 / 7.8 & --- \\
-MPC + residual, fixed reward             & 3 & $16.60\pm0.78$ & $18.06\pm1.10$ & 12.1 / 23.6 / 24.2 / 6.4 & $+0.3$ / $+0.8$ (2/3, 2/3) \\
-MPC + residual, LLM-written reward       & 3 & $17.23\pm1.30$ & $18.84\pm1.04$ & 13.4 / 24.7 / 23.6 / 7.2 & $+1.0$ / $+1.6$ (2/3, 3/3) \\
+LPV-MPC alone, exact model                          & --- & 16.28 & 17.22 & 11.0 / 22.3 / 24.1 / 7.8 & --- \\
+\textbf{MPC + agent-supervised residual}            & 3 & $17.23\pm1.30$ & $18.84\pm1.04$ & 13.4 / 24.7 / 23.6 / 7.2 & $+1.0$ / $+1.6$ (2/3, 3/3) \\
+MPC + residual, fixed reward (ablation)             & 3 & $16.60\pm0.78$ & $18.06\pm1.10$ & 12.1 / 23.6 / 24.2 / 6.4 & $+0.3$ / $+0.8$ (2/3, 2/3) \\
 \midrule
-LPV-MPC alone, $C_P$/$C_T$ $\times0.95$ in its model    & --- & 8.53 & 3.57 & 1.5 / 4.7 / 23.4 / 4.5 & --- \\
-$\times0.95$ MPC + residual, fixed reward     & 3 & $14.17\pm0.82$ & $15.35\pm0.68$ & 18.6 / 27.6 / 6.7 / 3.8 & $+5.6$ / $+11.8$ (3/3, 3/3) \\
-$\times0.95$ MPC + residual, LLM-written reward & 3 & $12.66\pm5.13$ & $18.25\pm2.52$ & 13.0 / 22.7 / 9.3 / 5.7 & $+4.1$ / $+14.7$ (2/3, 3/3) \\
+LPV-MPC alone, $C_P$/$C_T$ $\times0.95$ in its model      & --- & 8.53 & 3.57 & 1.5 / 4.7 / 23.4 / 4.5 & --- \\
+\textbf{$\times0.95$ MPC + agent-supervised residual}     & 3 & $12.66\pm5.13$ & $18.25\pm2.52$ & 13.0 / 22.7 / 9.3 / 5.7 & $+4.1$ / $+14.7$ (2/3, 3/3) \\
+$\times0.95$ MPC + residual, fixed reward (ablation)      & 3 & $14.17\pm0.82$ & $15.35\pm0.68$ & 18.6 / 27.6 / 6.7 / 3.8 & $+5.6$ / $+11.8$ (3/3, 3/3) \\
 \bottomrule
 \end{tabular}}
 \end{table}
 
 \begin{figure}[t]
 \centering\includegraphics[width=\linewidth]{fig_mpcbase.png}
-\caption{Residual on the MPC base. (a) Held-out \J\ on both wind sets for the MPC alone and with the two residuals, with an exact model and with the power/thrust coefficients 5\,\% low in the MPC's model (mean $\pm$ s.e., dots are seeds). (b) The four terms of \J\ on wind seeds 3--6 for the same rows.}
+\caption{The residual on the MPC base. (a) Held-out \J\ on both wind sets for the MPC alone and with the residual (agent-supervised and fixed reward), with an exact model and with the power/thrust coefficients 5\,\% low in the MPC's model (mean $\pm$ s.e., dots are seeds). (b) The four terms of \J\ on wind seeds 3--6 for the same rows.}
 \label{fig:mpcbase}
 \end{figure}
 
-The MPC is positive on every metric on its own (Table~\ref{tab:mpcbase}), three times the fixed-reward residual on the GSPI base, and the residual has correspondingly little left to do: $+0.3$ with the fixed reward and $+1.0$ with the agent's, both 2/3 seeds, both within the seed spread; in half of the exact-model runs the best checkpoint is the initial one, i.e.\ the MPC itself (Appendix~\ref{app:paired}, Fig.~\ref{fig:training}). When the MPC's power and thrust coefficients are 5\,\% low in its model---alone at 8.5\,/\,3.6, its regulation degraded and its power MSE worse than GSPI on one held-out set---the residual repairs it: the fixed-reward arm reaches 14.2\,/\,15.4 in every seed and the agent arm 12.7\,/\,18.3 with one poor seed, above the exact-model MPC alone on wind seeds 7--10. The residual learns the part of the plant the model gets wrong, on wind realisations it has never seen. Between the fixed reward and the agent's, the difference is $+0.6$\,/\,$+0.8$ (2/3) on the exact model and $-1.5$\,/\,$+2.9$ (one poor seed) on the mismatched one: on the strong base, as on the weak one, the agent does not move the level, and here the composition is the MPC's already.
+Table~\ref{tab:main} and Fig.~\ref{fig:mpcbase} give the main result. On the exact-model MPC the agent-supervised residual adds $+1.0$\,/\,$+1.6$ on the two held-out sets, above the MPC in five of six seed--set pairs; the sixth is a seed whose best checkpoint on the supervisor winds is the initial policy, i.e.\ the MPC itself ($-0.5$). All four metrics improve in every seed; the composition is the MPC's---a strong regulation gain and a 24\,\% tower-fatigue reduction---with regulation improved further. The MPC leaves the residual little room: with a zero residual the controller is already positive on every metric, and on the supervisor winds several runs never exceeded their initial policy.
 
-\section{What the agent contributes, and rules for finding out}
-\label{sec:rules}
-The evidence on both bases points one way. The agent's demonstrable contribution is \emph{structural}: a vocabulary of reward shapes (saturated regulation terms, centred bounded load terms) that reaches a solution class no weight search reaches. It is \emph{realised by verification}: the same vocabulary drawn at random and verified by the same loop reaches the same class; the agent without the loop reaches nothing; the agent told the wrong objective and selected by the right one reaches the class. It is \emph{not a level effect}: no paired difference against the fixed reward is significant on either base, and on the strongest base the residual itself has little to add. We distil this, and the defects that mattered more than the agent, into rules.
-\begin{enumerate}\setlength\itemsep{2pt}
-\item \textbf{Verification against the true objective is the guarantee; the prompt is not.} Select on the objective you report; the agent's stated objective is a prior, not a constraint.
-\item \textbf{Put the agent on structural decisions; give numeric ones to random search, or to nothing.} No numeric lever, LLM or random, moved a tuned default; the reward's shape did.
-\item \textbf{Publish the grammar.} Once the agent's vocabulary of shapes is written down, a verified search over it is a reproducible, LLM-free control---and the honest baseline for the next agent.
-\item \textbf{One lever per agent.} The combined agent gained a little level and lost the composition effect.
-\item \textbf{Fix the protocol before crediting the agent.} Four defects each moved the comparison by more than any agent: a reward speed term gated on a different subset than the objective's metric (Appendix~\ref{app:gating}), an unnormalised critic target, an MPC cost with terms four orders of magnitude apart, and a reference controller evaluated through the learner's action channel instead of as itself (Appendix~\ref{app:mpc}).
-\item \textbf{Report composition and reliability, not only means.} The agent's contribution---a solution class, in a fraction of seeds---is invisible in a table of mean \J.
-\item \textbf{Expect the agent's headroom to shrink with the base.} On the strongest base the residual, and therefore its supervisor, had little left to do; the agent's place is where the base is weak or its model wrong.
-\end{enumerate}
+\subsection{The residual repairs the model}
+\label{sec:repair}
+When the MPC's power and thrust coefficients are 5\,\% low in its model, the controller alone drops to 8.5\,/\,3.6: it under-pitches for the plant it actually controls, its speed sits above rated for tens of seconds at a time, and its regulation terms on wind seeds 7--10 are worse than GSPI's. The supervised residual restores 12.7\,/\,18.3, on wind seeds 7--10 above the exact-model MPC alone, in every seed but one on wind seeds 3--6 (that seed's policy generalised poorly from the supervisor winds, 5.6 against a supervisor-wind 19.6). The residual has learned the part of the plant the model gets wrong, on wind realisations it never saw in training. The composition changes accordingly: the mismatched MPC's remaining strength was tower fatigue and its weakness regulation, and the residual buys regulation back at a cost in tower fatigue (23\,\% to 9\,\%), landing at a balanced controller.
 
-\section{Limitations}
-Seed budgets are five for the core GSPI-base arms and three for the controls and the MPC-base arms; no agentic difference in \J\ is significant, and the composition effect (3/5 balanced) rests on few seeds. One plant, one training turbulence intensity, two held-out sets of four realisations, one reasoning model with one prompt family. The MPC has no preview, a crude tower-state estimator and a two-second horizon; the model error studied is a scalar scaling of the aerodynamic coefficients, not an identified model. The residual policy observes the simulator's hub wind where the MPC uses ROSCO's estimate. An individual-pitch extension of the same supervisor was attempted and did not win on any of its levers; the boundary of the present claims is collective pitch.
+\subsection{One held-out episode}
+\label{sec:episode}
+\begin{figure}[t]
+\centering\includegraphics[width=0.92\linewidth]{fig_trajectory.png}
+\caption{One held-out above-rated episode: how close each controller holds power to rated, and what it costs the tower. Rows: electrical power over the scored window (rated dashed); the same, 60--100\,s; tower-base fore-aft moment. Left column: the MPC with the 5\,\% model error alone and with the agent-supervised and the fixed-reward residual. Right column: the ablation base (\S\ref{sec:ablation}), GSPI with the two residuals (one seed each, the seed nearest its arm's mean). The legend gives the episode's power MSE on above-rated steps and its tower-base fatigue; above rated the generator torque is constant, so the generator-speed trace is the power trace scaled. The episode is the 15\,m/s realisation on which the two GSPI-base arms' tower-fatigue difference is closest to its mean over the four held-out realisations.}
+\label{fig:trajectory}
+\end{figure}
+Fig.~\ref{fig:trajectory} (left column) shows the repair in time on one held-out 15\,m/s episode chosen by a stated rule: the mismatched MPC alone lets power ride above rated during the gust at 50--80\,s and drifts around it afterwards (power MSE $3.1\times10^{-5}$); with the residual the power stays on the reference ($1.7\times10^{-5}$ supervised, $2.0$ fixed) at a modest cost in tower-base moment. The two residuals are indistinguishable by eye.
+
+\subsection{What the agent writes}
+\label{sec:shapes}
+The rewards the agent keeps have a structure that no coefficient of \eqref{eq:reward} can produce. The best-checkpoint expression of the strongest MPC-base run (held-out 18.9\,/\,20.0) is, in the sandbox's variables (\texttt{region} = router region, \texttt{region\_w} = wind label, \texttt{d\_wg} = relative speed error, \texttt{p\_ratio} = power over paired GSPI power, \texttt{load\_t}, \texttt{load\_b} = fatigue proxies, \texttt{act} = actuation),
+\begin{small}\begin{verbatim}
+  (90*tanh(p_ratio-1) if region==0 else 0)
+  -(24*tanh(abs(d_wg)/.005) + 16*tanh(abs(p_ratio-1)) if region_w==1 else 0)
+  -tanh(load_t)*(.85 if region==0 else .35) - .8*tanh(load_b) - .07*tanh(act)
+\end{verbatim}\end{small}
+Three departures from \eqref{eq:reward} recur across the agent's MPC-base runs (Appendix~\ref{app:expressions}): the regulation term on the above-rated subset is \emph{saturated} ($\tanh|\delta\omega|/0.005$, or its square) instead of quadratic, so that a large error in a gust does not dominate the return; a second saturated term penalises \emph{power} deviation on the same subset, which \eqref{eq:reward} does not contain although power MSE is half of the objective's regulation score; and the fatigue terms are \emph{bounded}, $\tanh\ell$, in several runs \emph{centred} at the baseline's level, $\tanh(\ell-1)$, so that load below the baseline's is not paid for. The ablations that follow show that these shapes are what the agent contributes.
+
+\section{Ablations: what the agent contributes, and what it does not}
+\label{sec:ablation}
+
+\paragraph{Is the agent's reward needed on the MPC base?} Not for the level. The fixed reward \eqref{eq:reward}, tuned once, reaches $16.60\pm0.78$\,/\,$18.06\pm1.10$ on the exact-model MPC against the agent's $17.23\pm1.30$\,/\,$18.84\pm1.04$: a difference of $+0.6$\,/\,$+0.8$ in two of three seeds ($p=0.75$ at $n=3$), inside the seed spread. On the mismatched MPC the fixed reward is $14.17\pm0.82$\,/\,$15.35\pm0.68$ against the agent's $12.66\pm5.13$\,/\,$18.25\pm2.52$, one poor agent seed deciding the first set. On this base the residual has little to do and the reward's shape has little to change; the agent's effect on the level of the objective is within noise at these seed counts.
+
+\begin{table}[t]
+\centering\small
+\caption{The ablation base: the same residual and the same loop on the GSPI base, where the residual is the whole improvement (held-out \J, mean $\pm$ s.d.; composition on wind seeds 3--6; ``balanced'' counts seeds on which all four metrics improve; difference to the fixed reward with wins and exact $p$ on wind seeds 3--6 / 7--10).}
+\label{tab:ablation}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llcccccc}
+\toprule
+arm & $n$ & \J\ seeds 3--6 & \J\ seeds 7--10 & P\,/\,$\omega$\,/\,T\,/\,B & balanced & $\Delta\J$ vs.\ fixed (wins, exact $p$) \\
+\midrule
+fixed reward (tuned), no agent               & 5 & $4.86\pm2.76$ & $5.50\pm2.09$ & 17.4 / 19.0 / $-$17.6 / 0.7 & 0/5 & --- \\
+\textbf{agent-written reward, verified loop} & 5 & $5.30\pm4.17$ & $6.04\pm4.28$ & 6.8 / 10.1 / $\mathbf{+1.5}$ / 2.7 & \textbf{3/5} & $+0.4$ / $+0.5$ (3/5, 0.75 / 0.69) \\
+agent asked once, no verification            & 5 & $4.97\pm1.90$ & $6.66\pm2.75$ & 11.6 / 13.3 / $-$5.5 / 0.5 & 1/5 & $+0.1$ / $+1.2$ (2/5, 3/5; $\approx1$) \\
+random structure from the agent's vocabulary, verified loop & 3 & $6.13\pm0.52$ & $7.06\pm1.35$ & 9.5 / 10.5 / $+2.1$ / 2.5 & 1/3 & $+0.4$ / $+0.3$ (2/3, 1/3; $\approx1$) \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[t]
+\centering\includegraphics[width=\linewidth]{fig2_composition.png}
+\caption{What each ablation arm's held-out \J\ is made of on the GSPI base (wind seeds 3--6, arm means; the arms of Table~\ref{tab:ablation}), with the MPC alone for scale. The fixed reward and the agent asked once buy regulation with tower fatigue; the verified agent-written reward and the verified random draw from its vocabulary have every term positive.}
+\label{fig:composition}
+\end{figure}
+
+\paragraph{What the agent changes where the residual has more to do.} On the GSPI base the residual is the whole controller's improvement, and the reward's shape decides what that improvement is made of (Table~\ref{tab:ablation}, Fig.~\ref{fig:composition}). The fixed reward buys regulation with tower fatigue ($-17.6$\,\%), the opposite of what a residual load controller is for. The agent's rewards are the only arm whose mean tower fatigue improves and the only one with balanced seeds: 3 of 5, against 0 of 5 for the fixed reward. Their level is not higher ($+0.4$\,/\,$+0.5$, $p=0.75$\,/\,$0.69$); their composition is different, and Fig.~\ref{fig:trajectory} (right column) shows what that looks like on one episode: both residuals hold power closer to rated than GSPI, the fixed reward by driving the tower harder (13.4 against 9.2\,MN\,m), the agent's without (10.0).
+
+\paragraph{Verification makes it real; the vocabulary is the prior.} Asked once at the first decision and applied without a fork, the same agent is the fixed reward (1 of 5 balanced). A random search over expressions drawn from a fixed grammar of the term shapes the agent uses---the saturated regulation forms, the centred bounded load forms, log-uniform coefficients---verified by the same loop, lands where the agent lands: $6.13\pm0.52$\,/\,$7.06\pm1.35$, positive mean tower fatigue, the balanced solution in 1 of 3 seeds, the saturated forms kept. Whether the agent finds the balanced solution more reliably (3/5 against 1/3) is not separable at these seed counts. What the agent demonstrably contributes is the vocabulary---it wrote, unprompted, the shapes the grammar of the control was built from---and what makes the vocabulary count is verification against the objective, not the agent's search and not its prompt.
+
+\section{Discussion and limitations}
+\label{sec:discussion}
+Put learning where the model fails: on the exact-model MPC the residual adds about a point and repairs nothing, on the mismatched MPC it repairs 4 to 15. Put the agent on the structure of the reward and verify what it writes against the objective you report: its level effect is within noise on both bases, its structural effect is real, and it survives only inside the verification loop. Evaluate the reference controller as itself: the channel through which the MPC was first evaluated cost it four points, more than any agent moved anything.
+
+Seed budgets are three for the MPC-base arms and five for the core GSPI-base arms; no agentic difference in level is significant, and the composition effect (3/5 balanced) rests on few seeds. One plant, one training turbulence intensity, two held-out sets of four realisations, one reasoning model with one prompt family. The MPC has no preview, a crude tower-state estimator and a two-second horizon; the model error studied is a scalar scaling of the aerodynamic coefficients, not an identified model. The residual policy observes the simulator's hub wind where the MPC uses ROSCO's estimate. An individual-pitch extension of the same supervisor was attempted and did not win on any of its levers; the boundary of the present claims is collective pitch.
 
 \clearpage
 \bibliographystyle{unsrtnat}
@@ -185,11 +184,40 @@ Seed budgets are five for the core GSPI-base arms and three for the controls and
 \clearpage
 \appendix
 
-\section{Objective, metrics and the tuned default}
+\section{Objective, metrics and the tuned fixed reward}
 \label{app:weights}
 The four metrics of \eqref{eq:J} are computed per episode against the paired GSPI run on the same wind realisation: power MSE and generator-speed MSE relative to rated on the steps where hub wind exceeds rated (the 8\,m/s episodes contribute no regulation term), and damage-equivalent loads of tower-base fore-aft moment and blade-root out-of-plane moment over all episodes. Each episode's reduction is clipped to $\pm100$\,\% before averaging so that a single blown regulation episode cannot own the objective. Energy is the total over all episodes.
 
-The tuned default of \eqref{eq:reward} is the per-knob geometric median of the best checkpoints of a three-seed random-search arm over the six knobs on the GSPI base (fork-verified, \J-selected on wind seeds 1--2): $w_P=220$, $w_\omega=25.2$, $\lambda_T=1$, $\lambda_B=1.31$, residual bounds 0.074\,rad (below rated) and 0.05\,rad (above). That search raised held-out \J\ from $4.60\pm2.38$\,/\,$5.96\pm2.02$ (untuned) to $6.70\pm2.12$\,/\,$7.89\pm2.21$ but never kept a candidate with $\lambda_T>1$ (Fig.~\ref{fig:mechanism}b). The tower-weight sweep from the tuned default (seed 0, wind seeds 3--6\,/\,7--10): $\lambda_T=1$: 5.0\,/\,5.9; 3: 1.4\,/\,3.7; 10: $-2.9$\,/\,$-3.3$; 30: the policy never left its initial state. The same default is used unchanged on the MPC base.
+The tuned fixed reward \eqref{eq:reward} is the per-knob geometric median of the best checkpoints of a three-seed random-search arm over its six knobs on the GSPI base (fork-verified, \J-selected on wind seeds 1--2): $w_P=220$, $w_\omega=25.2$, $\lambda_T=1$, $\lambda_B=1.31$, residual bounds 0.074\,rad (below rated) and 0.05\,rad (above). That search raised held-out \J\ from $4.60\pm2.38$\,/\,$5.96\pm2.02$ (untuned) to $6.70\pm2.12$\,/\,$7.89\pm2.21$ but never kept a candidate with $\lambda_T>1$: fatigue responds over tens of episodes, regulation within one fork, so a 30-episode verification horizon is myopic for that knob (Fig.~\ref{fig:mechanism}b). A sweep of the tower weight from the tuned default (seed 0, wind seeds 3--6\,/\,7--10) confirms the balanced solution is not on that axis: $\lambda_T=1$: 5.0\,/\,5.9; 3: 1.4\,/\,3.7; 10: $-2.9$\,/\,$-3.3$; 30: the policy never left its initial state. The same default is used unchanged on the MPC base.
+
+\section{Further supervision arms on the GSPI base}
+\label{app:levers}
+The supervision loop of \S\ref{sec:agent} was also run with the agent on two other levers, each with a random-search control, and with two variants of the reward-expression agent (Table~\ref{tab:levers}, Fig.~\ref{fig:levers}). \emph{Hyper-parameters}: the agent proposes PPO learning rates, GAE $\lambda$, entropy and clip; control: random search. \emph{Combined}: one agent proposes hyper-parameters and a reward expression together. \emph{Told a different objective}: the reward-expression agent is told a load-priority objective (tower fatigue first, speed regulation as a penalised constraint) while \J\ still selects every fork and checkpoint.
+
+\begin{table}[H]
+\centering\small
+\caption{Further arms on the GSPI base (held-out \J, mean $\pm$ s.d.; composition on wind seeds 3--6; balanced seeds; difference to the tuned fixed reward with wins and exact $p$ on wind seeds 3--6 / 7--10).}
+\label{tab:levers}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llcccccc}
+\toprule
+arm & $n$ & \J\ seeds 3--6 & \J\ seeds 7--10 & P\,/\,$\omega$\,/\,T\,/\,B & balanced & $\Delta\J$ vs.\ fixed (wins, exact $p$) \\
+\midrule
+LLM hyper-parameters                       & 3 & $5.26\pm2.39$ & $7.13\pm3.05$ & 17.1 / 20.7 / $-$18.1 / 1.2 & 0/3 & $-0.5$ / $+0.3$ (2/3, 1.0) \\
+random hyper-parameters                    & 3 & $4.93\pm2.02$ & $5.96\pm2.17$ & 15.1 / 17.0 / $-$13.2 / 0.8 & 0/3 & $-0.8$ / $-0.9$ (2/3, 1.0) \\
+LLM hyper-parameters $+$ reward, one agent & 5 & $6.37\pm2.94$ & $8.65\pm2.60$ & 15.9 / 16.3 / $-$7.6 / 0.9 & 0/5 & $+1.5$ / $+3.2$ (4/5, 0.31 / 0.13) \\
+LLM reward, told a load-priority objective & 5 & $7.00\pm2.12$ & $8.33\pm2.38$ & 9.5 / 14.6 / $+0.9$ / 3.0 & 3/5 & $+2.1$ / $+2.8$ (4/5, 0.31 / 0.19) \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[H]
+\centering\includegraphics[width=0.9\linewidth]{fig1_levers.png}
+\caption{Seed-paired difference of held-out \J\ between each supervised arm and the tuned fixed reward on the GSPI base, both held-out wind sets (mean $\pm$ s.e., dots are seeds, labels are wins$/n$). No arm is significantly above zero.}
+\label{fig:levers}
+\end{figure}
+
+The hyper-parameter agent is worth $-0.5$\,/\,$+0.3$ and random hyper-parameter search $-0.8$\,/\,$-0.9$: the two proposers are indistinguishable and neither moves the tuned fixed reward; on an earlier, defective default (Appendix~\ref{app:gating}) both had appeared valuable. The combined agent raises the level ($+1.5$\,/\,$+3.2$, 4/5) but never the composition (0/5 balanced): it buys regulation the way the hyper-parameter arms do. The agent told a load-priority objective writes the same shapes as the agent told \J\ and, with \J\ selecting its forks, reaches the balanced solution as often (3/5) with the largest paired gain of any arm ($+2.1$\,/\,$+2.8$, 4/5); its fork records show it choosing between candidates whose told objective and \J\ disagreed, and \J\ won each time because \J\ selects. Pooled over the two looped reward-expression arms the balanced solution appears in 6 of 10 seeds, in 1 of 5 without the loop and in 0 of 5 fixed-reward seeds.
 
 \section{Why the reward's speed term is gated by the wind label}
 \label{app:gating}
@@ -198,19 +226,13 @@ The tuned default of \eqref{eq:reward} is the per-knob geometric median of the b
 \caption{(a) Measured \J\ on the supervisor winds at every decision of a fixed-reward run whose speed term is gated by the router's region (red) and of the tuned default gated by the wind label (blue); crosses mark rollbacks. (b) Every fork candidate's tower weight against the \J\ of its 30-episode fork in the weight search; no candidate with $\lambda_T>1$ is ever kept.}
 \label{fig:mechanism}
 \end{figure}
-The objective's regulation metrics are scored on the steps where hub wind exceeds rated, whatever the controller does. If the reward's speed term is instead gated by the router's region, the transition steps at 12.5\,m/s---router ``below rated'', objective ``above''---carry no speed penalty, and the policy is rewarded there for load reduction that the objective scores as regulation loss. Under that gating every fixed-reward run found an early optimum and then rolled back at every later decision (Fig.~\ref{fig:mechanism}a): held-out \J\ $1.59\pm0.87$\,/\,$0.97\pm1.37$ ($n=3$). On that default, hyper-parameter supervision appears valuable ($+5.7$\,/\,$+8.0$ for the LLM, $+5.8$\,/\,$+7.5$ for random search, both by lengthening the credit window, GAE $\lambda$ 0.98$\to$0.995, and slowing the actor). Gating the speed term by the wind label removes the loop without any agent, and on that default the same hyper-parameter arms are worth nothing (\S\ref{sec:levers}). The aligned gating is used throughout the main text; the lesson is rule~5.
+The objective's regulation metrics are scored on the steps where hub wind exceeds rated, whatever the controller does. If the reward's speed term is instead gated by the router's region, the transition steps at 12.5\,m/s---router ``below rated'', objective ``above''---carry no speed penalty, and the policy is rewarded there for load reduction that the objective scores as regulation loss. Under that gating every fixed-reward run found an early optimum and then rolled back at every later decision (Fig.~\ref{fig:mechanism}a): held-out \J\ $1.59\pm0.87$\,/\,$0.97\pm1.37$ ($n=3$). On that default, hyper-parameter supervision appears valuable ($+5.7$\,/\,$+8.0$ for the LLM, $+5.8$\,/\,$+7.5$ for random search, both by lengthening the credit window, GAE $\lambda$ 0.98$\to$0.995, and slowing the actor). Gating the speed term by the wind label removes the loop without any agent, and on that default the same hyper-parameter arms are worth nothing (Appendix~\ref{app:levers}). The aligned gating is used throughout.
 
-\section{The MPC: cost scaling, selection, evaluation channel, model error}
+\section{The MPC: cost scaling, selection, model error}
 \label{app:mpc}
 The controller model is $J\dot\omega=T_{\mathrm{aero}}(v-\dot x,\omega,\beta)-T_{\mathrm{gen}}(\omega)$, $m\ddot x=F_{\mathrm{thrust}}(v-\dot x,\omega,\beta)-c\dot x-kx$ with the first tower fore-aft mode at 0.324\,Hz, modal mass 437\,t and structural damping ratio 0.01, linearised at the operating point from the $C_P$/$C_T$ tables every 0.1\,s and discretised exactly; tower states are estimated by leaky double integration of the measured nacelle acceleration; the wind input is ROSCO's estimate low-passed at 0.35\,rad/s; torque is native ROSCO. The condensed QP over $N=20$ steps minimises
 $\sum_k q\,(\delta\omega_k/(0.005\,\omega_{\mathrm{rated}}))^2 + q_t(\dot x_k/0.2)^2 + r\,(\Delta\beta_k/0.002)^2$
-subject to the live pitch floor, the pitch limit and the rate limit, 3.6\,ms per solve. Selection on wind seeds 1--2 by \J\ over $N\in\{20,40\}\times r\in\{0.1,0.3,1,3\}\times q_t\in\{0,0.1,0.3,1,3\}\times$ two wind-filter corners (82 points) gives $N=20$, $r=0.3$, $q_t=3$; $N=40$ is worse everywhere.
-
-\paragraph{Cost scaling.} With the speed error normalised by rated speed and the pitch increment by 0.1\,rad (the natural first choice), the speed term is $O(10^{-5})$ at a typical error of 0.5\,\% while the tower term is $O(1)$; any tower weight above zero then out-weighs regulation by four orders of magnitude and the optimum feathers the rotor, so the best such MPC has no tower term and loses tower fatigue---the published verdict (Table~\ref{tab:mpc}, regulation-only row). Scaling each term to $O(1)$ at its typical value makes the same three-state MPC positive on every metric.
-
-\paragraph{Evaluation channel.} An earlier version of this study evaluated the MPC by sending its command through the residual channel of the RL agents (as an offset on ROSCO's command with the channel's bounds off). That channel has a rule written for the learned residual---below rated, by the router's region, the offset is non-negative---which zeroed the MPC's negative offsets during the router's transition hold at 12.5\,m/s and produced pitch discontinuities: on one held-out episode the tower-base fatigue was 11.6\,MN\,m through the channel and 7.3\,MN\,m for the same MPC run as the base controller, against 19.4 for GSPI. Every MPC-alone number in this paper is therefore the MPC run as the base controller with a zero residual, i.e.\ through exactly the code path of the residual runs; the lesson is rule~5.
-
-\paragraph{Model error.} As the base controller, with full authority, the MPC is sharper in its model sensitivity than a bounded controller would be (Table~\ref{tab:mpc}, Fig.~\ref{fig:mpc_error}): tower frequency $\pm10$\,\% and modal mass $-20$\,\% cost 3--4 points, modal mass $+20$\,\% costs nothing, off-design turbulence (14\,\%, 22\,\%) costs 2--4 and 18\,m/s is easier; but the power and thrust coefficients 5\,\% low or high take it to 8.5 and 5.7, and $\pm15$\,\% to $-24$, the regulation terms collapsing. An identified aerodynamic model will not be exact; this is what the residual of \S\ref{sec:mpcbase} repairs.
+subject to the live pitch floor, the pitch limit and the rate limit. Selection on wind seeds 1--2 by \J\ over $N\in\{20,40\}\times r\in\{0.1,0.3,1,3\}\times q_t\in\{0,0.1,0.3,1,3\}\times$ two wind-filter corners (82 points) gives $N=20$, $r=0.3$, $q_t=3$; $N=40$ is worse everywhere. The regulation-only cost of the published verdict (references 1 and 0.1\,rad, $q_t=0$, $r=0.02$) scores $-2.19$\,/\,$-6.20$ as the base controller with tower fatigue $-22$\,\%. Table~\ref{tab:mpc} collects the held-out rows, the model-error study of \S\ref{sec:mpc} and off-design winds; every row is the MPC as the base controller with a zero residual, and the model error is applied to the MPC's internal model only.
 
 \begin{table}[H]
 \centering\footnotesize
@@ -221,8 +243,8 @@ subject to the live pitch floor, the pitch limit and the rate limit, 3.6\,ms per
 \toprule
 variant & \J\ seeds 3--6 & \J\ seeds 7--10 & P / $\omega$ / T / B (seeds 3--6) & note \\
 \midrule
-exact model & 16.28 & 17.22 & 11.0 / 22.3 / 24.1 / 7.8 & base of \S\ref{sec:mpcbase} \\
-$C_P$/$C_T$ $\times0.95$ & 8.53 & 3.57 & 1.5 / 4.7 / 23.4 / 4.5 & base of \S\ref{sec:mpcbase} \\
+exact model & 16.28 & 17.22 & 11.0 / 22.3 / 24.1 / 7.8 & base of \S\ref{sec:main} \\
+$C_P$/$C_T$ $\times0.95$ & 8.53 & 3.57 & 1.5 / 4.7 / 23.4 / 4.5 & base of \S\ref{sec:repair} \\
 regulation-only cost ($q_t=0$, unscaled references) & $-2.19$ & $-6.20$ & 10.5 / 1.2 / $-22.0$ / 1.6 & the published verdict \\
 \midrule
 $C_P$/$C_T$ $\times0.85$ / $\times1.05$ / $\times1.15$ & $-24.0$ / 5.7 / $-24.6$ & & & regulation collapses at $\pm15$\,\% \\
@@ -233,21 +255,35 @@ turbulence intensity 14\,\% / 22\,\% (15\,m/s) / 18\,m/s & 12.6 / 14.2 / 23.1 & 
 \end{tabular}}
 \end{table}
 
-\begin{figure}[H]
-\centering\includegraphics[width=0.72\linewidth]{fig_mpc_error.png}
-\caption{The MPC is conditional on its aerodynamic model. Held-out \J\ of the MPC as the base controller when only its internal model is perturbed; the plant is unchanged.}
-\label{fig:mpc_error}
-\end{figure}
-
 \section{Reward expressions written by the agent}
 \label{app:expressions}
-Best-checkpoint expressions of the reward-expression agent on the GSPI base (variables: \texttt{region} = router region, \texttt{region\_w} = wind label, \texttt{d\_wg} = relative speed error, \texttt{p\_ratio} = power over paired GSPI power, \texttt{load\_t}, \texttt{load\_b} = fatigue proxies, \texttt{act} = actuation cost). Seed 0, told \J:
+Best-checkpoint expressions of the agent on the MPC base, variables as in \S\ref{sec:shapes}. Exact model, seed 1 (held-out 17.1\,/\,19.1):
+\begin{small}\begin{verbatim}
+  (55*tanh(3*(p_ratio-1)) if region==0 else 0)
+  - (14*tanh(3*abs(p_ratio-1))**2 if region_w else 0)
+  - (16*tanh(abs(d_wg)/.005)**2 if region_w else 0)
+  - .8*tanh(load_t) - .8*tanh(load_b) - .12*tanh(act)
+\end{verbatim}\end{small}
+$C_P$/$C_T$ $\times0.95$, seed 1 (held-out 17.6\,/\,19.5):
+\begin{small}\begin{verbatim}
+  (230*tanh(4*(p_ratio-1)) if region==0 else -20*tanh(5*(p_ratio-1))**2)
+  - (25*tanh(d_wg/.005)**2 if region_w else 0)
+  - (1.3 if region==0 else .35)*tanh(load_t)
+  - (.7 if region==0 else 1.2)*tanh(load_b) - .08*tanh(act)
+\end{verbatim}\end{small}
+$C_P$/$C_T$ $\times0.95$, seed 2 (held-out 14.9\,/\,14.7), best checkpoint; the same run's later decisions switch to centred fatigue terms $\tanh(\ell-1)$:
+\begin{small}\begin{verbatim}
+  100*(1-region)*tanh(3*(p_ratio-1)) - 32*region_w*tanh((d_wg/.005)**2)
+  - 24*region_w*tanh(14*(p_ratio-1)**2)
+  - (.8+.2*region)*tanh(load_t) - .7*tanh(load_b) - .1*tanh(act)
+\end{verbatim}\end{small}
+On the GSPI base (the ablation base of \S\ref{sec:ablation}), seed 0:
 \begin{small}\begin{verbatim}
   180*tanh(15*(p_ratio-1))                                    if region==0
   -40*sqrt(tanh(abs(d_wg)/.005)**2 + tanh(60*abs(p_ratio-1))**2)   if region_w==1
   -.9*tanh(log((2+load_t+load_b)/4)) - .1*tanh(act)
 \end{verbatim}\end{small}
-Seed 1, told the load-priority objective:
+Seed 1, told the load-priority objective (Appendix~\ref{app:levers}):
 \begin{small}\begin{verbatim}
   155*tanh(p_ratio-1)                                          if region==0
   -26*tanh(abs(d_wg)/.005)                                     if region_w==1
@@ -270,7 +306,7 @@ The random structural control samples expressions of the same families with log-
 \end{figure}
 \begin{figure}[H]
 \centering\includegraphics[width=\linewidth]{fig4_reference.png}
-\caption{(a) \J\ of every GSPI-base controller and of the MPC (as base controller) on both held-out sets. (b) The MPC under model error and off-design winds (the data of Fig.~\ref{fig:mpc_error}, with the wind classes).}
+\caption{(a) \J\ of every GSPI-base controller and of the MPC (as base controller) on both held-out sets. (b) The MPC under model error and off-design winds (the data of Table~\ref{tab:mpc}).}
 \label{fig:reference}
 \end{figure}
 
