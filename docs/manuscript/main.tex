@@ -1,7 +1,6 @@
-\documentclass[11pt]{article}
-\usepackage[a4paper,margin=1in]{geometry}
+\documentclass{article}
+\usepackage{arxiv}          % arXiv-preprint look: title rules, A PREPRINT line, running header
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
@@ -19,8 +18,11 @@
 
 \title{What does a language-model supervisor contribute to a learning controller?\\
 \large A controlled study of agentic reward and hyper-parameter supervision for residual pitch control of a wind turbine}
+% authors: one block per author, \And between authors, \\ for affiliation and e-mail lines, e.g.
+% \author{First Author \\ Affiliation \\ \texttt{mail} \And Second Author \\ Affiliation \\ \texttt{mail}}
 \author{\pending{authors}}
-\date{Preprint. \today}
+\date{\today}
+\renewcommand{\shorttitle}{LLM supervision of a learning controller}
 
 \begin{document}
 \maketitle
@@ -122,8 +124,8 @@ On the GSPI base the residual is the whole controller's improvement, so the leve
 \label{sec:episode}
 
 \begin{figure}[t]
-\centering\includegraphics[width=\linewidth]{fig_trajectory.png}
-\caption{One held-out above-rated episode, both bases: how close each controller holds power to rated, and what it costs the tower. Top: GSPI, the fixed-reward residual and the agent-reward residual on the GSPI base (one seed each, the seed nearest its arm's mean). Bottom: the MPC with the 5\,\% model error alone and with the two residuals. Left: electrical power over the scored window (rated dashed); middle: the same, 60--100\,s; right: tower-base fore-aft moment. The legend gives the episode's power MSE on above-rated steps and its tower-base fatigue; above rated the generator torque is constant, so the generator-speed trace is the power trace scaled and its MSE is the same number. The episode is the 15\,m/s realisation on which the two GSPI-base arms' tower-fatigue difference is closest to its mean over the four held-out realisations.}
+\centering\includegraphics[width=0.92\linewidth]{fig_trajectory.png}
+\caption{One held-out above-rated episode, both bases: how close each controller holds power to rated, and what it costs the tower. Rows: electrical power over the scored window (rated dashed); the same, 60--100\,s; tower-base fore-aft moment. Columns: the GSPI base with GSPI, the fixed-reward residual and the agent-reward residual (one seed each, the seed nearest its arm's mean); the MPC with the 5\,\% model error alone and with the two residuals. The legend gives the episode's power MSE on above-rated steps and its tower-base fatigue; above rated the generator torque is constant, so the generator-speed trace is the power trace scaled and its MSE is the same number. The episode is the 15\,m/s realisation on which the two GSPI-base arms' tower-fatigue difference is closest to its mean over the four held-out realisations.}
 \label{fig:trajectory}
 \end{figure}
 
@@ -176,9 +178,11 @@ The evidence on both bases points one way. The agent's demonstrable contribution
 \section{Limitations}
 Seed budgets are five for the core GSPI-base arms and three for the controls and the MPC-base arms; no agentic difference in \J\ is significant, and the composition effect (3/5 balanced) rests on few seeds. One plant, one training turbulence intensity, two held-out sets of four realisations, one reasoning model with one prompt family. The MPC has no preview, a crude tower-state estimator and a two-second horizon; the model error studied is a scalar scaling of the aerodynamic coefficients, not an identified model. The residual policy observes the simulator's hub wind where the MPC uses ROSCO's estimate. An individual-pitch extension of the same supervisor was attempted and did not win on any of its levers; the boundary of the present claims is collective pitch.
 
+\clearpage
 \bibliographystyle{unsrtnat}
 \bibliography{references}
 
+\clearpage
 \appendix
 
 \section{Objective, metrics and the tuned default}
@@ -209,8 +213,8 @@ subject to the live pitch floor, the pitch limit and the rate limit, 3.6\,ms per
 \paragraph{Model error.} As the base controller, with full authority, the MPC is sharper in its model sensitivity than a bounded controller would be (Table~\ref{tab:mpc}, Fig.~\ref{fig:mpc_error}): tower frequency $\pm10$\,\% and modal mass $-20$\,\% cost 3--4 points, modal mass $+20$\,\% costs nothing, off-design turbulence (14\,\%, 22\,\%) costs 2--4 and 18\,m/s is easier; but the power and thrust coefficients 5\,\% low or high take it to 8.5 and 5.7, and $\pm15$\,\% to $-24$, the regulation terms collapsing. An identified aerodynamic model will not be exact; this is what the residual of \S\ref{sec:mpcbase} repairs.
 
 \begin{table}[H]
-\centering\small
-\caption{LPV-MPC as the base controller (\J-selected weights) on the held-out sets, and under perturbation of its internal model only and off-design winds (wind seeds 3--6 unless noted).}
+\centering\footnotesize
+\caption{LPV-MPC as the base controller (\J-selected weights) on the held-out sets, and under perturbation of its internal model only and off-design winds (wind seeds 3--6 unless noted; the off-design rows use seeds 3--4).}
 \label{tab:mpc}
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{lcccl}
@@ -224,7 +228,7 @@ regulation-only cost ($q_t=0$, unscaled references) & $-2.19$ & $-6.20$ & 10.5 /
 $C_P$/$C_T$ $\times0.85$ / $\times1.05$ / $\times1.15$ & $-24.0$ / 5.7 / $-24.6$ & & & regulation collapses at $\pm15$\,\% \\
 tower frequency $\times0.9$ / $\times1.1$ & 12.0 / 13.4 & & & \\
 modal mass $\times0.8$ / $\times1.2$ & 13.3 / 17.6 & & & \\
-turbulence intensity 14\,\% (seeds 3--4) / 22\,\% (15\,m/s, seeds 3--4) / 18\,m/s (seeds 3--4) & 12.6 / 14.2 / 23.1 & & & off-design winds \\
+turbulence intensity 14\,\% / 22\,\% (15\,m/s) / 18\,m/s & 12.6 / 14.2 / 23.1 & & & off-design winds \\
 \bottomrule
 \end{tabular}}
 \end{table}

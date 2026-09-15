@@ -30,7 +30,7 @@ SUPPLY** are not cited with bibliographic details until the user provides them.
 | [Coquelet2022] | M. Coquelet et al., "A reinforcement-learning approach for individual pitch control," Wind Energy, 2022. doi:10.1002/we.2734. | Seen on the Wiley page in search results (title/DOI); author list to confirm before submission. |
 | [fatpack] | G. T. Frøseth, fatpack: fatigue analysis in Python (rainflow counting), https://github.com/Gunnstein/fatpack | Verified — repository / PyPI. |
 | [IEC61400-1] | IEC 61400-1, Wind energy generation systems — Part 1: Design requirements (damage-equivalent load convention). | Standard; edition to be fixed at submission. |
-| [Baseline] | Wang, Dong, Zhao, IEEE Trans. Sustainable Energy, 2026 — the region-III RL pitch-control baseline whose metric set defines J. | **TO SUPPLY**: not found by web search on 2026-09-13; the user holds the paper (`RelatedWorks/`, not in this repository). Title, volume, pages and DOI must be inserted before any submission. |
+| [Baseline] | M. Wang, H. Dong, X. Zhao, "A Hybrid Interpretable Reinforcement Learning Framework for Robust Pitch Control of Large-Scale Wind Turbines," IEEE Trans. Sustainable Energy, 2026 (in press) - the region-III RL pitch-control baseline whose metric set defines J. | **Title and authors supplied by the user on 2026-09-15** from the paper they hold (`RelatedWorks/`, not in this repository); not findable by web search (IEEE Xplore not indexed) on 2026-09-13 and 2026-09-15, so not independently verified. Volume, pages and DOI still to be inserted before submission. |
 
 Deliberately not cited: any "Lakhani-style supervisor" reference (the phrase appears in a code
 comment; no verifiable source was found, so the guardrail is described without attribution).

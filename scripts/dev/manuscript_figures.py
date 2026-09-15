@@ -417,8 +417,8 @@ def fig_trajectory():
     m = mean(diffs.values())
     k = min(diffs, key=lambda kk: abs(diffs[kk] - m))
     print(f"   trajectory episode: U15_TI8_S{k} (tower-DEL differences fixed-agent: {diffs})")
-    fig, axes = plt.subplots(2, 3, figsize=(12.5, 6.0), gridspec_kw={"width_ratios": [1.3, 1, 1]})
-    for i, (rname, curves) in enumerate(rows):
+    fig, axes = plt.subplots(3, 2, figsize=(9.0, 7.6), gridspec_kw={"height_ratios": [1.25, 1, 1]})
+    for j, (rname, curves) in enumerate(rows):
         for label, pf, col in curves:
             pth = pf(k)
             if not os.path.exists(pth):
@@ -428,22 +428,19 @@ def fig_trajectory():
             t = np.arange(len(d["gen_speed"])) * 0.01
             w = (t >= 20) & (t <= 150)
             lab = f"{label}  (power MSE {pmse * 1e5:.2f}e-5, tower {delT:.2f} MN m)"
-            axes[i, 0].plot(t[w], d["P"][w] / 1e6, color=col, lw=0.7, label=lab)
+            axes[0, j].plot(t[w], d["P"][w] / 1e6, color=col, lw=0.7, label=lab)
             z = (t >= 60) & (t <= 100)
-            axes[i, 1].plot(t[z], d["P"][z] / 1e6, color=col, lw=0.9)
+            axes[1, j].plot(t[z], d["P"][z] / 1e6, color=col, lw=0.9)
             kk = (d["outb_Time"] >= 20) & (d["outb_Time"] <= 150)
-            axes[i, 2].plot(d["outb_Time"][kk], d["outb_TwrBsMyt"][kk] / 1e3, color=col, lw=0.7)
-        axes[i, 0].axhline(5.0, color="k", lw=0.5, ls="--"); axes[i, 1].axhline(5.0, color="k", lw=0.5, ls="--")
-        axes[i, 0].set_ylabel("electrical power [MW] (rated dashed)"); axes[i, 1].set_ylabel("electrical power [MW], 60–100 s")
-        axes[i, 2].set_ylabel("tower-base fore-aft moment [MN m]")
-        axes[i, 0].legend(frameon=False, fontsize=6.3, loc="upper left", bbox_to_anchor=(0.0, 1.0), title=rname, title_fontsize=7.5, alignment="left")
-        lo, hi = axes[i, 0].get_ylim(); axes[i, 0].set_ylim(lo, hi + 0.5 * (hi - lo))
-    for ax in axes[1]:
-        ax.set_xlabel("time [s]")
-    for ax in axes[:, 0].tolist() + axes[:, 2].tolist():
-        ax.set_xlim(20, 150)
-    for ax in axes[:, 1]:
-        ax.set_xlim(60, 100)
+            axes[2, j].plot(d["outb_Time"][kk], d["outb_TwrBsMyt"][kk] / 1e3, color=col, lw=0.7)
+        axes[0, j].axhline(5.0, color="k", lw=0.5, ls="--"); axes[1, j].axhline(5.0, color="k", lw=0.5, ls="--")
+        axes[0, j].set_title(rname, fontsize=9)
+        axes[0, j].legend(frameon=False, fontsize=6.6, loc="upper left")
+        lo, hi = axes[0, j].get_ylim(); axes[0, j].set_ylim(lo, hi + 0.55 * (hi - lo))
+        axes[0, j].set_xlim(20, 150); axes[1, j].set_xlim(60, 100); axes[2, j].set_xlim(20, 150)
+        axes[2, j].set_xlabel("time [s]")
+    axes[0, 0].set_ylabel("electrical power [MW]\n(rated dashed)"); axes[1, 0].set_ylabel("electrical power [MW],\n60–100 s")
+    axes[2, 0].set_ylabel("tower-base fore-aft\nmoment [MN m]")
     fig.suptitle(f"Held-out episode: 15 m/s, turbulence intensity 8 %, TurbSim seed {k}", fontsize=9, y=0.995)
     fig.tight_layout()
     fig.savefig(os.path.join(a.out, "fig_trajectory.png"))
