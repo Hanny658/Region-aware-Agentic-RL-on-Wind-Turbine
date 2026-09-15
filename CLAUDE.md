@@ -30,6 +30,11 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   (`mpc_baseline.py`, the old 12.4 / 14.1 and 12.0 / 11.6 rows) handicaps it: the channel's R2
   non-negativity rule chops its negative offsets at region transitions. The F-era "MPC loses tower
   DEL -17.6 %" was a cost-scaling artefact (speed term O(1e-5) vs tower term O(1)).
+- **Offset-free / adaptive MPC is now the strongest controller on J** (roadmap v2 s19, `adapt` in
+  `controllers/mpc.py`, tau 5 s): 20.5 / 21.7 exact, 21.7 / 21.9 (offset) and 20.4 / 21.6 (RLS) with Cp/Ct x0.95,
+  RLS flat 20.4-20.7 over +-15 %. It beats every residual run and refutes manuscript v4's main line
+  ("residual adds to the MPC and repairs its model"); x0.95-trained residuals do not transfer to x0.9 / x1.05.
+  TCST campaign gate STOPPED before extra seeds; the next direction is the user's decision.
 - **Residual on the MPC base** (`--base mpc [--base_mm_cp 0.95]`, n = 3, s17-s18): adds +0.3 (fixed
   reward) / +1.0 (LLM reward) to the exact-model MPC, within noise, half the runs never beat episode 0;
   repairs the x0.95 model (8.5 / 3.6 -> 14.2 / 15.4 fixed, 12.7 / 18.3 LLM). LLM reward vs fixed on

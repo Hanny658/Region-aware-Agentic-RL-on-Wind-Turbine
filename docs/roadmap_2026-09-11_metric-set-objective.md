@@ -687,3 +687,43 @@ decisions and rollback dips visible); `fig_mpc_error`, `fig_mpcbase`, `fig2_comp
 `fig4_reference` re-sourced from the base0 rows. `j_table.py --ref_json` writes the reference rows
 and seed-wise differences into `table_J_mpcbase.csv`. Per-step logs of the trajectory runs:
 `<run>/logs_traj_s3456/`, `mpc/logs_base0_*`.
+
+
+## 19. Offset-free and adaptive MPC close the model error without learning; the residual story does not survive (2026-09-15 14:17-15:10; `campaign_tcst.sh`, gate STOP)
+
+Two textbook compensators added to `controllers/mpc.py` (`adapt`): **offset** = offset-free MPC, a lumped
+aerodynamic-torque disturbance from the rotor balance J dw/dt = T_aero,model + d - T_gen (measured
+generator torque, filtered acceleration), held over the horizon; **rls** = adaptive MPC, a scalar gain on
+the model aerodynamics (torque and thrust) by forgetting least squares. Synthetic check with a x0.95 model:
+d/T -> +0.0500, theta -> 1.0526 (exact). Time constant selected on seeds 1-2 by mean J over exact/x0.95
+(tau 2 / 5 / 15 s): offset 11.9 / **22.7** / 21.4, rls 16.2 / **22.3** / 20.3 -> both tau = 5 s. All rows: MPC
+as the env base, zero residual (`eval_base0_{offset,rls}_*`).
+
+| MPC variant | model | J S3-S6 | J S7-S10 | S3-S6 P / w / T / B |
+|---|---|---|---|---|
+| nominal | exact | 16.28 | 17.22 | 11.0 / 22.3 / 24.1 / 7.8 |
+| nominal | Cp x0.95 | 8.53 | 3.57 | 1.5 / 4.7 / 23.4 / 4.5 |
+| **offset-free** | exact | **20.47** | **21.69** | 22.0 / 33.7 / 21.2 / 5.0 |
+| **offset-free** | Cp x0.95 | **21.66** | **21.87** | 23.9 / 35.5 / 19.6 / 7.7 |
+| **adaptive (RLS)** | exact | **20.44** | **21.66** | 21.7 / 33.5 / 21.4 / 5.2 |
+| **adaptive (RLS)** | Cp x0.95 | **20.38** | **21.58** | 21.7 / 33.5 / 21.4 / 4.9 |
+| best residual run on any MPC base (mrw3t_s2) | exact | 18.91 | 19.99 | 17.4 / 28.7 / 22.0 / 7.6 |
+
+Model-error sweep, S3-S6 (nominal / offset-free / adaptive): x0.85 -24.0 / 21.8 / 20.6; x0.9 -16.1 / 21.6 / 20.7;
+x0.95 8.5 / 21.7 / 20.4; x1.05 5.7 / 20.0 / 20.6; x1.15 -24.6 / 15.8 / **20.6**. The adaptive MPC is flat
+(20.4-20.7) over +-15 %; offset-free degrades only at +15 % (it corrects the torque bias, not the gain).
+Even with the exact model both add ~4 J: they also absorb what the model misses beyond Cp (drivetrain
+losses, dynamic inflow, the LSS torque balance), mostly on regulation (power MSE 11 -> 22 %, speed 22 -> 34 %)
+at a small tower-fatigue cost (24 -> 21 %).
+
+Residual generalisation (S3-S6): residuals trained on the x0.95 MPC fall apart off their training error
+(fixed reward: x0.9 5.8 / 8.8 / 7.0, x1.05 5.5 / 4.9 / 5.7; LLM reward: x0.9 10.8 / 11.5 / 4.6, x1.05 -21.7 / 4.0 / 1.8);
+residuals trained on the exact MPC, run on the x0.95 model, are the nominal x0.95 MPC again (8.8-12.1).
+
+**Verdict (gate STOP, seeds 3-7 not launched).** A compensator with no training data, no reward and no
+agent reaches 20.4-21.9 on both held-out sets with a 5 % (and up to 15 %) aerodynamic error; the best
+supervised residual reaches 18.9 / 20.0 with an exact model and 12.7 / 18.3 with the error, and does not
+transfer to a different error. The manuscript v4 main line ("the residual adds to the strongest controller
+and repairs its model") is refuted by the textbook baseline a TCST reviewer would ask for; the offset-free /
+adaptive MPC is the new strongest controller on J. Open for the user's decision: residual/supervision on the
+compensated MPC, supervision of the MPC's interpretable parameters, or verification-centred supervision.
