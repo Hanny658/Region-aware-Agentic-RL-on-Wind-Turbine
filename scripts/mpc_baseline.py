@@ -35,7 +35,8 @@ from eval.fitness import baseline_metrics, fitness
 DBETA_MAX = 0.35     # residual channel wide open: MPC expresses the full (target - native) offset
 
 
-def run_episode_mpc(ep_index: int, episodes, tb, cp_path, mpc_kw, port, tag, residual: bool = False) -> dict:
+def run_episode_mpc(ep_index: int, episodes, tb, cp_path, mpc_kw, port, tag, residual: bool = False,
+                    dump: bool = False) -> dict:
     # `residual` (fairness step 0, 2026-09-11): the MPC's target goes through exactly the RL agents'
     # channel — |target - native| <= the PPO residual bound with the same second-order damper — so
     # the comparison no longer hands the MPC 20 deg of authority against the RL's 2.9 deg.
@@ -70,9 +71,11 @@ def run_episode_mpc(ep_index: int, episodes, tb, cp_path, mpc_kw, port, tag, res
     L["region"] = (L["v_hub"] > float(tb["rated_wind_ms"])).astype(np.int8)
     metrics = episode_metrics(L, env.dt, env.wg_rated, env.spec_ep.warmup_s, getattr(env, "outb", None))
     spec = env.spec_ep
+    outb = getattr(env, "outb", None)
     env.close()
     return {"metrics": metrics, "wind_file": spec.wind_file, "mean_wind": spec.mean_wind,
-            "terminated": bool(terminated), "wall_solve_s": t_solve, "n_solves": k // hold + 1}
+            "terminated": bool(terminated), "wall_solve_s": t_solve, "n_solves": k // hold + 1,
+            "log": L if dump else None, "outb": outb if dump else None}
 
 
 def _worker(args):
@@ -101,6 +104,8 @@ def main():
     ap.add_argument("--residual", action="store_true",
                     help="drive the plant through the RL agents' bounded, damped residual channel "
                          "(same authority as the RL) instead of the wide-open channel")
+    ap.add_argument("--dump_log", action="store_true",
+                    help="also write every episode's per-step log to <out>/logs_<tag>/<wind>.npz (trajectory figures)")
     ap.add_argument("--out", default="~/wtrl/exp/mpc")
     ap.add_argument("--tag", default="eval")
     ap.add_argument("--port0", type=int, default=6000)
@@ -137,7 +142,7 @@ def main():
             print(f"mpc [{rtag}] skip (exists)", flush=True)
             continue
         jobs = [(i, episodes, tb, cp_path, mpc_kw, args.port0 + 7 * i,
-                 f"work_mpc{i}", args.residual) for i in range(len(episodes))]
+                 f"work_mpc{i}", args.residual, args.dump_log) for i in range(len(episodes))]
         with mp.Pool(min(args.jobs, len(jobs))) as pool:
             res = pool.map(_worker, jobs)
         fit = fitness(res, base, target=args.fitness_target)
@@ -151,6 +156,13 @@ def main():
                 w.writerow({"mean_wind": rr["mean_wind"], "wind_file": Path(rr["wind_file"]).stem,
                             "terminated": int(rr["terminated"]), **rr["metrics"]})
         json.dump(fit, open(out / f"eval_{rtag}.json", "w"), indent=1, default=float)
+        if args.dump_log:
+            ld = out / f"logs_{rtag}"
+            ld.mkdir(exist_ok=True)
+            for rr in res:
+                extra = {f"outb_{kk}": vv for kk, vv in (rr.get("outb") or {}).items()}
+                np.savez(ld / f"{Path(rr['wind_file']).stem}.npz", **rr["log"], **extra)
+            print(f"per-step logs -> {ld}")
         ws = sum(rr["wall_solve_s"] for rr in res) / max(sum(rr["n_solves"] for rr in res), 1)
         print(f"mpc [{rtag}] target={fit.get('target')} F_strict={fit['F']:.2f} "
               f"F_tol2={fit.get('F_tol2', float('nan')):.2f} tier={fit.get('tier')} "

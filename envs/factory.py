@@ -28,11 +28,12 @@ def episode_list(means, seeds=(1,), ti=8.0, episode_s=150.0, warmup_s=20.0) -> l
     return eps
 
 
-def mpc_base_kw(cp_scale: float = 1.0) -> dict:
+def mpc_base_kw(cp_scale: float = 1.0, ftower_scale: float = 1.0, mass_scale: float = 1.0) -> dict:
     """The J-selected LPV-MPC (cost scale v2, N=20, r=0.3, qt=3, wc_v=0.35) as a base controller,
-    with an optional aerodynamic-model mismatch of the MPC's internal model."""
+    with optional mismatches of the MPC's internal model (aerodynamic coefficients, first tower
+    frequency, tower modal mass); the plant is never changed."""
     return dict(horizon=20, ts=0.1, q=1.0, r=0.3, qt=3.0, wc_v=0.35, err_ref=0.005, dbeta_ref=0.002,
-                cp_scale=float(cp_scale))
+                cp_scale=float(cp_scale), ftower_scale=float(ftower_scale), mass_scale=float(mass_scale))
 
 
 def make_env(backend: str, episodes: list[EpisodeSpec], cfg: EnvConfig | None = None,

@@ -17,23 +17,33 @@ because it bounds the supervision claim. **Do not describe research directions b
 in this repo's docs, commits or manuscripts. The IPC/torque code paths stay in the tree (inert at
 `--ipc_max 0` / `--dtau_max 0`) because run configs reference them.
 
-## Final state (2026-09-12; manuscript in preparation)
+## Final state (2026-09-15; manuscript v3, agent-centred)
 Objective: **J** = mean of the baseline paper's four % reductions vs paired GSPI (power MSE,
 gen-speed MSE, tower DEL, blade DEL; per-episode clipped ±100), −20 per % energy loss over 1 %, no
 tiers, wind-labelled R3 subsets (`docs/roadmap_2026-09-11_metric-set-objective.md`, decisions D1–D6).
 F (tower-DEL priority with constraint tiers) stays computable for the historical tables.
-- **The model-based reference is the strongest controller on J**: the 3-state LPV-MPC with its cost
-  re-scaled so the tower term works (`--scale v2`, qt = 3) scores 12.4 / 14.1 on the two held-out
-  sets wide-open and **12.0 / 11.6 through the RL's own ±2.9° residual channel**, every term
-  positive, F strict 15.8 / 18.3. The F-era "MPC loses tower DEL −17.6 %" (§16) was a cost-scaling
-  artefact (speed term O(1e-5) vs tower term O(1)). The tower damper and the regulation-only MPC are
-  below GSPI on J.
+- **The model-based reference is the strongest controller on J, and it must be evaluated as the
+  base controller** (roadmap v2 s18): the 3-state LPV-MPC with its cost re-scaled so the tower term
+  works (`--scale v2`, qt = 3) scores **16.3 / 17.2** on the two held-out sets as the environment's
+  base with a zero residual (`evaluate.py --gspi --run <mpc-base run>`), every term positive; with
+  Cp/Ct x0.95 in its model 8.5 / 3.6, +-15 % -> -24. Pushing the MPC through the RL's action channel
+  (`mpc_baseline.py`, the old 12.4 / 14.1 and 12.0 / 11.6 rows) handicaps it: the channel's R2
+  non-negativity rule chops its negative offsets at region transitions. The F-era "MPC loses tower
+  DEL -17.6 %" was a cost-scaling artefact (speed term O(1e-5) vs tower term O(1)).
+- **Residual on the MPC base** (`--base mpc [--base_mm_cp 0.95]`, n = 3, s17-s18): adds +0.3 (fixed
+  reward) / +1.0 (LLM reward) to the exact-model MPC, within noise, half the runs never beat episode 0;
+  repairs the x0.95 model (8.5 / 3.6 -> 14.2 / 15.4 fixed, 12.7 / 18.3 LLM). LLM reward vs fixed on
+  the MPC base: +0.6 / +0.8 (2/3), -1.5 / +2.9 mismatched -- no level effect on the strong base either.
 - **RL under J, fair default** (reward v3 = speed term gated by the wind label; weights J-tuned;
   n = 3 each): guard 5.8 / 6.8, llm_hparam 8.2 / 9.9, random_hparam 7.4 / 8.3, llm_reward 8.3 / 9.2.
   Agentic gains are +1.5…+3 J (not significant at n = 3); the LLM proposer equals random search in
   the hyper-parameter namespace; **llm_reward is the only RL arm positive on all four terms**
   (saturated speed term, centred bounded load terms — a change of reward shape the weight search
-  cannot reach). Best RL seeds match the residual-channel MPC; means are ≈ 3 J behind.
+  cannot reach). Final n = 5: fixed 4.86 / 5.50, llm_reward 5.30 / 6.04 (+0.4 / +0.5, 3/5 balanced),
+  told-F 7.00 / 8.33, combo 6.37 / 8.65 (0/5 balanced), random reward structure (n = 3) 6.13 / 7.06.
+  **Manuscript (docs/manuscript/main.tex, v3) is agent-centred**: the agent's contribution is a
+  vocabulary of reward shapes realised by verification, no level effect on either base; the MPC
+  base is one subsection (strong-base test), not a co-headline. No development shorthand in the paper.
 - **Objective decides the lever** (roadmap v2 §9 vs 08-30 §21): on F the reward-weight *proposer*
   mattered (llm_fork > random_fork 7/7); on J the untuned default collapsed into a rollback loop
   (12.5 m/s speed-MSE), hyper-parameter search repaired it (+6…+8, proposer-agnostic), and once the

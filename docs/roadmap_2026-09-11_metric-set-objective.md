@@ -636,3 +636,54 @@ learns what the model gets wrong; (3) between the fixed and the LLM-written rewa
 is again small (+0.6/+0.8 exact, 2/3; -1.5/+2.9 mismatched, one bad seed). This is the manuscript's new
 main result; the GSPI-base arms become the ablations of the supervision design.
 `docs/tables/table_J_mpcbase.csv`.
+
+**Superseded by s18 (2026-09-15 09:30): the two "MPC alone" rows above are not the MPC the residual
+sits on** (they were the MPC pushed through the RL's action channel); with the MPC as the base the
+residual adds +0.3 / +1.0, not +5, and the mismatched base is 8.5 / 3.6, not 4.5 / -1.
+
+
+## 18. The MPC reference was evaluated through the wrong channel; corrected (2026-09-15 08:40-09:30; `campaign_mpcbase0.sh`, `evaluate.py --gspi` on an MPC-base config)
+
+**Finding.** Three of the six exact-base residual runs (`mg3t_s1`, `mg3t_s2`, `mrw3t_s0`) have their
+best checkpoint at episode 0 (|dbeta| ~ 0.001 deg, i.e. the MPC itself) and still score 15.7-16.5 on
+S3-S6 against the "MPC alone, wide-open" row of 12.40. The standalone rows (`mpc_baseline.py`) send
+the MPC's target through the RL's residual channel (`safety.apply`) with the bound opened; that
+channel has the R2 non-negativity rule written for the learned residual (`d = max(d, 0)` while the
+router says R2), which zeroed the MPC's negative offsets during the router's transition hold at
+12.5 m/s and produced pitch discontinuities. One-episode diagnostic (U12.5 TI8 S3, same MPC, same
+wind): tower DEL 11.58 MN m through the channel vs 7.32 MN m as the base controller (GSPI 19.40);
+the difference is in [40, 150) s (11.9 vs 6.6), not a start-up transient ([20, 40) s: 8.8 vs 8.9);
+the base offset is negative 62 % of the scored steps. So the MPC-in-env is the faithful MPC and
+every "MPC alone" row must be the MPC as the base with a zero residual (`evaluate.py --gspi --run
+<mpc-base run>`; new `--base_mm_cp/ft/m`, `--base_mpc_json`, `--out`, `--dump_log`).
+
+**Corrected reference rows** (MPC as base, zero residual; `~/wtrl/exp/mpc/eval_base0_*.json`):
+
+| variant | J S3-S6 | J S7-S10 | S3-S6 P / w / T / B |
+|---|---|---|---|
+| exact model | **16.28** | **17.22** | 11.0 / 22.3 / 24.1 / 7.8 |
+| Cp/Ct x0.95 | **8.53** | **3.57** | 1.5 / 4.7 / 23.4 / 4.5 |
+| Cp/Ct x0.85 / x1.05 / x1.15 | -24.01 / 5.71 / -24.58 | | regulation collapses at +-15 % |
+| tower f x0.9 / x1.1 | 12.03 / 13.38 | | |
+| modal mass x0.8 / x1.2 | 13.33 / 17.64 | | |
+| TI 14 % (S3-S4) / TI 22 % U15 (S3-S4) / U18 (S3-S4) | 12.56 / 14.22 / 23.06 | | off-design winds |
+| regulation-only cost (qt = 0, unscaled refs) | -2.19 / -6.20 (10.5 / 1.2 / -22.0 / 1.6) | | the published verdict |
+
+**Consequences for s17** (differences vs the corrected reference, seed-wise, exact floor 0.25):
+- exact base: fixed-reward residual +0.32 / +0.84 (2/3, 2/3); LLM-reward residual +0.95 / +1.62
+  (2/3, 3/3). The residual adds ~nothing to the exact-model MPC; half the runs never beat episode 0.
+- Cp x0.95 base: fixed +5.6 / +11.8 (3/3, 3/3); LLM +4.1 / +14.7 (2/3, 3/3). The repair holds
+  (8.5 / 3.6 -> 14.2 / 15.4 and 12.7 / 18.3) but from a higher floor than 4.5 / -1.
+- LLM reward vs fixed reward on the MPC base: unchanged (+0.6 / +0.8 exact, 2/3; -1.5 / +2.9
+  mismatched). The agent does not move the level on the strong base either.
+- The old standalone model-error rows (s15-s16, residual channel) are superseded by the base rows
+  above; as the base (full authority) the MPC is *more* sensitive to its aero model (+-15 %: -24).
+
+**Manuscript** rewritten around the agent (user instruction 09:05: "MPC+residual is not new; avoid
+two papers fighting"): the MPC base is the strong-base test of the same supervision study, one
+subsection; new figures `fig_trajectory.png` (one held-out 15 m/s episode, both bases; episode by
+a stated rule) and `fig_training.png` (J on S1-S2 vs episode, fixed vs agent, both bases; fork
+decisions and rollback dips visible); `fig_mpc_error`, `fig_mpcbase`, `fig2_composition`,
+`fig4_reference` re-sourced from the base0 rows. `j_table.py --ref_json` writes the reference rows
+and seed-wise differences into `table_J_mpcbase.csv`. Per-step logs of the trajectory runs:
+`<run>/logs_traj_s3456/`, `mpc/logs_base0_*`.

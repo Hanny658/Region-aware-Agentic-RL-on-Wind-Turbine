@@ -148,6 +148,7 @@ def run_episode(env, policy_set: dict, hidden, episode_index: int, deterministic
         "terminated": bool(terminated), "episode_index": episode_index,
         "mean_wind": env.spec_ep.mean_wind, "wind_file": env.spec_ep.wind_file,
         "metrics": metrics, "knobs": env.knobs(), "log": L if keep_log else None,
+        "outb": (getattr(env, "outb", None) if keep_log else None),
     }
     if hold:
         out["ipc"] = {"obs": np.asarray(iO, np.float32), "act": np.asarray(iA, np.float32),

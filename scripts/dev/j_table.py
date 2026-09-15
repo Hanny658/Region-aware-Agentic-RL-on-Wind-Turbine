@@ -22,7 +22,10 @@ LABEL = {"jg2": "guard-v2 (fixed hparams, reward v2)", "jg1": "guard-v1 (reward 
          "jrw3t": "llm_reward (v3, tuned)", "jg3L3": "guard-v3 tuned, lambda_tower 3", "jg3L10": "guard-v3 tuned, lambda_tower 10",
          "jg3L30": "guard-v3 tuned, lambda_tower 30", "jcb3t": "llm_combo (hparams + reward, v3, tuned)",
          "jhp3u": "llm_hparam (v3, untuned default)", "jrhp3u": "random_hparam (v3, untuned default)",
-         "jrwF3t": "llm_reward told F, J selects", "jrwO3t": "llm_reward single blind proposal"}
+         "jrwF3t": "llm_reward told F, J selects", "jrwO3t": "llm_reward single blind proposal",
+         "jrr3t": "random reward structure, same loop", "mg3t": "MPC base + fixed-reward residual",
+         "mrw3t": "MPC base + llm_reward residual", "mgC3t": "MPC x0.95 base + fixed-reward residual",
+         "mrwC3t": "MPC x0.95 base + llm_reward residual"}
 
 
 def perm_p(d):
@@ -40,6 +43,9 @@ ap.add_argument("--arms", nargs="+", default=["jg2", "jg1", "jhp", "jrhp", "jrw"
 ap.add_argument("--ref", default="jg2")
 ap.add_argument("--seeds", nargs="+", type=int, default=None)
 ap.add_argument("--csv", default=None, help="also write per-run rows + arm aggregates + paired tests to this CSV")
+ap.add_argument("--ref_json", nargs="*", default=[],
+                help="deterministic reference rows label=tag[,tag2]: eval_<tag>.json (S3-S6) and eval_<tag2>.json (S7-S10) "
+                     "in $EXP/mpc, e.g. 'MPC alone=base0_s3456,base0_s78910'; every arm is also compared against the first one")
 a = ap.parse_args()
 csv_rows = []
 
@@ -72,6 +78,29 @@ for (arm, seed), r in sorted(runs.items(), key=lambda kv: (a.arms.index(kv[0][0]
             rec |= {f"J_{k}": round(j["J"], 3), f"P_{k}": round(j["J_power_mse_red_pct"], 2), f"w_{k}": round(j["J_gen_speed_mse_red_pct"], 2),
                     f"T_{k}": round(j["J_TwrBsMyt_DEL_red_pct"], 2), f"B_{k}": round(j["J_RootMyc1_DEL_red_pct"], 2),
                     f"E_{k}": round(j["energy_loss_pct"], 3), f"F_{k}": round(j["F"], 3)}
+    csv_rows.append(rec)
+
+refs = []   # (label, {"S3-S6": json, "S7-S10": json})
+for spec in a.ref_json:
+    label, tags = spec.split("=", 1)
+    tags = tags.split(",")
+    ref = {}
+    for k, t in zip(TAGS, tags):
+        fp = f"{EXP}/mpc/eval_{t}.json"
+        if os.path.exists(fp):
+            ref[k] = json.load(open(fp, encoding="utf-8"))
+    refs.append((label, ref))
+    cells = [f"{label[:9]:>9} {'-':>7}"]
+    rec = {"kind": "ref", "label": label}
+    for k in TAGS:
+        j = ref.get(k)
+        cells.append(f"{j['J']:7.2f} {j['J_power_mse_red_pct']:6.1f} {j['J_gen_speed_mse_red_pct']:6.1f} "
+                     f"{j['J_TwrBsMyt_DEL_red_pct']:6.1f} {j['J_RootMyc1_DEL_red_pct']:6.1f} {j['energy_loss_pct']:5.2f}" if j else f"{'-':>41}")
+        if j:
+            rec |= {f"J_{k}": round(j["J"], 3), f"P_{k}": round(j["J_power_mse_red_pct"], 2), f"w_{k}": round(j["J_gen_speed_mse_red_pct"], 2),
+                    f"T_{k}": round(j["J_TwrBsMyt_DEL_red_pct"], 2), f"B_{k}": round(j["J_RootMyc1_DEL_red_pct"], 2),
+                    f"E_{k}": round(j["energy_loss_pct"], 3)}
+    print(" | ".join(cells) + f"   <- reference: {label}")
     csv_rows.append(rec)
 
 print(f"\n{'arm':>34} {'n':>2} {'J_S1S2':>12} {'J_S3-S6':>12} {'J_S7-S10':>12} {'P_S3-6':>7} {'w_S3-6':>7} {'T_S3-6':>7} {'B_S3-6':>7}")
@@ -107,6 +136,20 @@ for x, y in pairs:
         print(f"  {x:>5} - {y:<5} {k:>6}: mean {mean(d):+6.2f}  wins {wins}/{len(d)}  exact p {perm_p(d):.3f}  paired-t p {paired_t(d):.3f}  diffs {[round(v, 1) for v in d]}")
         csv_rows.append({"kind": "paired", "comparison": f"{x} - {y}", "wind_set": k, "n": len(d), "mean_diff": round(mean(d), 3),
                          "wins": wins, "exact_p": round(perm_p(d), 4), "paired_t_p": round(paired_t(d), 4), "diffs": " ".join(f"{v:.2f}" for v in d)})
+if refs:
+    label, ref = refs[0]
+    print(f"\nseed-wise differences against the deterministic reference '{label}' (exact floor = 2/2^n):")
+    for x in a.arms:
+        for k in TAGS:
+            if k not in ref:
+                continue
+            d = [runs[(ar, s)][k]["J"] - ref[k]["J"] for (ar, s) in sorted(runs) if ar == x and k in runs[(ar, s)]]
+            if len(d) < 2:
+                continue
+            wins = sum(1 for v in d if v > 0)
+            print(f"  {x:>6} - ref {k:>6}: mean {mean(d):+6.2f}  wins {wins}/{len(d)}  exact p {perm_p(d):.3f}  paired-t p {paired_t(d):.3f}  diffs {[round(v, 1) for v in d]}")
+            csv_rows.append({"kind": "vs_ref", "comparison": f"{x} - {label}", "wind_set": k, "n": len(d), "mean_diff": round(mean(d), 3),
+                             "wins": wins, "exact_p": round(perm_p(d), 4), "paired_t_p": round(paired_t(d), 4), "diffs": " ".join(f"{v:.2f}" for v in d)})
 if a.csv:
     import csv as _csv
     keys = []

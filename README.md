@@ -68,8 +68,11 @@ wind speed (`docs/roadmap_2026-09-11_metric-set-objective.md`). Held-out on two 
 
 | controller | J S3–S6 | J S7–S10 | four terms (S3–S6) P / ω / T / B |
 |---|---|---|---|
-| **LPV-MPC, tower term active, through the RL's ±2.9° residual channel** | **11.97** | **11.61** | 8.5 / 20.5 / 13.2 / 5.6 |
-| LPV-MPC, same cost, wide-open channel | 12.40 | 14.10 | 8.9 / 19.8 / 15.8 / 5.1 |
+| **LPV-MPC, tower term active, as the base controller (zero residual)** | **16.28** | **17.22** | 11.0 / 22.3 / 24.1 / 7.8 |
+| MPC base + fixed-reward residual (n = 3) | 16.60 ± 0.78 | 18.06 ± 1.10 | 12.1 / 23.6 / 24.2 / 6.4 |
+| MPC base + LLM-reward residual (n = 3) | 17.23 ± 1.30 | 18.84 ± 1.04 | 13.4 / 24.7 / 23.6 / 7.2 |
+| LPV-MPC with Cp/Ct ×0.95 in its model, as base | 8.53 | 3.57 | 1.5 / 4.7 / 23.4 / 4.5 |
+| ×0.95 MPC base + fixed-reward / LLM-reward residual (n = 3) | 14.17 ± 0.82 / 12.66 ± 5.13 | 15.35 ± 0.68 / 18.25 ± 2.52 | 18.6 / 27.6 / 6.7 / 3.8 |
 | llm_reward (LLM-written reward, reward v3, J-tuned default; n = 5) | 5.30 ± 4.17 | 6.04 ± 4.28 | 6.8 / 10.1 / **+1.5** / **2.7** (3/5 seeds all-positive) |
 | llm_reward told F while J selects (ablation) | 8.58 ± 0.59 | 9.89 ± 0.31 | 10.0 / 16.6 / 3.5 / 4.3 (2/3 all-positive) |
 | llm_reward single blind proposal, no fork loop (ablation) | 4.70 ± 2.34 | 6.14 ± 2.33 | 14.4 / 14.0 / −8.6 / −1.0 |
@@ -79,14 +82,19 @@ wind speed (`docs/roadmap_2026-09-11_metric-set-objective.md`). Held-out on two 
 | guard (fixed knobs, reward v3, J-tuned default; n = 5) | 4.86 ± 2.76 | 5.50 ± 2.09 | 17.4 / 19.0 / −17.6 / 0.7 |
 | guard (fixed knobs, reward v2, untuned) | 1.59 ± 0.87 | 0.97 ± 1.37 | −6.9 / −0.6 / 10.4 / 3.4 |
 | ROSCO tower damper (best gain under J) | −0.06 | −0.26 | ≈ 0 |
-| LPV-MPC regulation-only (the F-era tuning) | −1.64 | −8.08 | 7.5 / 4.2 / −17.6 / −0.7 |
+| LPV-MPC regulation-only cost (the F-era tuning), as base | -2.19 | -6.20 | 10.5 / 1.2 / -22.0 / 1.6 |
 
 What changed relative to the F-era results below:
 - **The MPC's tower-DEL loss was a cost-scaling artefact.** With the speed, pitch-rate and
   tower-velocity terms scaled to O(1) at their typical values, the tower weight can act
   (qt = 3) and the same 3-state LPV-MPC is positive on all four metrics, F-strict 15.8 / 18.3,
-  and ahead of every RL arm — also when driven through the RL's own bounded, damped residual
-  channel (authority explains only 0.4–2.5 J of its lead).
+  and ahead of every RL arm. **It has to be evaluated as the base controller** (roadmap v2 §18):
+  pushing it through the RL's action channel (`mpc_baseline.py`) lets the channel's below-rated
+  non-negativity rule chop its negative offsets at region transitions (12.4 / 14.1 instead of
+  16.3 / 17.2). As the base it is also sharper in its model sensitivity (Cp/Ct ±15 %: −24).
+- **Residual on the MPC base** (`--base mpc`): +0.3 (fixed reward) / +1.0 (LLM reward) on the
+  exact model, within noise; repairs a 5 % aerodynamic-model error (8.5 / 3.6 → 14–18). The LLM
+  reward is not distinguishable from the fixed one on this base either.
 - **Residual RL needs three things to be competitive on J**: a normalised value target
   (`--value_norm`; the critic was a constant before), a speed term gated by the wind label the
   objective uses (`--reward v3`; otherwise training collapses into a rollback loop at 12.5 m/s),

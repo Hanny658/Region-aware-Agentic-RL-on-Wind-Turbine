@@ -7,6 +7,10 @@ fig2_composition.png  the four terms of J per controller (S3-S6 means; arm-mean 
 fig3_mechanism.png    (a) critic collapse vs value normalisation, (b) the rollback loop under reward v2
                       and its absence under v3, (c) fork myopia: lambda_tower candidates never kept
 fig4_reference.png    J on both held-out sets for every controller, plus the MPC model-mismatch rows
+fig_mpc_error.png     the MPC (as base controller) under model error; fig_mpcbase.png the residual on the MPC base
+fig_trajectory.png    one held-out 15 m/s episode: base / fixed-reward residual / agent-reward residual, both bases
+fig_training.png      training-time J of fixed-reward and agent-reward runs on both bases (fork decisions marked)
+Every MPC-alone row is the MPC as the environment base controller with a zero residual (eval_base0_*).
 """
 from __future__ import annotations
 
@@ -63,8 +67,8 @@ def fig_levers():
     """Seed-paired differences of J against the tuned fixed reward, both held-out sets."""
     fig, ax = plt.subplots(figsize=(8.6, 3.6))
     guard = load_J("jg3t")
-    arms = [("jhp3t", "LLM\nhyper-params"), ("jrhp3t", "random\nhyper-params"), ("jcb3t", "LLM hparams\n+ reward"),
-            ("jrw3t", "LLM reward\nexpression"), ("jrwF3t", "LLM reward,\ntold F"), ("jrr3t", "random reward\nstructure"),
+    arms = [("jhp3t", "LLM\nhyper-params"), ("jrhp3t", "random\nhyper-params"), ("jcb3t", "LLM hyper-params\n+ reward"),
+            ("jrw3t", "LLM reward\nexpression"), ("jrwF3t", "LLM reward, told\nload-priority objective"), ("jrr3t", "random reward\nstructure"),
             ("jrwO3t", "LLM reward,\nsingle-shot")]
     for i, (arm, label) in enumerate(arms):
         x = load_J(arm)
@@ -108,6 +112,11 @@ def mpc_json(tag: str):
     return j
 
 
+MM_VARIANTS = [("", "exact model"), ("_cp0.85", "$C_P/C_T$ ×0.85"), ("_cp0.95", "$C_P/C_T$ ×0.95"),
+               ("_cp1.05", "$C_P/C_T$ ×1.05"), ("_cp1.15", "$C_P/C_T$ ×1.15"),
+               ("_ft0.9", "tower f ×0.9"), ("_ft1.1", "tower f ×1.1"), ("_m0.8", "modal mass ×0.8"), ("_m1.2", "modal mass ×1.2")]
+
+
 def terms(j: dict) -> list[float]:
     return [j.get("J_" + k, j.get(k, float("nan"))) for k in TERM_KEYS]
 
@@ -120,14 +129,13 @@ def arm_terms(runs: dict, ws="S3-S6"):
 
 def fig_composition():
     items = []
-    for tag, label in (("eval_heldoutJ2r_s3456_N20q1r0.3qt3w0.35", "LPV-MPC, tower term,\nresidual channel"),
-                       ("eval_heldoutJ2_s3456_N20q1r0.3qt3w0.35", "LPV-MPC, tower term,\nwide-open"),
-                       ("eval_heldoutW_N20q1r0.02qt0w0.35", "LPV-MPC,\nregulation-only")):
+    for tag, label in (("eval_base0_s3456", "LPV-MPC (exact model)"),
+                       ("eval_base0_regonly_s3456", "LPV-MPC,\nregulation-only cost")):
         j = mpc_json(tag)
         if j:
             items.append((label, terms(j), 1, j["J"]))
-    for arm, label in (("jrw3t", "LLM reward expression"), ("jrwF3t", "LLM reward, told F"), ("jrr3t", "random reward structure"),
-                       ("jrwO3t", "LLM reward, single-shot"), ("jcb3t", "LLM hparams + reward"), ("jhp3t", "LLM hyper-parameters"),
+    for arm, label in (("jrw3t", "LLM reward expression"), ("jrwF3t", "LLM reward, told load-priority obj."), ("jrr3t", "random reward structure"),
+                       ("jrwO3t", "LLM reward, single-shot"), ("jcb3t", "LLM hyper-params + reward"), ("jhp3t", "LLM hyper-parameters"),
                        ("jrhp3t", "random hyper-parameters"), ("jg3t", "fixed reward (tuned)")):
         runs = load_J(arm)
         t, n = arm_terms(runs)
@@ -143,7 +151,7 @@ def fig_composition():
         ax.annotate(f"J={it[3]:.1f}", (i, max(it[1]) + 1.5), ha="center", fontsize=7)
     ax.axhline(0, color="k", lw=0.6)
     ax.set_xticks(range(len(items))); ax.set_xticklabels([it[0] for it in items], rotation=25, ha="right", fontsize=7.5)
-    ax.set_ylabel("% reduction vs paired GSPI (held-out wind seeds 3–6)")
+    ax.set_ylabel("% reduction vs GSPI\n(held-out wind seeds 3–6)")
     ax.legend(ncol=4, frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0))
     fig.tight_layout()
     fig.savefig(os.path.join(a.out, "fig2_composition.png"))
@@ -243,14 +251,14 @@ def fig_reference():
     fig, axes = plt.subplots(1, 2, figsize=(10.5, 3.6), gridspec_kw={"width_ratios": [1.7, 1]})
     ax = axes[0]
     rows = []
-    for tag_a, tag_b, label in (("eval_heldoutJ2r_s3456_N20q1r0.3qt3w0.35", "eval_heldoutJ2r_2W_N20q1r0.3qt3w0.35", "LPV-MPC, residual channel"),
-                                ("eval_heldoutJ2_s3456_N20q1r0.3qt3w0.35", "eval_heldoutJ2_2W_N20q1r0.3qt3w0.35", "LPV-MPC, wide-open"),
-                                ("eval_heldoutW_N20q1r0.02qt0w0.35", "eval_heldout2W_N20q1r0.02qt0w0.35", "LPV-MPC, regulation-only")):
+    for tag_a, tag_b, label in (("eval_base0_s3456", "eval_base0_s78910", "LPV-MPC, exact model"),
+                                ("eval_base0_cp0.95_s3456", "eval_base0_cp0.95_s78910", "LPV-MPC, $C_P/C_T$ ×0.95"),
+                                ("eval_base0_regonly_s3456", "eval_base0_regonly_s78910", "LPV-MPC, regulation-only cost")):
         ja, jb = mpc_json(tag_a), mpc_json(tag_b)
         if ja and jb:
             rows.append((label, [ja["J"]], [jb["J"]]))
-    for arm, label in (("jrw3t", "LLM reward expression"), ("jrwF3t", "LLM reward, told F"), ("jrr3t", "random reward structure"),
-                       ("jrwO3t", "LLM reward, single-shot"), ("jcb3t", "LLM hparams + reward"), ("jhp3t", "LLM hyper-parameters"),
+    for arm, label in (("jrw3t", "LLM reward expression"), ("jrwF3t", "LLM reward, told load-priority obj."), ("jrr3t", "random reward structure"),
+                       ("jrwO3t", "LLM reward, single-shot"), ("jcb3t", "LLM hyper-params + reward"), ("jhp3t", "LLM hyper-parameters"),
                        ("jrhp3t", "random hyper-parameters"), ("jg3t", "fixed reward (tuned)")):
         runs = load_J(arm)
         A = [r["S3-S6"]["J"] for r in runs.values() if "S3-S6" in r]
@@ -271,25 +279,21 @@ def fig_reference():
     ax.set_title("(a) every controller, both held-out wind-seed sets"); ax.legend(frameon=False, loc="lower right")
     # (b) MPC model mismatch and stress classes
     ax = axes[1]
-    base = "eval_mmJ2r_s3456_N20q1r0.3qt3w0.35"
-    variants = [("", "exact model"), ("_cp0.85ft1m1", "$C_P/C_T$ ×0.85"), ("_cp0.95ft1m1", "$C_P/C_T$ ×0.95"),
-                ("_cp1.05ft1m1", "$C_P/C_T$ ×1.05"), ("_cp1.15ft1m1", "$C_P/C_T$ ×1.15"),
-                ("_cp1ft0.9m1", "tower f ×0.9"), ("_cp1ft1.1m1", "tower f ×1.1"), ("_cp1ft1m0.8", "modal mass ×0.8"), ("_cp1ft1m1.2", "modal mass ×1.2")]
     labels, vals = [], []
-    for suf, lab in variants:
-        j = mpc_json(base + suf)
+    for suf, lab in MM_VARIANTS:
+        j = mpc_json(f"eval_base0{suf}_s3456")
         if j:
             labels.append(lab); vals.append(j["J"])
-    for tag, lab in (("eval_robustJ2r_ti14_N20q1r0.3qt3w0.35", "turbulence intensity 14 %"), ("eval_robustJ2r_ti22_N20q1r0.3qt3w0.35", "turbulence intensity 22 %, 15 m/s"),
-                     ("eval_robustJ2r_u18_N20q1r0.3qt3w0.35", "18 m/s")):
+    for tag, lab in (("eval_base0_ti14", "turbulence intensity 14 %"), ("eval_base0_ti22", "turbulence intensity 22 %, 15 m/s"),
+                     ("eval_base0_u18", "18 m/s")):
         j = mpc_json(tag)
         if j:
             labels.append(lab); vals.append(j["J"])
     cols = ["#4C72B0" if v > 0 else "#C44E52" for v in vals]
     ax.barh(range(len(vals)), vals, color=cols)
     ax.set_yticks(range(len(vals))); ax.set_yticklabels(labels, fontsize=7.5); ax.invert_yaxis()
-    ax.axvline(0, color="k", lw=0.6); ax.set_xlabel("J, LPV-MPC (residual channel)")
-    ax.set_title("(b) LPV-MPC: model error, off-design winds")
+    ax.axvline(0, color="k", lw=0.6); ax.set_xlabel("J, LPV-MPC (base controller)")
+    ax.set_title("(b) MPC: model error, off-design winds")
     for i, v in enumerate(vals):
         if v >= 0:
             ax.annotate(f"{v:.1f}", (v, i), textcoords="offset points", xytext=(4, 0), ha="left", va="center", fontsize=7)
@@ -305,13 +309,9 @@ def fig_reference():
 # ------------------------------------------------------------------ fig: MPC model-error fragility (motivation)
 def fig_mpc_error():
     fig, ax = plt.subplots(figsize=(6.4, 3.0))
-    base = "eval_mmJ2r_s3456_N20q1r0.3qt3w0.35"
-    variants = [("", "exact model"), ("_cp0.85ft1m1", "$C_P/C_T$ ×0.85"), ("_cp0.95ft1m1", "$C_P/C_T$ ×0.95"),
-                ("_cp1.05ft1m1", "$C_P/C_T$ ×1.05"), ("_cp1.15ft1m1", "$C_P/C_T$ ×1.15"),
-                ("_cp1ft0.9m1", "tower f ×0.9"), ("_cp1ft1.1m1", "tower f ×1.1"), ("_cp1ft1m0.8", "modal mass ×0.8"), ("_cp1ft1m1.2", "modal mass ×1.2")]
     labels, vals = [], []
-    for suf, lab in variants:
-        j = mpc_json(base + suf)
+    for suf, lab in MM_VARIANTS:
+        j = mpc_json(f"eval_base0{suf}_s3456")
         if j:
             labels.append(lab); vals.append(j["J"])
     cols = ["#4C72B0" if v > 0 else "#C44E52" for v in vals]
@@ -320,7 +320,7 @@ def fig_mpc_error():
         ax.annotate(f"{v:.1f}", (max(v, 0) + 0.4 if v >= -6 else v + 0.5, i), va="center", fontsize=7,
                     ha="left", color="white" if v < -6 else "black")
     ax.set_yticks(range(len(vals))); ax.set_yticklabels(labels, fontsize=8); ax.invert_yaxis()
-    ax.axvline(0, color="k", lw=0.6); ax.set_xlabel("J on held-out wind seeds 3–6, LPV-MPC through the residual channel")
+    ax.axvline(0, color="k", lw=0.6); ax.set_xlabel("J on held-out wind seeds 3–6, LPV-MPC as the base controller, zero residual")
     fig.tight_layout()
     fig.savefig(os.path.join(a.out, "fig_mpc_error.png"))
     plt.close(fig)
@@ -330,7 +330,7 @@ def fig_mpc_error():
 def fig_mpcbase():
     fig, axes = plt.subplots(1, 2, figsize=(11.0, 3.6), gridspec_kw={"width_ratios": [1.15, 1]})
     rows = []   # (label, [J S3-S6 per seed], [J S7-S10 per seed], terms S3-S6 mean)
-    for tag_a, tag_b, label in (("eval_heldoutJ2_s3456_N20q1r0.3qt3w0.35", "eval_heldoutJ2_2W_N20q1r0.3qt3w0.35", "MPC alone, exact model"),):
+    for tag_a, tag_b, label in (("eval_base0_s3456", "eval_base0_s78910", "MPC alone, exact model"),):
         ja, jb = mpc_json(tag_a), mpc_json(tag_b)
         if ja and jb:
             rows.append((label, [ja["J"]], [jb["J"]], terms(ja)))
@@ -340,7 +340,7 @@ def fig_mpcbase():
         t, n = arm_terms(runs)
         if A:
             rows.append((f"{label} (n={len(A)})", A, B, list(t)))
-    for tag_a, tag_b, label in (("eval_heldoutJ2_N20q1r0.3qt3w0.35_cp0.95ft1m1", "eval_heldoutJ2_2W_N20q1r0.3qt3w0.35_cp0.95ft1m1", "MPC alone, $C_P/C_T$ ×0.95"),):
+    for tag_a, tag_b, label in (("eval_base0_cp0.95_s3456", "eval_base0_cp0.95_s78910", "MPC alone, $C_P/C_T$ ×0.95"),):
         ja, jb = mpc_json(tag_a), mpc_json(tag_b)
         if ja and jb:
             rows.append((label, [ja["J"]], [jb["J"]], terms(ja)))
@@ -378,7 +378,112 @@ def fig_mpcbase():
     plt.close(fig)
 
 
-for f in (fig_levers, fig_composition, fig_mechanism, fig_reference, fig_mpc_error, fig_mpcbase):
+# ------------------------------------------------------------------ fig: trajectory overlays on one held-out episode
+BASE_DIR = os.path.expanduser(os.environ.get("WTRL_BASE", "~/wtrl/baselines/openfast"))
+
+
+def _ep_metrics(d):
+    """Per-episode speed MSE on the wind-labelled above-rated steps and tower-base DEL (m = 4), as the objective computes them."""
+    import sys
+    sys.path.insert(0, REPO)
+    import yaml
+    from eval.metrics import del_rainflow
+    tb = yaml.safe_load(open(os.path.join(REPO, "configs", "turbine", "nrel5mw.yaml")))
+    act = d["warmup"] == 0
+    r3 = act & (d["v_hub"] > float(tb["rated_wind_ms"]))
+    wg = float(tb["rated_gen_speed_rads"])
+    mse = float((((d["gen_speed"][r3] - wg) / wg) ** 2).mean()) if r3.sum() > 100 else float("nan")
+    pmse = float((((d["P"][r3] - 5.0e6) / 5.0e6) ** 2).mean()) if r3.sum() > 100 else float("nan")
+    k = d["outb_Time"] >= 20.0
+    dto = float(d["outb_Time"][1] - d["outb_Time"][0])
+    return mse, float(del_rainflow(d["outb_TwrBsMyt"][k], dto, 4) / 1e3), wg, pmse
+
+
+def fig_trajectory():
+    rows = [("GSPI base", [("GSPI", lambda k: f"{BASE_DIR}/U15_TI8_S{k}.npz", "0.45"),
+                           ("+ residual, fixed reward", lambda k: f"{EXP}/jg3t_s0/logs_traj_s3456/U15_TI8_S{k}.npz", "#4C72B0"),
+                           ("+ residual, agent-written reward", lambda k: f"{EXP}/jrw3t_s0/logs_traj_s3456/U15_TI8_S{k}.npz", "#DD8452")]),
+            ("MPC base, $C_P/C_T$ ×0.95 in its model", [("MPC ×0.95 alone", lambda k: f"{EXP}/mpc/logs_base0_cp0.95_s3456/U15_TI8_S{k}.npz", "0.45"),
+                           ("+ residual, fixed reward", lambda k: f"{EXP}/mgC3t_s2/logs_traj_s3456/U15_TI8_S{k}.npz", "#4C72B0"),
+                           ("+ residual, agent-written reward", lambda k: f"{EXP}/mrwC3t_s1/logs_traj_s3456/U15_TI8_S{k}.npz", "#DD8452")])]
+    # episode: the 15 m/s realisation on which the GSPI-base arms' tower-fatigue difference is closest to its mean over the four
+    diffs = {}
+    for k in (3, 4, 5, 6):
+        pa, pb = rows[0][1][1][1](k), rows[0][1][2][1](k)
+        if os.path.exists(pa) and os.path.exists(pb):
+            diffs[k] = _ep_metrics(np.load(pa))[1] - _ep_metrics(np.load(pb))[1]
+    if not diffs:
+        raise FileNotFoundError("no trajectory logs (logs_traj_s3456)")
+    m = mean(diffs.values())
+    k = min(diffs, key=lambda kk: abs(diffs[kk] - m))
+    print(f"   trajectory episode: U15_TI8_S{k} (tower-DEL differences fixed-agent: {diffs})")
+    fig, axes = plt.subplots(2, 3, figsize=(12.5, 6.0), gridspec_kw={"width_ratios": [1.3, 1, 1]})
+    for i, (rname, curves) in enumerate(rows):
+        for label, pf, col in curves:
+            pth = pf(k)
+            if not os.path.exists(pth):
+                continue
+            d = np.load(pth)
+            mse, delT, wg, pmse = _ep_metrics(d)
+            t = np.arange(len(d["gen_speed"])) * 0.01
+            w = (t >= 20) & (t <= 150)
+            lab = f"{label}  (power MSE {pmse * 1e5:.2f}e-5, tower {delT:.2f} MN m)"
+            axes[i, 0].plot(t[w], d["P"][w] / 1e6, color=col, lw=0.7, label=lab)
+            z = (t >= 60) & (t <= 100)
+            axes[i, 1].plot(t[z], d["P"][z] / 1e6, color=col, lw=0.9)
+            kk = (d["outb_Time"] >= 20) & (d["outb_Time"] <= 150)
+            axes[i, 2].plot(d["outb_Time"][kk], d["outb_TwrBsMyt"][kk] / 1e3, color=col, lw=0.7)
+        axes[i, 0].axhline(5.0, color="k", lw=0.5, ls="--"); axes[i, 1].axhline(5.0, color="k", lw=0.5, ls="--")
+        axes[i, 0].set_ylabel("electrical power [MW] (rated dashed)"); axes[i, 1].set_ylabel("electrical power [MW], 60–100 s")
+        axes[i, 2].set_ylabel("tower-base fore-aft moment [MN m]")
+        axes[i, 0].legend(frameon=False, fontsize=6.3, loc="upper left", bbox_to_anchor=(0.0, 1.0), title=rname, title_fontsize=7.5, alignment="left")
+        lo, hi = axes[i, 0].get_ylim(); axes[i, 0].set_ylim(lo, hi + 0.5 * (hi - lo))
+    for ax in axes[1]:
+        ax.set_xlabel("time [s]")
+    for ax in axes[:, 0].tolist() + axes[:, 2].tolist():
+        ax.set_xlim(20, 150)
+    for ax in axes[:, 1]:
+        ax.set_xlim(60, 100)
+    fig.suptitle(f"Held-out episode: 15 m/s, turbulence intensity 8 %, TurbSim seed {k}", fontsize=9, y=0.995)
+    fig.tight_layout()
+    fig.savefig(os.path.join(a.out, "fig_trajectory.png"))
+    plt.close(fig)
+
+
+# ------------------------------------------------------------------ fig: training-time J of the supervised runs
+def _evals(run: str):
+    p = f"{EXP}/{run}/evals.csv"
+    if not os.path.exists(p):
+        return None
+    rows = list(csv.DictReader(open(p, encoding="utf-8")))
+    return ([int(r["episode"]) for r in rows], [float(r["J"]) for r in rows], [r["tag"].startswith("fork") for r in rows])
+
+
+def fig_training():
+    fig, axes = plt.subplots(1, 2, figsize=(10.5, 3.4), sharey=False)
+    for ax, title, arms in ((axes[0], "(a) GSPI base", (("jg3t", "fixed reward", "#4C72B0"), ("jrw3t", "agent-written reward", "#DD8452"))),
+                            (axes[1], "(b) MPC base, exact model", (("mg3t", "fixed reward", "#4C72B0"), ("mrw3t", "agent-written reward", "#DD8452")))):
+        for arm, label, col in arms:
+            first = True
+            for d in sorted(glob.glob(f"{EXP}/{arm}_s*")):
+                e = _evals(os.path.basename(d))
+                if e is None:
+                    continue
+                ep, J, fk = e
+                ax.plot(ep, J, color=col, lw=0.9, alpha=0.75, label=label if first else None)
+                if any(fk):
+                    ax.scatter([x for x, f in zip(ep, fk) if f], [y for y, f in zip(J, fk) if f], marker="^", s=14, color=col, zorder=3,
+                               label="fork decision (best candidate kept)" if first and arm.startswith(("jrw", "mrw")) else None)
+                first = False
+        ax.axhline(0, color="k", lw=0.5)
+        ax.set_title(title); ax.set_xlabel("training episode"); ax.set_ylabel("J on the supervisor winds (seeds 1–2)")
+        ax.legend(frameon=False, fontsize=7, loc="lower right")
+    fig.tight_layout()
+    fig.savefig(os.path.join(a.out, "fig_training.png"))
+    plt.close(fig)
+
+
+for f in (fig_levers, fig_composition, fig_mechanism, fig_reference, fig_mpc_error, fig_mpcbase, fig_trajectory, fig_training):
     try:
         f()
         print("ok", f.__name__)
