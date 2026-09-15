@@ -136,7 +136,15 @@ class Evaluator:
                "--out", str(self.cache), "--base_mm_cp", str(cp), "--base_mpc_json", json.dumps(kw)]
         r = subprocess.run(cmd, capture_output=True, text=True)
         if not out.exists():
-            raise RuntimeError(f"evaluation failed for {kw}:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}")
+            # an MPC setting that trips the overspeed guard ends its episode early and leaves no load channels to
+            # score; that is a failed controller, scored at the floor of every clipped term, not a crashed search
+            unstable = "needs .outb metrics" in r.stderr or "terminated" in r.stdout
+            if not unstable:
+                raise RuntimeError(f"evaluation failed for {kw}:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}")
+            fail = {"J": -100.0, "J_power_mse_red_pct": -100.0, "J_gen_speed_mse_red_pct": -100.0,
+                    "J_TwrBsMyt_DEL_red_pct": -100.0, "J_RootMyc1_DEL_red_pct": -100.0, "energy_loss_pct": float("nan"),
+                    "per_episode": [], "failed": "episode terminated early (overspeed guard); scored at the clip floor"}
+            json.dump(fail, open(out, "w"), indent=1)
         return json.load(open(out))
 
 
