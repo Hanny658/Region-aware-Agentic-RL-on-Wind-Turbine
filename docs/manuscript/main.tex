@@ -5,6 +5,7 @@
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
+\usepackage{float}
 \usepackage{xcolor}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage{caption}
@@ -247,12 +248,12 @@ The random structural control samples expressions of the same families with log-
 
 \section{Paired differences and the full controller list}
 \label{app:paired}
-\begin{figure}[h]
+\begin{figure}[H]
 \centering\includegraphics[width=0.85\linewidth]{fig1_levers.png}
 \caption{Seed-paired difference of \J\ between each supervised arm and the tuned fixed reward on the GSPI base, both held-out wind sets (mean $\pm$ s.e., dots are seeds, labels are wins$/n$).}
 \label{fig:levers}
 \end{figure}
-\begin{figure}[h]
+\begin{figure}[H]
 \centering\includegraphics[width=\linewidth]{fig4_reference.png}
 \caption{(a) \J\ of every GSPI-base controller and the MPC variants on both held-out sets. (b) The MPC through the residual channel under model error and off-design winds (the data of Fig.~\ref{fig:mpc_error}, with the wind classes).}
 \label{fig:reference}

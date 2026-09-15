@@ -280,7 +280,7 @@ def fig_reference():
         j = mpc_json(base + suf)
         if j:
             labels.append(lab); vals.append(j["J"])
-    for tag, lab in (("eval_robustJ2r_ti14_N20q1r0.3qt3w0.35", "TI 14 %"), ("eval_robustJ2r_ti22_N20q1r0.3qt3w0.35", "turbulence intensity 22 %, 15 m/s"),
+    for tag, lab in (("eval_robustJ2r_ti14_N20q1r0.3qt3w0.35", "turbulence intensity 14 %"), ("eval_robustJ2r_ti22_N20q1r0.3qt3w0.35", "turbulence intensity 22 %, 15 m/s"),
                      ("eval_robustJ2r_u18_N20q1r0.3qt3w0.35", "18 m/s")):
         j = mpc_json(tag)
         if j:
