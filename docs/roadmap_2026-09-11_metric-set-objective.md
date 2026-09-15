@@ -617,14 +617,14 @@ The residual sits on the J-selected LPV-MPC (wide-open) instead of the GSPI: the
 worker, the residual (+-0.05 rad, damped) is added to its target, the MPC target is in the
 observation. Zero residual == the wide-open MPC, so episode 0 is the MPC (plus the untrained
 actor's ~0.3 deg constant offset, which happens to help: init J 20.5 on S1+S2 vs 17.2 for the MPC).
-Tuned v3 default, 3 seeds, held-out S3-S6 / S7-S10 (two exact-base runs were killed by the nightly
-/tmp purge at ep 224/272 and are being finished; their best-so-far held-out is 15.7/17.6 and 15.7/17.5):
+Tuned v3 default, 3 seeds, held-out S3-S6 / S7-S10 (two exact-base runs were killed by the nightly /tmp purge at ep 224/272 and finished after a resume;
+final n = 3 everywhere):
 
 | controller | n | J S3-S6 | J S7-S10 | S3-S6 P / w / T / B |
 |---|---|---|---|---|
 | LPV-MPC alone, exact model, wide-open | - | 12.40 | 14.10 | 8.9 / 19.8 / 15.8 / 5.1 |
-| **MPC + fixed-reward residual** (`mg3t`) | 2(+1) | 17.04 +- 0.57 | 18.29 +- 1.29 | 12.7 / 24.3 / 24.0 / 7.1 |
-| **MPC + LLM-reward residual** (`mrw3t`) | 2(+1) | 17.98 +- 0.92 | 19.53 +- 0.46 | 14.7 / 26.0 / 23.2 / 8.1 |
+| **MPC + fixed-reward residual** (`mg3t`) | 3 | 16.60 +- 0.78 | 18.06 +- 1.10 | 12.1 / 23.6 / 24.2 / 6.4 |
+| **MPC + LLM-reward residual** (`mrw3t`) | 3 | 17.23 +- 1.30 | 18.84 +- 1.04 | 13.4 / 24.7 / 23.6 / 7.2 |
 | LPV-MPC alone, Cp/Ct x0.95, wide-open | - | 4.48 | -1.0 | (regulation lost) |
 | **mismatched MPC + fixed-reward residual** (`mgC3t`) | 3 | 14.17 +- 0.82 | 15.35 +- 0.68 | 18.6 / 27.6 / 6.7 / 3.8 |
 | **mismatched MPC + LLM-reward residual** (`mrwC3t`) | 3 | 12.66 +- 5.13 | 18.25 +- 2.52 | 13.0 / 22.7 / 9.3 / 5.7 |
@@ -633,6 +633,6 @@ Reading: (1) the supervised residual adds ~+5 J to the strongest controller with
 positive and the tower gain rising from 16 to 23-25 %; (2) on the MPC whose aero model is 5 % off
 (alone: 4.5 / -1) the residual restores 13-18 J, i.e. above the exact-model MPC alone - the residual
 learns what the model gets wrong; (3) between the fixed and the LLM-written reward the difference
-is again small (+0.9/+1.2 exact; -1.5/+2.9 mismatched, one bad seed). This is the manuscript's new
+is again small (+0.6/+0.8 exact, 2/3; -1.5/+2.9 mismatched, one bad seed). This is the manuscript's new
 main result; the GSPI-base arms become the ablations of the supervision design.
 `docs/tables/table_J_mpcbase.csv`.

@@ -32,6 +32,7 @@ os.makedirs(a.out, exist_ok=True)
 EXP = os.path.expanduser(a.exp)
 TAGS = {"S3-S6": "eval_heldout_s3456_ckpt_best.json", "S7-S10": "eval_heldout2_s78910.json"}
 C = {"F": "#4C72B0", "J": "#DD8452", "S3-S6": "#4C72B0", "S7-S10": "#DD8452"}
+WS = {"S3-S6": "wind seeds 3–6", "S7-S10": "wind seeds 7–10"}
 plt.rcParams.update({"font.size": 9, "axes.titlesize": 10, "axes.labelsize": 9, "legend.fontsize": 8,
                      "figure.dpi": 150, "savefig.dpi": 200, "axes.spines.top": False, "axes.spines.right": False})
 
@@ -73,7 +74,7 @@ def fig_levers():
                 continue
             xx = i + (j - 0.5) * 0.22
             ax.errorbar(xx, mean(d), yerr=pstdev(d) / np.sqrt(len(d)) if len(d) > 1 else 0, fmt="o", color=C[ws], capsize=3,
-                        label=ws if i == 0 else None)
+                        label=WS[ws] if i == 0 else None)
             ax.scatter([xx] * len(d), d, s=9, color=C[ws], alpha=0.35, zorder=1)
             ax.annotate(f"{sum(v > 0 for v in d)}/{len(d)}", (xx, mean(d)), textcoords="offset points",
                         xytext=(-7 if j == 0 else 7, 0), ha="right" if j == 0 else "left", va="center", fontsize=6.5, color=C[ws])
@@ -134,7 +135,7 @@ def fig_composition():
             items.append((f"{label} (n={n})", list(t), n, mean(r["S3-S6"]["J"] for r in runs.values() if "S3-S6" in r)))
     fig, ax = plt.subplots(figsize=(9.2, 3.6))
     w = 0.2
-    names = ["power MSE", "speed MSE", "tower DEL", "blade DEL"]
+    names = ["power MSE", "speed MSE", "tower fatigue", "blade fatigue"]
     cols = ["#4C72B0", "#55A868", "#C44E52", "#8172B2"]
     for k in range(4):
         ax.bar(np.arange(len(items)) + (k - 1.5) * w, [it[1][k] for it in items], w, color=cols[k], label=names[k])
@@ -142,7 +143,7 @@ def fig_composition():
         ax.annotate(f"J={it[3]:.1f}", (i, max(it[1]) + 1.5), ha="center", fontsize=7)
     ax.axhline(0, color="k", lw=0.6)
     ax.set_xticks(range(len(items))); ax.set_xticklabels([it[0] for it in items], rotation=25, ha="right", fontsize=7.5)
-    ax.set_ylabel("% reduction vs paired GSPI (held-out S3–S6)")
+    ax.set_ylabel("% reduction vs paired GSPI (held-out wind seeds 3–6)")
     ax.legend(ncol=4, frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0))
     fig.tight_layout()
     fig.savefig(os.path.join(a.out, "fig2_composition.png"))
@@ -263,24 +264,24 @@ def fig_reference():
                 continue
             y = i + (j - 0.5) * 0.25
             ax.errorbar(mean(vals), y, xerr=pstdev(vals) / np.sqrt(len(vals)) if len(vals) > 1 else 0, fmt="o",
-                        color=C[ws], capsize=3, label=ws if i == 0 else None)
+                        color=C[ws], capsize=3, label=WS[ws] if i == 0 else None)
             ax.scatter(vals, [y] * len(vals), s=9, color=C[ws], alpha=0.35)
     ax.set_yticks(range(len(rows))); ax.set_yticklabels([r[0] for r in rows], fontsize=7.5); ax.invert_yaxis()
     ax.axvline(0, color="k", lw=0.6); ax.set_xlabel("J (held-out; mean ± s.e., dots = seeds)")
-    ax.set_title("(a) every controller, both held-out wind sets"); ax.legend(frameon=False, loc="lower right")
+    ax.set_title("(a) every controller, both held-out wind-seed sets"); ax.legend(frameon=False, loc="lower right")
     # (b) MPC model mismatch and stress classes
     ax = axes[1]
     base = "eval_mmJ2r_s3456_N20q1r0.3qt3w0.35"
-    variants = [("", "exact model"), ("_cp0.85ft1m1", "Cp/Ct ×0.85"), ("_cp0.95ft1m1", "Cp/Ct ×0.95"),
-                ("_cp1.05ft1m1", "Cp/Ct ×1.05"), ("_cp1.15ft1m1", "Cp/Ct ×1.15"),
+    variants = [("", "exact model"), ("_cp0.85ft1m1", "$C_P/C_T$ ×0.85"), ("_cp0.95ft1m1", "$C_P/C_T$ ×0.95"),
+                ("_cp1.05ft1m1", "$C_P/C_T$ ×1.05"), ("_cp1.15ft1m1", "$C_P/C_T$ ×1.15"),
                 ("_cp1ft0.9m1", "tower f ×0.9"), ("_cp1ft1.1m1", "tower f ×1.1"), ("_cp1ft1m0.8", "modal mass ×0.8"), ("_cp1ft1m1.2", "modal mass ×1.2")]
     labels, vals = [], []
     for suf, lab in variants:
         j = mpc_json(base + suf)
         if j:
             labels.append(lab); vals.append(j["J"])
-    for tag, lab in (("eval_robustJ2r_ti14_N20q1r0.3qt3w0.35", "TI 14 %"), ("eval_robustJ2r_ti22_N20q1r0.3qt3w0.35", "TI 22 %, U15"),
-                     ("eval_robustJ2r_u18_N20q1r0.3qt3w0.35", "U18")):
+    for tag, lab in (("eval_robustJ2r_ti14_N20q1r0.3qt3w0.35", "TI 14 %"), ("eval_robustJ2r_ti22_N20q1r0.3qt3w0.35", "turbulence intensity 22 %, 15 m/s"),
+                     ("eval_robustJ2r_u18_N20q1r0.3qt3w0.35", "18 m/s")):
         j = mpc_json(tag)
         if j:
             labels.append(lab); vals.append(j["J"])
@@ -300,7 +301,84 @@ def fig_reference():
     plt.close(fig)
 
 
-for f in (fig_levers, fig_composition, fig_mechanism, fig_reference):
+
+# ------------------------------------------------------------------ fig: MPC model-error fragility (motivation)
+def fig_mpc_error():
+    fig, ax = plt.subplots(figsize=(6.4, 3.0))
+    base = "eval_mmJ2r_s3456_N20q1r0.3qt3w0.35"
+    variants = [("", "exact model"), ("_cp0.85ft1m1", "$C_P/C_T$ ×0.85"), ("_cp0.95ft1m1", "$C_P/C_T$ ×0.95"),
+                ("_cp1.05ft1m1", "$C_P/C_T$ ×1.05"), ("_cp1.15ft1m1", "$C_P/C_T$ ×1.15"),
+                ("_cp1ft0.9m1", "tower f ×0.9"), ("_cp1ft1.1m1", "tower f ×1.1"), ("_cp1ft1m0.8", "modal mass ×0.8"), ("_cp1ft1m1.2", "modal mass ×1.2")]
+    labels, vals = [], []
+    for suf, lab in variants:
+        j = mpc_json(base + suf)
+        if j:
+            labels.append(lab); vals.append(j["J"])
+    cols = ["#4C72B0" if v > 0 else "#C44E52" for v in vals]
+    ax.barh(range(len(vals)), vals, color=cols)
+    for i, v in enumerate(vals):
+        ax.annotate(f"{v:.1f}", (max(v, 0) + 0.4 if v >= -6 else v + 0.5, i), va="center", fontsize=7,
+                    ha="left", color="white" if v < -6 else "black")
+    ax.set_yticks(range(len(vals))); ax.set_yticklabels(labels, fontsize=8); ax.invert_yaxis()
+    ax.axvline(0, color="k", lw=0.6); ax.set_xlabel("J on held-out wind seeds 3–6, LPV-MPC through the residual channel")
+    fig.tight_layout()
+    fig.savefig(os.path.join(a.out, "fig_mpc_error.png"))
+    plt.close(fig)
+
+
+# ------------------------------------------------------------------ fig: residual on the MPC base (main result)
+def fig_mpcbase():
+    fig, axes = plt.subplots(1, 2, figsize=(11.0, 3.6), gridspec_kw={"width_ratios": [1.15, 1]})
+    rows = []   # (label, [J S3-S6 per seed], [J S7-S10 per seed], terms S3-S6 mean)
+    for tag_a, tag_b, label in (("eval_heldoutJ2_s3456_N20q1r0.3qt3w0.35", "eval_heldoutJ2_2W_N20q1r0.3qt3w0.35", "MPC alone, exact model"),):
+        ja, jb = mpc_json(tag_a), mpc_json(tag_b)
+        if ja and jb:
+            rows.append((label, [ja["J"]], [jb["J"]], terms(ja)))
+    for arm, label in (("mg3t", "MPC + residual, fixed reward"), ("mrw3t", "MPC + residual, LLM reward")):
+        runs = load_J(arm)
+        A = [r["S3-S6"]["J"] for r in runs.values() if "S3-S6" in r]; B = [r["S7-S10"]["J"] for r in runs.values() if "S7-S10" in r]
+        t, n = arm_terms(runs)
+        if A:
+            rows.append((f"{label} (n={len(A)})", A, B, list(t)))
+    for tag_a, tag_b, label in (("eval_heldoutJ2_N20q1r0.3qt3w0.35_cp0.95ft1m1", "eval_heldoutJ2_2W_N20q1r0.3qt3w0.35_cp0.95ft1m1", "MPC alone, $C_P/C_T$ ×0.95"),):
+        ja, jb = mpc_json(tag_a), mpc_json(tag_b)
+        if ja and jb:
+            rows.append((label, [ja["J"]], [jb["J"]], terms(ja)))
+    for arm, label in (("mgC3t", "×0.95 MPC + residual, fixed reward"), ("mrwC3t", "×0.95 MPC + residual, LLM reward")):
+        runs = load_J(arm)
+        A = [r["S3-S6"]["J"] for r in runs.values() if "S3-S6" in r]; B = [r["S7-S10"]["J"] for r in runs.values() if "S7-S10" in r]
+        t, n = arm_terms(runs)
+        if A:
+            rows.append((f"{label} (n={len(A)})", A, B, list(t)))
+    ax = axes[0]
+    for i, (label, A, B, _) in enumerate(rows):
+        for j, (vals, ws) in enumerate(((A, "S3-S6"), (B, "S7-S10"))):
+            if not vals:
+                continue
+            y = i + (j - 0.5) * 0.25
+            ax.errorbar(mean(vals), y, xerr=pstdev(vals) / np.sqrt(len(vals)) if len(vals) > 1 else 0, fmt="o",
+                        color=C[ws], capsize=3, label=WS[ws] if i == 0 else None)
+            ax.scatter(vals, [y] * len(vals), s=10, color=C[ws], alpha=0.4)
+    ax.set_yticks(range(len(rows))); ax.set_yticklabels([r[0] for r in rows], fontsize=8); ax.invert_yaxis()
+    ax.axvline(0, color="k", lw=0.6); ax.set_xlabel("J (held-out; mean ± s.e., dots = seeds)")
+    ax.set_title("(a) the residual on the MPC, exact and mismatched model"); ax.legend(frameon=False, loc="upper left")
+    ax = axes[1]
+    w = 0.2
+    names = ["power MSE", "speed MSE", "tower fatigue", "blade fatigue"]
+    cols = ["#4C72B0", "#55A868", "#C44E52", "#8172B2"]
+    for k in range(4):
+        ax.bar(np.arange(len(rows)) + (k - 1.5) * w, [r[3][k] for r in rows], w, color=cols[k], label=names[k])
+    ax.axhline(0, color="k", lw=0.6)
+    short = ["MPC\nexact", "+ resid.\nfixed rew.", "+ resid.\nLLM rew.", "MPC\n$C_P$ ×0.95", "+ resid.\nfixed rew.", "+ resid.\nLLM rew."][:len(rows)]
+    ax.set_xticks(range(len(rows))); ax.set_xticklabels(short, fontsize=7.5)
+    ax.set_ylabel("% reduction vs GSPI (wind seeds 3–6)"); ax.set_title("(b) what the J is made of", pad=22)
+    ax.legend(ncol=4, frameon=False, fontsize=7, loc="lower center", bbox_to_anchor=(0.5, 1.0))
+    fig.tight_layout()
+    fig.savefig(os.path.join(a.out, "fig_mpcbase.png"))
+    plt.close(fig)
+
+
+for f in (fig_levers, fig_composition, fig_mechanism, fig_reference, fig_mpc_error, fig_mpcbase):
     try:
         f()
         print("ok", f.__name__)
