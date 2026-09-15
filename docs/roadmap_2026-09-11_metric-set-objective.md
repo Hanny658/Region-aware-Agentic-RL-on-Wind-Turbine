@@ -769,3 +769,48 @@ the next decision: fixed-reward runs (no forks) 39 % GSPI / 57 % MPC; after a fo
   (a rollback-sized drop at 25-73 % of evaluations), and the guardrail carries much of the loop's value.
   A verification-centred method would have to replicate forks over training seeds (the noise is the
   learner's, not the wind's) and/or stabilise the update, not enlarge the validation wind set.
+
+## 21. 600 s protocol and a verified search over the compensated MPC's parameters (2026-09-15 23:50 - 2026-09-16 07:30; `campaign_mpc600_search.sh`, `scripts/mpc_param_search.py`, `scripts/dev/mpc_search_report.py`)
+
+**600 s protocol.** The separate 650 s bank `~/wtrl/wind600` was extended with TurbSim seeds 1-2 (supervisor
+winds) and 7-10 (second held-out set) at 8 / 12.5 / 15 m/s; paired GSPI baselines at 600 s live in the separate
+home `~/wtrl600` (30 files). Identity check: GSPI against its own 600 s baselines gives J = 0.00. The canonical
+150 s bank and its baselines were verified untouched (the 2026-09-09 incident does not recur: `run.sh` honours a
+preset `WTRL_HOME`). Every row below is 600 s, 6 episodes on the supervisor winds and 12 per held-out set.
+
+**References at 600 s** (MPC as the base controller, zero residual): nominal 18.01 on the supervisor winds and
+16.84 on wind seeds 3-6; offset-free 22.53 / 20.89 / 21.71; adaptive 22.84 / 21.09. With Cp/Ct x0.95 the nominal
+MPC drops to 7.88 on seeds 3-6 while offset-free holds 21.26 / 22.26 and adaptive 21.03 - the s19 verdict
+replicates at 600 s.
+
+**The search.** Box: horizon {10,15,20,30}, r [0.03,3], qt [0.1,30], wc_v [0.1,1.5], tau_adapt [1,30],
+adapt {offset,rls}; start = the offset-free MPC of s19. Three proposers, 40 verified candidates each, batches of
+4, deterministic evaluation on the supervisor winds (no training noise, unlike the residual of s20).
+
+| proposer | best J after 8 / 16 / 24 / 32 / 40 | J <= 0 candidates | best held-out (seeds 3-6 / 7-10) |
+|---|---|---|---|
+| LLM | 22.84 / 23.17 / 23.30 / 23.40 / 23.40 | 1/40 | **21.37 / 22.75** |
+| local search (1+lambda around the incumbent) | 22.53 / 22.53 / 22.53 / 22.53 / 22.68 | 1/40 | 21.08 / 21.96 |
+| uniform random over the box | never beat the start | 34/40 | (start) 20.89 / 21.71 |
+
+Reading: (1) the tuned corner of the box is small - uniform random destabilises the MPC in 34 of 40 draws, so it
+is a weak control; the local search is the meaningful non-LLM comparison. (2) The LLM's gain over the start is
++0.87 on the supervisor winds and +0.48 / +1.04 held-out; over the *adaptive* reference (same weights, rls) it is
++0.56 supervisor and +0.28 held-out on seeds 3-6. Both proposers converge to the same direction: slightly lower r
+(0.25-0.26 vs 0.3), slightly higher qt (3.2-3.25 vs 3.0), faster wind filter (0.38-0.40 vs 0.35). (3) The
+supervisor-wind ranking transfers: Spearman +0.93 (p 0.001, 8 selected candidates) with a mean optimism of only
++0.36 J - the deterministic MPC evaluation is a far better verifier than the residual's fork (s20). (4) The gains
+are ~1 J on a 21-point controller; n = 1 search per proposer, so no significance claim.
+
+Artefacts: `docs/tables/mpc600_search.csv`, `docs/figures/mpc600_search.png`, histories under
+`~/wtrl/exp/mpcsearch600/{llm,es,random}/history.jsonl` (LLM transcript included), cache of 143 evaluations.
+
+**Paused 2026-09-16 07:30** (`campaign_ctl.sh pause campaign_mpc600`, 19 processes): the remaining reference rows
+(nominal / adaptive on wind seeds 7-10 and the x0.95 pairs) were still running; `resume` continues, everything
+else is cached.
+
+**Weight sensitivity (2026-09-15, no simulations, `scripts/dev/weight_sensitivity.py`).** Re-weighting the four
+metrics of the 150 s held-out results: wherever regulation carries >= 25 % of the weight the compensated MPC is
+the best controller; under fatigue-dominated weights (regulation share <= 12.5 %, or tower weight 0.7) the
+nominal MPC and the MPC-base residuals lead, because compensation buys regulation at a small fatigue cost.
+`docs/tables/weight_sensitivity.csv`, `docs/figures/weight_sensitivity.png`.
