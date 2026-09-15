@@ -130,21 +130,27 @@ class Evaluator:
             return json.load(open(out))
         tag = out.stem[len("eval_"):]
         kw = dict(clip_params(p))
-        cmd = [sys.executable, str(PROJ / "scripts" / "evaluate.py"), "--run", os.path.expanduser(self.a.config_run),
-               "--gspi", "--backend", "openfast", "--seeds", *map(str, seeds), "--episode_s", str(self.a.episode_s),
-               "--workers", str(self.a.workers), "--port0", str(self.a.port0 + 300 * slot), "--tag", tag,
-               "--out", str(self.cache), "--base_mm_cp", str(cp), "--base_mpc_json", json.dumps(kw)]
-        r = subprocess.run(cmd, capture_output=True, text=True)
-        if not out.exists():
-            # an MPC setting that trips the overspeed guard ends its episode early and leaves no load channels to
-            # score; that is a failed controller, scored at the floor of every clipped term, not a crashed search
-            unstable = "needs .outb metrics" in r.stderr or "terminated" in r.stdout
-            if not unstable:
-                raise RuntimeError(f"evaluation failed for {kw}:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}")
-            fail = {"J": -100.0, "J_power_mse_red_pct": -100.0, "J_gen_speed_mse_red_pct": -100.0,
-                    "J_TwrBsMyt_DEL_red_pct": -100.0, "J_RootMyc1_DEL_red_pct": -100.0, "energy_loss_pct": float("nan"),
-                    "per_episode": [], "failed": "episode terminated early (overspeed guard); scored at the clip floor"}
-            json.dump(fail, open(out, "w"), indent=1)
+        log = ""
+        for attempt in range(2):
+            # a crashed candidate can leave simulator processes behind; the retry uses a fresh port range
+            port = self.a.port0 + 300 * slot + (150 if attempt else 0)
+            cmd = [sys.executable, str(PROJ / "scripts" / "evaluate.py"), "--run", os.path.expanduser(self.a.config_run),
+                   "--gspi", "--backend", "openfast", "--seeds", *map(str, seeds), "--episode_s", str(self.a.episode_s),
+                   "--workers", str(self.a.workers), "--port0", str(port), "--tag", tag,
+                   "--out", str(self.cache), "--base_mm_cp", str(cp), "--base_mpc_json", json.dumps(kw)]
+            r = subprocess.run(cmd, capture_output=True, text=True)
+            if out.exists():
+                return json.load(open(out))
+            log += f"--- attempt {attempt} (port {port})\n{r.stdout[-1500:]}\n{r.stderr[-1500:]}\n"
+            if "needs .outb metrics" in r.stderr:
+                break                                   # deterministic: the controller itself ended the episode
+        # an MPC setting that trips the overspeed guard (or crashes the simulator) twice is a failed controller:
+        # scored at the floor of every clipped term, with the reason kept, instead of a crashed search
+        fail = {"J": -100.0, "J_power_mse_red_pct": -100.0, "J_gen_speed_mse_red_pct": -100.0,
+                "J_TwrBsMyt_DEL_red_pct": -100.0, "J_RootMyc1_DEL_red_pct": -100.0, "energy_loss_pct": float("nan"),
+                "per_episode": [], "failed": "evaluation did not complete (episode terminated or simulator failure)",
+                "log_tail": log[-3000:]}
+        json.dump(fail, open(out, "w"), indent=1)
         return json.load(open(out))
 
 
