@@ -727,3 +727,45 @@ transfer to a different error. The manuscript v4 main line ("the residual adds t
 and repairs its model") is refuted by the textbook baseline a TCST reviewer would ask for; the offset-free /
 adaptive MPC is the new strongest controller on J. Open for the user's decision: residual/supervision on the
 compensated MPC, supervision of the MPC's interpretable parameters, or verification-centred supervision.
+
+## 20. How reliable is the loop's verification? Zero-simulation probe (2026-09-15; `scripts/dev/verification_probe.py`, `docs/tables/verification_probe.csv`)
+
+75 J-era runs with both held-out sets (63 GSPI base, 12 MPC base); 240 fork decisions with a following evaluation.
+
+**Checkpoint selection transfers.** Spearman between the supervisor-wind (seeds 1-2) score of the selected
+checkpoint and its held-out score, after removing each arm's mean (the pooled rho is inflated by arm differences):
+
+| base | term | supervisor winds -> held-out | held-out S3-6 <-> S7-10 (ceiling) |
+|---|---|---|---|
+| GSPI (61 runs) | J | 0.87 | 0.90 |
+| GSPI | tower fatigue | 0.91 | 0.94 |
+| GSPI | speed MSE | 0.92 | 0.97 |
+| MPC (12 runs) | J | 0.24 | 0.01 |
+| MPC | tower fatigue | 0.97 | 0.34 |
+
+On the GSPI base two supervisor wind seeds rank runs almost as well as another four-seed held-out set; the
+selection optimism (+2.2 J on average) is a shift, not a reordering. On the MPC base the runs differ by less
+than the wind noise: the two held-out sets do not agree with each other (0.01), so nothing can be ranked there.
+Tower fatigue is the most reliable term on both bases, not the least.
+
+**Fork choice is below the training noise.** Chosen candidate after its 30-episode fork vs the same policy at
+the next evaluation: persistence rho 0.57 for J (0.86 tower, 0.62 speed, 0.63 power) on the GSPI base, 0.14 on
+the MPC base; winner's curse median +0.3 J (GSPI) / +10 J (MPC). The margin between the chosen candidate and the
+runner-up is small (median 0.3 J) and does not predict the realised gain (rho +0.02, n 240); best-minus-worst
+candidate rho -0.03. The fork does predict whether training on from this checkpoint helps (predicted vs realised
+gain rho 0.46, sign agreement 0.71), but not which candidate is better. LLM proposals: predicted vs realised 0.48
+(165 decisions); random proposals 0.30 (75).
+
+**Collapses come from training, not from forks.** Share of evaluations that trigger the guardrail's rollback at
+the next decision: fixed-reward runs (no forks) 39 % GSPI / 57 % MPC; after a fork 25 % GSPI / 73 % MPC.
+
+**Consequences.**
+- The hypothesis "the validation winds are too few" is not supported on the GSPI base.
+- The hypothesis "a 30-episode fork is myopic for tower fatigue" (manuscript v4, Appendix A) is not supported:
+  tower fatigue is the most persistent and best-transferring term; the lambda_T > 1 candidates lost on J for
+  another reason (the full 300-episode lambda_T sweep is worse too). That sentence must be revised.
+- What is supported: (i) the difference between candidates is smaller than the noise of 30 further PPO
+  episodes, which is why the proposer (LLM vs random) barely matters; (ii) training instability is pervasive
+  (a rollback-sized drop at 25-73 % of evaluations), and the guardrail carries much of the loop's value.
+  A verification-centred method would have to replicate forks over training seeds (the noise is the
+  learner's, not the wind's) and/or stabilise the update, not enlarge the validation wind set.
