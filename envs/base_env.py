@@ -169,7 +169,8 @@ class ResidualPitchEnv(gym.Env):
         if self.mpc is None:
             return 0.0
         fa = m.get("fa_acc", 0.0)
-        self.mpc.observe(fa if fa == fa else 0.0, self.dt, w_meas=m["rot_speed"], v_meas=m["v_est"])
+        self.mpc.observe(fa if fa == fa else 0.0, self.dt, w_meas=m["rot_speed"], v_meas=m["v_est"],
+                         tq_gen_hss=m.get("gen_torque"), beta_meas=m["beta_meas"])
         if self._k_base % self.mpc_hold == 0 or self._beta_base is None:
             self._beta_base = self.mpc.solve(m["rot_speed"], m["beta_meas"], m["v_est"], m["min_pit"])
         self._k_base += 1

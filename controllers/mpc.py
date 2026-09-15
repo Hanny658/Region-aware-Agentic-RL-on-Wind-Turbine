@@ -23,6 +23,15 @@ rad per step so that all three terms are O(1) at their typical values and qt tra
 Tower states are estimated from the measured tower-top acceleration by leaky integration
 (leak 0.03 Hz << the 0.324 Hz mode). Torque stays native ROSCO, so below rated the optimum
 rides the pitch floor. Wind over the horizon is held at ROSCO's estimate (no preview).
+
+Model-error compensation (2026-09-15), `adapt`:
+  "none"   the nominal LPV-MPC above;
+  "offset" offset-free MPC: a lumped aerodynamic-torque disturbance d is estimated from the rotor
+           balance J dw/dt = T_aero,model + d - T_gen (measured generator torque, filtered rotor
+           acceleration), low-passed with time constant tau_adapt, and held over the horizon;
+  "rls"    adaptive MPC: a scalar gain theta on the model aerodynamics (torque and thrust),
+           T_aero,meas ~ theta T_aero,model, estimated by exponentially forgetting least squares
+           (time constant tau_adapt), clipped to [0.6, 1.4], used in the linearisation.
 """
 from __future__ import annotations
 
@@ -39,7 +48,8 @@ class LPVMPC:
     def __init__(self, tb: dict, cp_table_path: str, horizon: int = 20, ts: float = 0.1,
                  q: float = 1.0, r: float = 1.0, qt: float = 0.0, wc_v: float = 0.25,
                  err_ref: float = 1.0, dbeta_ref: float = 0.1, xd_ref: float = 0.2,
-                 cp_scale: float = 1.0, ftower_scale: float = 1.0, mass_scale: float = 1.0):
+                 cp_scale: float = 1.0, ftower_scale: float = 1.0, mass_scale: float = 1.0,
+                 adapt: str = "none", tau_adapt: float = 5.0, wc_acc: float = 2.0):
         import osqp
         import scipy.sparse as sp
         from scipy.linalg import expm
@@ -77,26 +87,77 @@ class LPVMPC:
         self.wc_v = float(wc_v)
         self.w_f: float | None = None
         self.v_f: float | None = None
+        # model-error compensation
+        if adapt not in ("none", "offset", "rls"):
+            raise ValueError(f"adapt must be none|offset|rls, got {adapt!r}")
+        self.adapt, self.tau_adapt, self.wc_acc = adapt, float(tau_adapt), float(wc_acc)
+        self.gearbox = float(tb["gearbox_ratio"])
+        self._reset_adapt()
+
+    def _reset_adapt(self):
+        self.d_hat = 0.0            # offset-free: lumped aero-torque disturbance [N m, LSS]
+        self.theta = 1.0            # adaptive: gain on the model aerodynamics
+        self._w_lp = None           # rotor speed low-passed at wc_acc (for the acceleration)
+        self._a_lp = 0.0            # its derivative
+        self._tg_lp = None          # generator torque (LSS), same filter
+        self._tm_lp = None          # model aero torque, same filter (keeps the phase aligned)
+        self._s_mm = 0.0            # forgetting LS sums
+        self._s_ym = 0.0
+        self.n_obs_adapt = 0
 
     def reset(self):
         self.xd_hat = self.x_hat = 0.0
         self.w_f = self.v_f = None
+        self._reset_adapt()
 
     def observe(self, fa_acc: float, dt: float, w_meas: float | None = None,
-                v_meas: float | None = None):
+                v_meas: float | None = None, tq_gen_hss: float | None = None,
+                beta_meas: float | None = None):
         self.xd_hat += dt * (fa_acc - self.leak * self.xd_hat)
         self.x_hat += dt * (self.xd_hat - self.leak * self.x_hat)
         if w_meas is not None:
             self.w_f = w_meas if self.w_f is None else self.w_f + dt * self.wc_speed * (w_meas - self.w_f)
         if v_meas is not None:
             self.v_f = v_meas if self.v_f is None else self.v_f + dt * self.wc_v * (v_meas - self.v_f)
+        if self.adapt != "none" and w_meas is not None and tq_gen_hss is not None and beta_meas is not None \
+                and self.v_f is not None:
+            self._update_adapt(dt, float(w_meas), float(tq_gen_hss), float(beta_meas))
 
-    def _aero(self, v, w, beta_rad):
+    def _update_adapt(self, dt: float, w: float, tq_hss: float, beta: float):
+        """Aerodynamic torque from the rotor balance, all three signals through the same first-order
+        filter (corner wc_acc) so that acceleration, generator torque and model torque stay in phase."""
+        a = min(1.0, dt * self.wc_acc)
+        tg = tq_hss * self.gearbox
+        v_rel = max(self.v_f - self.xd_hat, 0.5)
+        tm = self._aero(v_rel, w, beta, scale=self.cp_scale)[0]      # the nominal (possibly wrong) model
+        if self._w_lp is None:
+            self._w_lp, self._tg_lp, self._tm_lp = w, tg, tm
+            return
+        w_new = self._w_lp + a * (w - self._w_lp)
+        self._a_lp += a * ((w_new - self._w_lp) / dt - self._a_lp)
+        self._w_lp = w_new
+        self._tg_lp += a * (tg - self._tg_lp)
+        self._tm_lp += a * (tm - self._tm_lp)
+        t_meas = self.J * self._a_lp + self._tg_lp                 # aero torque the plant delivered
+        g = min(1.0, dt / self.tau_adapt)
+        self.n_obs_adapt += 1
+        if self.n_obs_adapt < int(2.0 / dt):                         # let the filters settle (2 s)
+            return
+        if self.adapt == "offset":
+            self.d_hat += g * ((t_meas - self._tm_lp) - self.d_hat)
+        else:
+            self._s_mm = (1 - g) * self._s_mm + g * self._tm_lp * self._tm_lp
+            self._s_ym = (1 - g) * self._s_ym + g * t_meas * self._tm_lp
+            if self._s_mm > (0.2 * self.tq_rated_lss) ** 2:
+                self.theta = float(np.clip(self._s_ym / self._s_mm, 0.6, 1.4))
+
+    def _aero(self, v, w, beta_rad, scale: float | None = None):
         v = max(v, 0.5)
         lam = np.clip(w * self.R / v, 1e-3, 25.0)
         A = 0.5 * self.rho * np.pi * self.R ** 2
-        cp = self.Cp(np.rad2deg(beta_rad), lam) * self.cp_scale
-        ct = self.Ct(np.rad2deg(beta_rad), lam) * self.cp_scale
+        sc = (self.cp_scale * self.theta) if scale is None else scale
+        cp = self.Cp(np.rad2deg(beta_rad), lam) * sc
+        ct = self.Ct(np.rad2deg(beta_rad), lam) * sc
         return A * cp * v ** 3 / max(w, 0.05), A * ct * v ** 2
 
     def solve(self, w: float, beta: float, v_est: float, floor: float) -> float:
@@ -128,6 +189,8 @@ class LPVMPC:
                        (F0 - Fw * w - Fb * beta + Fv * self.xd_hat) / m
                        + self.k_t * self.x_hat / m + self.c_t * self.xd_hat / m])
         # note: cc is built so that Ac s0 + Bc beta0 + cc reproduces the nonlinear derivatives at s0
+        if self.adapt == "offset":
+            cc[0] += self.d_hat / J           # offset-free: estimated torque disturbance, held over the horizon
         M = np.zeros((5, 5))
         M[:3, :3] = Ac * self.Ts
         M[:3, 3:4] = Bc * self.Ts

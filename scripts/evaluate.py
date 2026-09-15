@@ -77,7 +77,8 @@ def main():
     if cfg_run.get("base") == "mpc":
         from envs.factory import mpc_base_kw
         mm = dict(cp_scale=float(cfg_run.get("base_mm_cp", 1.0)), ftower_scale=float(cfg_run.get("base_mm_ft", 1.0)),
-                  mass_scale=float(cfg_run.get("base_mm_m", 1.0)))
+                  mass_scale=float(cfg_run.get("base_mm_m", 1.0)),
+                  adapt=str(cfg_run.get("base_adapt", "none")), tau_adapt=float(cfg_run.get("base_tau_adapt", 5.0)))
         for k, v in (("cp_scale", args.base_mm_cp), ("ftower_scale", args.base_mm_ft), ("mass_scale", args.base_mm_m)):
             if v is not None:
                 mm[k] = float(v)
