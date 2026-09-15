@@ -22,6 +22,11 @@ ps -o sid= -p $$ | tr -d ' ' > "$EXP/campaign_mpc600.sid"
 # the 600 s home and wind bank for EVERY python call below (run.sh keeps a preset WTRL_HOME)
 export WTRL_HOME=$HOME/wtrl600 WTRL_WIND=$HOME/wtrl/wind600
 RUN=$HOME/wtrl/run.sh
+# the WSL VM can lose outbound network while Windows keeps it (2026-09-16 02:10): relay LLM calls through Windows then
+WINPY=/mnt/c/Users/hanny/AppData/Local/Programs/Python/Python313/python.exe
+if ! curl -s -o /dev/null --max-time 10 https://example.com && [ -x "$WINPY" ]; then
+  export WTRL_LLM_WINPY=$WINPY; echo "WSL has no outbound network: LLM calls relayed through Windows"
+fi
 echo "=== MPC 600 s search start $(date)  WTRL_HOME=$WTRL_HOME WTRL_WIND=$WTRL_WIND ==="
 
 echo "--- 0: wind $(date +%H:%M)"

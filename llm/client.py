@@ -52,28 +52,60 @@ class LLMClient:
         for attempt in range(self.retries):
             t0 = time.time()
             try:
-                r = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-                    response_format={"type": "json_object"},
-                    reasoning_effort=self.reasoning_effort,
-                    max_completion_tokens=self.max_completion_tokens,
-                )
-                text = r.choices[0].message.content or ""
+                messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+                winpy = os.environ.get("WTRL_LLM_WINPY")
+                if winpy:
+                    text, usage = self._via_windows(winpy, messages)
+                else:
+                    r = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=messages,
+                        response_format={"type": "json_object"},
+                        reasoning_effort=self.reasoning_effort,
+                        max_completion_tokens=self.max_completion_tokens,
+                    )
+                    text = r.choices[0].message.content or ""
+                    usage = r.usage.model_dump() if r.usage else None
                 out = json.loads(text)
                 self.n_calls += 1
-                if r.usage:
-                    self.usage["prompt_tokens"] += r.usage.prompt_tokens or 0
-                    self.usage["completion_tokens"] += r.usage.completion_tokens or 0
+                if usage:
+                    self.usage["prompt_tokens"] += usage.get("prompt_tokens") or 0
+                    self.usage["completion_tokens"] += usage.get("completion_tokens") or 0
                 self._log({"tag": tag, "attempt": attempt, "model": self.model, "elapsed_s": time.time() - t0,
-                           "system": system, "user": user, "response": out,
-                           "usage": r.usage.model_dump() if r.usage else None})
+                           "system": system, "user": user, "response": out, "usage": usage,
+                           **({"via": "windows relay"} if winpy else {})})
                 return out
             except Exception as e:  # noqa: BLE001
                 last_err = e
                 self._log({"tag": tag, "attempt": attempt, "error": f"{type(e).__name__}: {str(e)[:500]}"})
                 time.sleep(2.0 * (attempt + 1))
         raise RuntimeError(f"LLM call failed after {self.retries} attempts: {last_err}")
+
+    def _via_windows(self, winpy: str, messages: list) -> tuple[str, dict | None]:
+        """Send the same request through the Windows host (llm/win_relay.py) when the WSL VM has no network."""
+        import subprocess
+        import tempfile
+        tmp = Path(os.path.expanduser(os.environ.get("WTRL_LLM_RELAY_DIR", "~/wtrl/tmp")))
+        tmp.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile("w", suffix=".json", dir=tmp, delete=False, encoding="utf-8") as f:
+            json.dump({"messages": messages, "reasoning_effort": self.reasoning_effort,
+                       "max_completion_tokens": self.max_completion_tokens, "timeout": 180}, f)
+            req = Path(f.name)
+        resp = req.with_suffix(".out.json")
+        to_win = lambda q: subprocess.run(["wslpath", "-w", str(q)], capture_output=True, text=True).stdout.strip()
+        try:
+            r = subprocess.run([winpy, to_win(PROJ / "llm" / "win_relay.py"), to_win(req), to_win(resp)],
+                               capture_output=True, text=True, timeout=240)
+            if not resp.exists():
+                raise RuntimeError(f"relay failed: {r.stderr[-400:]}")
+            d = json.loads(resp.read_text(encoding="utf-8"))
+            return d["content"], d.get("usage")
+        finally:
+            for q in (req, resp):
+                try:
+                    q.unlink()
+                except FileNotFoundError:
+                    pass
 
     def _log(self, rec: dict):
         if self.transcript is None:

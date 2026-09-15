@@ -1,0 +1,137 @@
+family,x,controller,J_w,n
+tower_weight,0.0,GSPI base: fixed reward,13.130146663338582,10
+tower_weight,0.1,GSPI base: fixed reward,9.950294047075731,10
+tower_weight,0.2,GSPI base: fixed reward,6.770441430812878,10
+tower_weight,0.3,GSPI base: fixed reward,3.590588814550027,10
+tower_weight,0.4,GSPI base: fixed reward,0.4107361982871748,10
+tower_weight,0.5,GSPI base: fixed reward,-2.7691164179756766,10
+tower_weight,0.6,GSPI base: fixed reward,-5.9489690342385275,10
+tower_weight,0.7,GSPI base: fixed reward,-9.128821650501378,10
+tower_weight,0.0,GSPI base: agent reward,7.164112211109137,10
+tower_weight,0.1,GSPI base: agent reward,6.564874810697286,10
+tower_weight,0.2,GSPI base: agent reward,5.965637410285437,10
+tower_weight,0.3,GSPI base: agent reward,5.366400009873585,10
+tower_weight,0.4,GSPI base: agent reward,4.767162609461735,10
+tower_weight,0.5,GSPI base: agent reward,4.167925209049884,10
+tower_weight,0.6,GSPI base: agent reward,3.568687808638034,10
+tower_weight,0.7,GSPI base: agent reward,2.9694504082261832,10
+tower_weight,0.0,GSPI base: random reward structure,8.187326889699388,6
+tower_weight,0.1,GSPI base: random reward structure,7.551689484034125,6
+tower_weight,0.2,GSPI base: random reward structure,6.916052078368861,6
+tower_weight,0.3,GSPI base: random reward structure,6.280414672703596,6
+tower_weight,0.4,GSPI base: random reward structure,5.644777267038333,6
+tower_weight,0.5,GSPI base: random reward structure,5.009139861373069,6
+tower_weight,0.6,GSPI base: random reward structure,4.373502455707804,6
+tower_weight,0.7,GSPI base: random reward structure,3.7378650500425405,6
+tower_weight,0.0,MPC base: fixed-reward residual,14.697309059709836,6
+tower_weight,0.1,MPC base: fixed-reward residual,15.75068326616323,6
+tower_weight,0.2,MPC base: fixed-reward residual,16.804057472616623,6
+tower_weight,0.3,MPC base: fixed-reward residual,17.857431679070014,6
+tower_weight,0.4,MPC base: fixed-reward residual,18.910805885523413,6
+tower_weight,0.5,MPC base: fixed-reward residual,19.964180091976804,6
+tower_weight,0.6,MPC base: fixed-reward residual,21.0175542984302,6
+tower_weight,0.7,MPC base: fixed-reward residual,22.070928504883593,6
+tower_weight,0.0,MPC base: agent residual,15.88911642148477,6
+tower_weight,0.1,MPC base: agent residual,16.748094032976635,6
+tower_weight,0.2,MPC base: agent residual,17.607071644468505,6
+tower_weight,0.3,MPC base: agent residual,18.466049255960368,6
+tower_weight,0.4,MPC base: agent residual,19.325026867452237,6
+tower_weight,0.5,MPC base: agent residual,20.184004478944104,6
+tower_weight,0.6,MPC base: agent residual,21.042982090435974,6
+tower_weight,0.7,MPC base: agent residual,21.901959701927836,6
+tower_weight,0.0,"MPC, nominal",13.969020424093582,2
+tower_weight,0.1,"MPC, nominal",15.081187593404366,2
+tower_weight,0.2,"MPC, nominal",16.19335476271515,2
+tower_weight,0.3,"MPC, nominal",17.305521932025925,2
+tower_weight,0.4,"MPC, nominal",18.417689101336713,2
+tower_weight,0.5,"MPC, nominal",19.529856270647493,2
+tower_weight,0.6,"MPC, nominal",20.642023439958276,2
+tower_weight,0.7,"MPC, nominal",21.75419060926906,2
+tower_weight,0.0,"MPC, offset-free",21.002723874072398,2
+tower_weight,0.1,"MPC, offset-free",21.034341412622098,2
+tower_weight,0.2,"MPC, offset-free",21.065958951171794,2
+tower_weight,0.3,"MPC, offset-free",21.09757648972149,2
+tower_weight,0.4,"MPC, offset-free",21.12919402827118,2
+tower_weight,0.5,"MPC, offset-free",21.16081156682088,2
+tower_weight,0.6,"MPC, offset-free",21.19242910537058,2
+tower_weight,0.7,"MPC, offset-free",21.22404664392027,2
+tower_weight,0.0,"MPC, adaptive",21.073054366630544,2
+tower_weight,0.1,"MPC, adaptive",21.063457052257476,2
+tower_weight,0.2,"MPC, adaptive",21.05385973788441,2
+tower_weight,0.3,"MPC, adaptive",21.044262423511334,2
+tower_weight,0.4,"MPC, adaptive",21.034665109138267,2
+tower_weight,0.5,"MPC, adaptive",21.0250677947652,2
+tower_weight,0.6,"MPC, adaptive",21.015470480392132,2
+tower_weight,0.7,"MPC, adaptive",21.00587316601906,2
+regulation_share,0.0,GSPI base: fixed reward,-9.390482467974499,10
+regulation_share,0.125,GSPI base: fixed reward,-5.747733070310511,10
+regulation_share,0.25,GSPI base: fixed reward,-2.104983672646523,10
+regulation_share,0.375,GSPI base: fixed reward,1.537765725017465,10
+regulation_share,0.5,GSPI base: fixed reward,5.180515122681454,10
+regulation_share,0.625,GSPI base: fixed reward,8.823264520345441,10
+regulation_share,0.75,GSPI base: fixed reward,12.46601391800943,10
+regulation_share,0.875,GSPI base: fixed reward,16.10876331567342,10
+regulation_share,1.0,GSPI base: fixed reward,19.751512713337412,10
+regulation_share,0.0,GSPI base: agent reward,1.5175580172910104,10
+regulation_share,0.125,GSPI base: agent reward,2.5546731904881357,10
+regulation_share,0.25,GSPI base: agent reward,3.5917883636852608,10
+regulation_share,0.375,GSPI base: agent reward,4.628903536882386,10
+regulation_share,0.5,GSPI base: agent reward,5.666018710079511,10
+regulation_share,0.625,GSPI base: agent reward,6.703133883276637,10
+regulation_share,0.75,GSPI base: agent reward,7.74024905647376,10
+regulation_share,0.875,GSPI base: agent reward,8.777364229670887,10
+regulation_share,1.0,GSPI base: agent reward,9.814479402868013,10
+regulation_share,0.0,GSPI base: random reward structure,2.0091896780394918,6
+regulation_share,0.125,GSPI base: random reward structure,3.1564506024136754,6
+regulation_share,0.25,GSPI base: random reward structure,4.30371152678786,6
+regulation_share,0.375,GSPI base: random reward structure,5.450972451162045,6
+regulation_share,0.5,GSPI base: random reward structure,6.598233375536229,6
+regulation_share,0.625,GSPI base: random reward structure,7.745494299910413,6
+regulation_share,0.75,GSPI base: random reward structure,8.892755224284599,6
+regulation_share,0.875,GSPI base: random reward structure,10.040016148658781,6
+regulation_share,1.0,GSPI base: random reward structure,11.187277073032964,6
+regulation_share,0.0,MPC base: fixed-reward residual,14.271777248219507,6
+regulation_share,0.125,MPC base: fixed-reward residual,15.036519080125458,6
+regulation_share,0.25,MPC base: fixed-reward residual,15.801260912031415,6
+regulation_share,0.375,MPC base: fixed-reward residual,16.566002743937368,6
+regulation_share,0.5,MPC base: fixed-reward residual,17.330744575843323,6
+regulation_share,0.625,MPC base: fixed-reward residual,18.095486407749274,6
+regulation_share,0.75,MPC base: fixed-reward residual,18.86022823965523,6
+regulation_share,0.875,MPC base: fixed-reward residual,19.624970071561183,6
+regulation_share,1.0,MPC base: fixed-reward residual,20.389711903467138,6
+regulation_share,0.0,MPC base: agent residual,14.174503647804245,6
+regulation_share,0.125,MPC base: agent residual,15.140017848406792,6
+regulation_share,0.25,MPC base: agent residual,16.105532049009337,6
+regulation_share,0.375,MPC base: agent residual,17.071046249611886,6
+regulation_share,0.5,MPC base: agent residual,18.036560450214434,6
+regulation_share,0.625,MPC base: agent residual,19.002074650816983,6
+regulation_share,0.75,MPC base: agent residual,19.96758885141953,6
+regulation_share,0.875,MPC base: agent residual,20.93310305202208,6
+regulation_share,1.0,MPC base: agent residual,21.898617252624632,6
+regulation_share,0.0,"MPC, nominal",14.594654760665094,2
+regulation_share,0.125,"MPC, nominal",15.133350657341454,2
+regulation_share,0.25,"MPC, nominal",15.672046554017815,2
+regulation_share,0.375,"MPC, nominal",16.210742450694177,2
+regulation_share,0.5,"MPC, nominal",16.74943834737054,2
+regulation_share,0.625,"MPC, nominal",17.2881342440469,2
+regulation_share,0.75,"MPC, nominal",17.82683014072326,2
+regulation_share,0.875,"MPC, nominal",18.36552603739962,2
+regulation_share,1.0,"MPC, nominal",18.904221934075984,2
+regulation_share,0.0,"MPC, offset-free",11.798889509874147,2
+regulation_share,0.125,"MPC, offset-free",14.11960906251727,2
+regulation_share,0.25,"MPC, offset-free",16.440328615160393,2
+regulation_share,0.375,"MPC, offset-free",18.761048167803516,2
+regulation_share,0.5,"MPC, offset-free",21.081767720446642,2
+regulation_share,0.625,"MPC, offset-free",23.40248727308976,2
+regulation_share,0.75,"MPC, offset-free",25.723206825732888,2
+regulation_share,0.875,"MPC, offset-free",28.04392637837601,2
+regulation_share,1.0,"MPC, offset-free",30.364645931019133,2
+regulation_share,0.0,"MPC, adaptive",12.16752309572892,2
+regulation_share,0.125,"MPC, adaptive",14.38790759197116,2
+regulation_share,0.25,"MPC, adaptive",16.608292088213396,2
+regulation_share,0.375,"MPC, adaptive",18.828676584455636,2
+regulation_share,0.5,"MPC, adaptive",21.04906108069787,2
+regulation_share,0.625,"MPC, adaptive",23.26944557694011,2
+regulation_share,0.75,"MPC, adaptive",25.489830073182347,2
+regulation_share,0.875,"MPC, adaptive",27.710214569424586,2
+regulation_share,1.0,"MPC, adaptive",29.930599065666822,2

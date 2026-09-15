@@ -211,9 +211,9 @@ def main():
     arm_dir.mkdir(parents=True, exist_ok=True)
     hist_path = arm_dir / "history.jsonl"
     ev = Evaluator(a)
-    rng = np.random.default_rng(a.rng + {"random": 11, "es": 22, "llm": 33, "reference": 0}[a.arm])
-
     hist = [json.loads(l) for l in open(hist_path)] if hist_path.exists() else []
+    # seeded by the history length so that a resumed arm does not replay the draws of the previous invocation
+    rng = np.random.default_rng([a.rng, {"random": 11, "es": 22, "llm": 33, "reference": 0}[a.arm], len(hist)])
     if not hist:
         res = summarise(ev.run(INCUMBENT0, 0))
         hist.append({"round": 0, "params": clip_params(INCUMBENT0), "result": res, "rationale": "incumbent (s19 selection)"})
@@ -240,7 +240,16 @@ def main():
             elif a.arm == "es":
                 cands = propose_es(rng, hist, n)
             else:
-                cands, analysis = propose_llm(client, hist, n, round_i)
+                for net_try in range(15):
+                    try:
+                        cands, analysis = propose_llm(client, hist, n, round_i)
+                        break
+                    except Exception as e:  # noqa: BLE001 - connection errors, timeouts, malformed JSON
+                        print(f"[llm] round {round_i}: proposal failed ({type(e).__name__}: {str(e)[:120]}); retry in 120 s", flush=True)
+                        import time
+                        time.sleep(120)
+                else:
+                    raise RuntimeError("LLM proposals failed for 30 minutes")
             uniq, keys = [], set()
             for c in cands:
                 k = key_of(c["params"])
