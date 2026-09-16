@@ -855,3 +855,37 @@ seeds; travel is the summed |d beta| of the scored window, duty is travel per sc
    than useful actuation. `pitch_rate_power_tower_band_frac` and `pitch_rate_power_3P_band_frac` are already in
    the per-episode metrics; a spectral decomposition of pitch rate will say how much of the 7x is broadband
    chatter and how much is load-driven motion.
+
+## 23. Control direction, stage 1 (2026-09-16, `campaign_control1.sh`; paused 18:07 mid-training)
+
+Three questions from the literature scan. Two are answered, the third is answered in part.
+
+**Q2 — how far does a residual transfer across model error?** Residuals trained on the Cp/Ct x0.95 MPC,
+evaluated at other errors (wind seeds 3-6, mean over 3 seeds):
+
+| controller | x0.85 | x0.9 | x0.95 | x1.05 | x1.15 |
+|---|---|---|---|---|---|
+| fixed-reward residual | -12.2 | 7.2 | 14.2 | 5.4 | -24.7 |
+| agent-reward residual | -13.1 | 9.0 | 12.7 | -5.3 | -29.5 |
+| nominal MPC alone | -24.0 | -16.1 | 8.5 | 5.7 | -24.6 |
+| **offset-free MPC alone** | **21.8** | **21.6** | **21.7** | **20.0** | **15.8** |
+
+The residual only works at the error it was trained on and collapses to (or below) the nominal MPC elsewhere;
+the estimator holds 15.8-21.8 across the whole +-15 % range. This is the quantified decomposition the literature
+lacks (the closest prior work reports only an ordering, observer ~ residual).
+
+**Q3 — ROSCO with its tower damper enabled, 600 s** (the baseline a reviewer will demand): J = -0.11 / -0.17 /
+-0.08 on supervisor winds / seeds 3-6 / seeds 7-10, every term within +-1 %. The tower damper contributes
+nothing under this objective, so our tower-DEL gains are not an artefact of a stripped baseline. The row belongs
+in the main table (`~/wtrl/exp/mpcsearch600/refs/eval_towerdamper_*.json`).
+
+**Q1 — does the residual still add anything once the estimator has removed the model error?** Training on the
+offset-free base with Cp/Ct x0.95 (150 s bank, tuned default, 3 seeds per arm): **5 of the 6 finished runs have
+their best checkpoint at episode 0**, i.e. 300 episodes of PPO never beat the zero-residual compensated MPC on
+the supervisor winds (moC3t 22.74 / 22.73 / 22.93, morC3t 22.74 / 22.93 at episode 0; only morC3t_s1 improved,
+23.46 at episode 224). Held-out evaluation of these arms had not started when the campaign was paused.
+
+**State at the pause.** `campaign_ctl.sh pause campaign_control1` stopped 43 processes; `mo3t_s0` and `mo3t_s1`
+(residual on the offset-free base with the exact model) were mid-training with rolling resume points, `mo3t_s2`
+not started. `resume` continues; the core campaign then runs the 150 s held-out evaluations of all three arms,
+after which the script evaluates them at 600 s. Everything else is cached.
