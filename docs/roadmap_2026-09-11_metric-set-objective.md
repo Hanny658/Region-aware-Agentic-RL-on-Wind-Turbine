@@ -778,10 +778,16 @@ home `~/wtrl600` (30 files). Identity check: GSPI against its own 600 s baseline
 150 s bank and its baselines were verified untouched (the 2026-09-09 incident does not recur: `run.sh` honours a
 preset `WTRL_HOME`). Every row below is 600 s, 6 episodes on the supervisor winds and 12 per held-out set.
 
-**References at 600 s** (MPC as the base controller, zero residual): nominal 18.01 on the supervisor winds and
-16.84 on wind seeds 3-6; offset-free 22.53 / 20.89 / 21.71; adaptive 22.84 / 21.09. With Cp/Ct x0.95 the nominal
-MPC drops to 7.88 on seeds 3-6 while offset-free holds 21.26 / 22.26 and adaptive 21.03 - the s19 verdict
-replicates at 600 s.
+**References at 600 s** (MPC as the base controller, zero residual; J on supervisor winds / seeds 3-6 / seeds 7-10):
+
+| MPC | exact model | Cp/Ct x0.95 |
+|---|---|---|
+| nominal | 18.01 / 16.84 / 18.33 | 7.88 / 10.29 (held-out) |
+| offset-free | 22.53 / 20.89 / 21.71 | 21.26 / 22.26 (held-out) |
+| adaptive (RLS) | 22.84 / 21.09 / 22.47 | 21.03 / 22.22 (held-out) |
+
+The s19 verdict replicates at 600 s: compensation is worth ~4 J with an exact model and ~11 J with a 5 % aero
+error, and both compensators are insensitive to that error (0.2-0.6 J).
 
 **The search.** Box: horizon {10,15,20,30}, r [0.03,3], qt [0.1,30], wc_v [0.1,1.5], tau_adapt [1,30],
 adapt {offset,rls}; start = the offset-free MPC of s19. Three proposers, 40 verified candidates each, batches of
@@ -805,9 +811,7 @@ are ~1 J on a 21-point controller; n = 1 search per proposer, so no significance
 Artefacts: `docs/tables/mpc600_search.csv`, `docs/figures/mpc600_search.png`, histories under
 `~/wtrl/exp/mpcsearch600/{llm,es,random}/history.jsonl` (LLM transcript included), cache of 143 evaluations.
 
-**Paused 2026-09-16 07:30** (`campaign_ctl.sh pause campaign_mpc600`, 19 processes): the remaining reference rows
-(nominal / adaptive on wind seeds 7-10 and the x0.95 pairs) were still running; `resume` continues, everything
-else is cached.
+Paused at 07:30 and resumed at 08:39 for the remaining reference rows; the campaign finished at 08:59.
 
 **Weight sensitivity (2026-09-15, no simulations, `scripts/dev/weight_sensitivity.py`).** Re-weighting the four
 metrics of the 150 s held-out results: wherever regulation carries >= 25 % of the weight the compensated MPC is
