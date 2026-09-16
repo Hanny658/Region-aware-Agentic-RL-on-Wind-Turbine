@@ -1,0 +1,10 @@
+controller,pitch_travel_deg,tower_band_frac,band_3P_frac,other_frac,episodes
+GSPI (pairing reference),19.01,0.0515,0.0421,0.9064,26
+"LPV-MPC, nominal",213.76,0.0349,0.3366,0.6285,12
+"LPV-MPC, offset-free",213.06,0.0435,0.2923,0.6641,12
+"LPV-MPC, adaptive (RLS)",204.6,0.0433,0.2983,0.6584,12
+"LPV-MPC, offset-free, Cp x0.95",196.94,0.045,0.2838,0.6713,12
+GSPI + fixed-reward residual,62.37,0.0759,0.0677,0.8564,60
+GSPI + agent-reward residual,40.99,0.0865,0.0937,0.8197,60
+MPC + fixed-reward residual,151.97,0.037,0.3453,0.6177,36
+MPC + agent-reward residual,215.58,0.0317,0.3379,0.6304,36

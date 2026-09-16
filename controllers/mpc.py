@@ -49,7 +49,8 @@ class LPVMPC:
                  q: float = 1.0, r: float = 1.0, qt: float = 0.0, wc_v: float = 0.25,
                  err_ref: float = 1.0, dbeta_ref: float = 0.1, xd_ref: float = 0.2,
                  cp_scale: float = 1.0, ftower_scale: float = 1.0, mass_scale: float = 1.0,
-                 adapt: str = "none", tau_adapt: float = 5.0, wc_acc: float = 2.0):
+                 adapt: str = "none", tau_adapt: float = 5.0, wc_acc: float = 2.0,
+                 notch_3p_q: float = 0.0):
         import osqp
         import scipy.sparse as sp
         from scipy.linalg import expm
@@ -91,6 +92,9 @@ class LPVMPC:
         if adapt not in ("none", "offset", "rls"):
             raise ValueError(f"adapt must be none|offset|rls, got {adapt!r}")
         self.adapt, self.tau_adapt, self.wc_acc = adapt, float(tau_adapt), float(wc_acc)
+        # speed-scheduled 3P notch on the rotor-speed measurement (0 = off). Quality factor Q: higher = narrower.
+        self.notch_3p_q = float(notch_3p_q)
+        self._nz = [0.0, 0.0, 0.0, 0.0]      # biquad state: x[n-1], x[n-2], y[n-1], y[n-2]
         self.gearbox = float(tb["gearbox_ratio"])
         self._reset_adapt()
 
@@ -101,6 +105,7 @@ class LPVMPC:
         self._a_lp = 0.0            # its derivative
         self._tg_lp = None          # generator torque (LSS), same filter
         self._tm_lp = None          # model aero torque, same filter (keeps the phase aligned)
+        self._nz = [0.0, 0.0, 0.0, 0.0]
         self._s_mm = 0.0            # forgetting LS sums
         self._s_ym = 0.0
         self.n_obs_adapt = 0
@@ -110,13 +115,34 @@ class LPVMPC:
         self.w_f = self.v_f = None
         self._reset_adapt()
 
+    def _notch(self, x: float, w_rot: float, dt: float) -> float:
+        """RBJ notch at 3 x the current rotor frequency, coefficients rescheduled every step."""
+        f0 = 3.0 * max(w_rot, 0.3) / (2 * np.pi)                 # [Hz]; floor keeps the filter defined at standstill
+        w0 = 2 * np.pi * f0 * dt
+        if not (0.0 < w0 < np.pi * 0.9):
+            return x
+        alpha = np.sin(w0) / (2 * self.notch_3p_q)
+        c = np.cos(w0)
+        a0 = 1 + alpha
+        b0, b1, b2 = 1 / a0, -2 * c / a0, 1 / a0
+        a1, a2 = -2 * c / a0, (1 - alpha) / a0
+        x1, x2, y1, y2 = self._nz
+        y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+        self._nz = [x, x1, y, y1]
+        return float(y)
+
     def observe(self, fa_acc: float, dt: float, w_meas: float | None = None,
                 v_meas: float | None = None, tq_gen_hss: float | None = None,
                 beta_meas: float | None = None):
         self.xd_hat += dt * (fa_acc - self.leak * self.xd_hat)
         self.x_hat += dt * (self.xd_hat - self.leak * self.x_hat)
         if w_meas is not None:
-            self.w_f = w_meas if self.w_f is None else self.w_f + dt * self.wc_speed * (w_meas - self.w_f)
+            w_in = float(w_meas)
+            if self.notch_3p_q > 0.0:
+                if self.w_f is None:
+                    self._nz = [w_in, w_in, w_in, w_in]           # start the biquad at the operating point
+                w_in = self._notch(w_in, self.w_f if self.w_f is not None else w_in, dt)
+            self.w_f = w_in if self.w_f is None else self.w_f + dt * self.wc_speed * (w_in - self.w_f)
         if v_meas is not None:
             self.v_f = v_meas if self.v_f is None else self.v_f + dt * self.wc_v * (v_meas - self.v_f)
         if self.adapt != "none" and w_meas is not None and tq_gen_hss is not None and beta_meas is not None \
