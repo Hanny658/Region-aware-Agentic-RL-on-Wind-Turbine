@@ -60,6 +60,11 @@ arm_args() {  # prefix -> train.py arguments
     mrw3t)  echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS --base mpc" ;;
     mgC3t)  echo "--supervisor guard         --reward v3 --knobs_json $KNOBS --base mpc --base_mm_cp 0.95" ;;
     mrwC3t) echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS --base mpc --base_mm_cp 0.95" ;;
+    # control direction, 2026-09-16: the residual on a COMPENSATED MPC base (offset-free). The question is whether
+    # learning still adds anything once the disturbance estimator has removed the model error (roadmap s19/s21).
+    mo3t)   echo "--supervisor guard         --reward v3 --knobs_json $KNOBS --base mpc --base_adapt offset" ;;
+    moC3t)  echo "--supervisor guard         --reward v3 --knobs_json $KNOBS --base mpc --base_adapt offset --base_mm_cp 0.95" ;;
+    morC3t) echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS --base mpc --base_adapt offset --base_mm_cp 0.95" ;;
     # the RL analogue of the MPC's qt grid: the tuned default with the tower weight at 3 / 10 / 30
     # (the 30-episode fork search never keeps a higher lambda_tower — tower DEL responds too slowly)
     jg3L3)  echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT3.json" ;;
