@@ -818,3 +818,40 @@ metrics of the 150 s held-out results: wherever regulation carries >= 25 % of th
 the best controller; under fatigue-dominated weights (regulation share <= 12.5 %, or tower weight 0.7) the
 nominal MPC and the MPC-base residuals lead, because compensation buys regulation at a small fatigue cost.
 `docs/tables/weight_sensitivity.csv`, `docs/figures/weight_sensitivity.png`.
+
+## 22. Actuator cost: the MPC's gains are bought with ~7.6x the pitch travel (2026-09-16, `scripts/dev/actuation_table.py`, no simulations)
+
+The literature scan (`docs/literature_2026-09-16.md`, items 12 and 16) reports fatigue reductions jointly with
+pitch travel / actuator duty cycle and treats load gains bought with actuation as suspect. Our evaluation files
+already carry pitch travel per episode, so the column was free. Held-out wind seeds 3-6, mean over episodes and
+seeds; travel is the summed |d beta| of the scored window, duty is travel per scored second.
+
+| controller | pitch travel [deg/ep] | vs GSPI | duty [deg/s] | J |
+|---|---|---|---|---|
+| GSPI (pairing reference) | 27.9 | 1.00 | 0.215 | 0 |
+| LPV-MPC, nominal | 213.8 | 7.66 | 1.644 | 16.28 |
+| LPV-MPC, offset-free | 213.1 | 7.64 | 1.639 | 20.47 |
+| LPV-MPC, adaptive (RLS) | 204.6 | 7.33 | 1.574 | 20.44 |
+| LPV-MPC, nominal, Cp x0.95 | 197.1 | 7.06 | 1.516 | 8.53 |
+| LPV-MPC, offset-free, Cp x0.95 | 196.9 | 7.06 | 1.515 | 21.66 |
+| GSPI + fixed-reward residual (n=5) | 62.4 | 2.24 | 0.480 | 4.86 |
+| **GSPI + agent-reward residual (n=5)** | **41.0** | **1.47** | **0.315** | 5.30 |
+| MPC + fixed-reward residual (n=3) | 152.0 | 5.45 | 1.169 | 16.60 |
+| MPC + agent-reward residual (n=3) | 215.6 | 7.73 | 1.658 | 17.23 |
+| x0.95 MPC + fixed-reward residual (n=3) | 218.0 | 7.81 | 1.677 | 14.17 |
+| x0.95 MPC + agent-reward residual (n=3) | 161.9 | 5.80 | 1.245 | 12.66 |
+
+**Consequences.**
+1. Every MPC row in this repository buys its regulation and load reductions with roughly 7x the pitch activity of
+   the GSPI baseline. No table before today reported this, and the two most comparable papers in the scan would
+   treat the omission as a defect. The actuator column now belongs in every main table.
+2. The ranking changes under an actuation budget: per unit of pitch travel the agent-reward residual on the GSPI
+   base is the most efficient controller we have (5.30 J at 1.47x travel), while the compensated MPC is the least
+   (20.5 J at 7.6x). The objective J does not see this at all.
+3. The control-direction formulation therefore needs three constraints, not two: tower-base DEL, blade-root DEL
+   **and** actuator duty cycle, with regulation as the objective. That is the safe-BO formulation of s21's
+   follow-up, and it is the formulation under which the two controller families are actually comparable.
+4. Caveat to check before publishing: part of the MPC's travel may be chatter from re-solving every 0.1 s rather
+   than useful actuation. `pitch_rate_power_tower_band_frac` and `pitch_rate_power_3P_band_frac` are already in
+   the per-episode metrics; a spectral decomposition of pitch rate will say how much of the 7x is broadband
+   chatter and how much is load-driven motion.
