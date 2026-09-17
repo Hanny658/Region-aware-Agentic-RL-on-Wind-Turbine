@@ -915,3 +915,44 @@ the estimator; after it, a bounded residual has nothing of size to learn.
 
 Infrastructure note: stage 2 was queued behind stage 1 with `until ! pgrep -f campaign_control1.sh`, which
 matches its own command line and never fires; stage 2 was started by hand at 08:46 after a six-hour gap.
+
+## 25. Where the MPC's actuation goes, and the J-vs-duty front (2026-09-17; `campaign_control2.sh`, `pitch_spectrum_table.py`, `pareto_duty.py`)
+
+**The 3P hypothesis is refuted.** The spectrum table showed 29-34 % of the MPC's pitch-rate power in the 3P band
+(0.5-0.75 Hz) against 4 % for GSPI, so a speed-scheduled 3P notch was added to the MPC's speed measurement
+(`notch_3p_q` in `controllers/mpc.py`; on a synthetic signal Q = 2 removes the 3P line, share 0.297 -> 0.001,
+and improves slow tracking). On the plant it does not pay: on the supervisor winds Q = 1 / 2 / 5 give
+-22.9 / 14.2 / 20.6 (mean over exact and x0.95) against 22.7 without the notch, and at Q = 5 held-out
+(600 s, exact / x0.95; seeds 3-6 / 7-10):
+
+| offset-free MPC | J 3-6 | J 7-10 | pitch travel [deg/ep] | 3P share of pitch-rate power |
+|---|---|---|---|---|
+| no notch, exact | 20.89 | 21.71 | 968 / 951 | 0.290 |
+| + notch Q5, exact | 19.21 | 20.22 | 945 / 933 | 0.100 |
+| no notch, x0.95 | 21.26 | 22.26 | 903 / 892 | - |
+| + notch Q5, x0.95 | 19.24 | 20.51 | 889 / 877 | - |
+
+The notch removes the 3P line (share 0.29 -> 0.10) but cuts travel by only 2-3 % and costs 1.5-2.4 J, mostly
+tower fatigue (22 -> 19 %) and regulation. The 3P share was a share of pitch-rate *power*; the travel itself is
+broadband (the "other" band holds 63-68 % for every MPC row), i.e. fast actuation across the band, governed by
+the pitch-increment weight r, not by one spectral line. Kept in the code as an option, off by default.
+
+**The J-vs-actuator-duty front.** The 600 s search cache holds 123 valid MPC settings on the supervisor winds
+with J and per-episode pitch travel; the trade-off is therefore already measured (`docs/figures/pareto_duty.png`,
+`docs/tables/pareto_duty.csv`). Pareto-efficient settings (duty = pitch travel per scored second):
+
+| duty [deg/s] | x GSPI | J | setting |
+|---|---|---|---|
+| 0.31 | 1.5 | 11.4 | N10, r 0.46, qt 2.3, rls |
+| 0.52 | 2.4 | 18.9 | N15, r 0.53, qt 3.4, offset |
+| **0.63** | **2.9** | **21.0** | N15, r 0.41, qt 3.7, offset (the knee) |
+| 0.86 | 4.0 | 21.5 | N15, r 0.29, qt 4.3, offset |
+| 1.28 | 5.9 | 22.5 | N20, r 0.35, qt 3.25, rls |
+| 1.70 | 7.9 | 23.4 | the J-selected point (s21) |
+
+Reading. (1) Selecting on J alone puts the operating point at 7.9x the GSPI travel for 2.4 J more than the knee
+at 2.9x. An actuator-duty constraint of ~3x GSPI keeps 90 % of the J. (2) s22's statement that the agent-reward
+residual is "the most actuation-efficient controller" was wrong: at the same 1.5x duty the MPC front reaches 11.4
+against the residual's 5.3; the MPC family dominates the learned residual at every duty level. (3) The knee
+points were scored on the supervisor winds only (one deterministic evaluation each); stage 3 (`campaign_control3.sh`)
+evaluates three of them on both 600 s held-out sets, the knee also with Cp/Ct x0.95.

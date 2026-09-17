@@ -11,3 +11,15 @@ MPC base + fixed-reward residual,3,151.97,5.447,1.169,0.0148,16.6
 MPC base + agent-reward residual,3,215.58,7.726,1.6583,0.0087,17.23
 x0.95 MPC base + fixed-reward residual,3,217.99,7.813,1.6768,0.0573,14.17
 x0.95 MPC base + agent-reward residual,3,161.87,5.801,1.2452,0.0763,12.66
+x0.95 offset-free base + fixed-reward residual,3,191.51,6.864,1.4732,0.0006,21.04
+x0.95 offset-free base + agent-reward residual,3,179.75,6.442,1.3827,0.0034,21.36
+offset-free base + fixed-reward residual,3,44.27,1.586,0.3405,0.0527,20.51
+"600 s: LPV-MPC, nominal",1,966.45,7.374,1.6663,0.0,16.84
+"600 s: LPV-MPC, adaptive (RLS)",1,932.04,7.111,1.607,0.0,21.09
+"600 s: LPV-MPC, offset-free",1,967.73,7.384,1.6685,0.0,20.89
+"600 s: LPV-MPC, offset-free + 3P notch Q5",1,944.66,7.208,1.6287,0.0,19.21
+"600 s: LPV-MPC, offset-free, Cp x0.95",1,903.3,6.892,1.5574,0.0,21.26
+"600 s: offset-free + 3P notch Q5, Cp x0.95",1,888.67,6.781,1.5322,0.0,19.24
+600 s: ROSCO with tower damper,1,131.22,1.001,0.2262,0.0,-0.17
+600 s: x0.95 offset-free base + fixed-reward residual,3,883.52,6.741,1.5233,0.0006,21.52
+600 s: x0.95 offset-free base + agent-reward residual,3,831.94,6.348,1.4344,0.0035,21.93

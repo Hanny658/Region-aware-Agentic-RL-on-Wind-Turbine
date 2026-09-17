@@ -8,3 +8,9 @@ GSPI + fixed-reward residual,62.37,0.0759,0.0677,0.8564,60
 GSPI + agent-reward residual,40.99,0.0865,0.0937,0.8197,60
 MPC + fixed-reward residual,151.97,0.037,0.3453,0.6177,36
 MPC + agent-reward residual,215.58,0.0317,0.3379,0.6304,36
+x0.95 offset-free base + fixed reward,191.51,0.045,0.2835,0.6714,36
+x0.95 offset-free base + agent reward,179.75,0.044,0.2832,0.6728,36
+"600 s: LPV-MPC, offset-free",967.73,0.0332,0.2904,0.6764,12
+"600 s: LPV-MPC, offset-free + 3P notch Q5",944.66,0.0591,0.1001,0.8408,12
+"600 s: LPV-MPC, adaptive (RLS)",932.04,0.0315,0.298,0.6705,12
+600 s: ROSCO with tower damper,131.22,0.1349,0.0876,0.7774,12
