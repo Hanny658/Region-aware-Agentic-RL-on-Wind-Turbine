@@ -131,7 +131,14 @@ def main():
     ap.add_argument("--config_run", default="~/wtrl/exp/jg3t_s0", help="any GSPI-base J run (its config.json)")
     ap.add_argument("--port0", type=int, default=7600)
     ap.add_argument("--heldout", action="store_true", help="evaluate the best candidate and the start on both held-out sets")
+    ap.add_argument("--emit_template", default=None, metavar="DST",
+                    help="write the case template of the best candidate (best.json under --root) to DST and exit")
     a = ap.parse_args()
+    if a.emit_template:
+        best = json.load(open(Path(os.path.expanduser(a.root)) / "best.json"))
+        make_template(Path(os.path.expanduser(a.template)), Path(os.path.expanduser(a.emit_template)), clip(best["params"]))
+        print(f"[rosco] template of {best['params']} (supervisor J {best['result']['J']:.2f}) -> {a.emit_template}")
+        return
     ev = Evaluator(a)
     root = Path(os.path.expanduser(a.root))
     hp = root / "history.jsonl"
