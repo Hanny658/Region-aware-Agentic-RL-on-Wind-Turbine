@@ -889,3 +889,29 @@ the supervisor winds (moC3t 22.74 / 22.73 / 22.93, morC3t 22.74 / 22.93 at episo
 (residual on the offset-free base with the exact model) were mid-training with rolling resume points, `mo3t_s2`
 not started. `resume` continues; the core campaign then runs the 150 s held-out evaluations of all three arms,
 after which the script evaluates them at 600 s. Everything else is cached.
+
+## 24. Stage 1 complete: on a compensated base the residual has (almost) nothing left to learn (2026-09-17 02:20)
+
+Residual on the offset-free MPC base, 150 s training with the tuned default, 3 seeds per arm, evaluated on
+both held-out sets at 600 s (`eval_heldout600_*`). Reference rows are the same base with a zero residual.
+
+| configuration | best checkpoint (episode) | 600 s seeds 3-6 | 600 s seeds 7-10 | P / w / T / B (seeds 3-6) |
+|---|---|---|---|---|
+| offset-free base, exact, alone | - | 20.47 | 21.69 | 22.0 / 33.7 / 21.2 / 5.0 |
+| + fixed-reward residual (`mo3t`) | 64 / 96 / 96 | 20.87 | 21.71 | 24.6 / 33.6 / 21.8 / 3.5 |
+| offset-free base, Cp x0.95, alone | - | 21.66 | 21.87 | 23.9 / 35.5 / 19.6 / 7.7 |
+| + fixed-reward residual (`moC3t`) | **0 / 0 / 0** | 21.51 | 22.06 | 26.1 / 35.1 / 21.6 / 3.2 |
+| + agent-reward residual (`morC3t`) | 0 / **224** / 0 | 21.93 | 22.41 | 26.5 / 35.5 / 22.0 / 3.6 |
+
+Reading. (1) With the model error removed by the estimator, 5 of 6 mismatched-base runs never beat their
+initial policy on the supervisor winds; the one that did (`morC3t_s1`, 22.80 / 23.19 held-out) is +1.1 over the
+base. On the exact base the residual adds +0.4 / +0.0. (2) The rows whose best checkpoint is episode 0 still
+differ from the base on the held-out sets (e.g. 21.51 vs 21.66) because the untrained actor's output is not
+exactly zero; the difference is within the wind noise of s20. (3) What the residual does change is the
+composition: power MSE up (22.0 -> 24.6), blade-root DEL down (5.0 -> 3.5 %; 7.7 -> 3.2 %) - a re-allocation
+between terms, not a net gain. Together with s23 (the residual does not transfer across model error while the
+estimator holds +-15 %) this completes the decomposition the literature lacks: parametric model error belongs to
+the estimator; after it, a bounded residual has nothing of size to learn.
+
+Infrastructure note: stage 2 was queued behind stage 1 with `until ! pgrep -f campaign_control1.sh`, which
+matches its own command line and never fires; stage 2 was started by hand at 08:46 after a six-hour gap.
