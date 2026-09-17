@@ -35,6 +35,13 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   RLS flat 20.4-20.7 over +-15 %. It beats every residual run and refutes manuscript v4's main line
   ("residual adds to the MPC and repairs its model"); x0.95-trained residuals do not transfer to x0.9 / x1.05.
   TCST campaign gate STOPPED before extra seeds; the next direction is the user's decision.
+- **Control direction (2026-09-16/17, roadmap s22-s26):** every MPC row buys its J with ~7.6x the GSPI pitch
+  travel (s22); the travel is broadband, not 3P (a 3P notch removes the line, cuts travel 2-3 %, costs 1.5-2.4 J,
+  s25); the J-vs-actuator-duty front from the 600 s search cache has its knee at ~3x GSPI travel, and that knee
+  holds held-out: same J as the J-selected point at 38-41 % of its actuation, blade DEL 3 -> 5-6 % (s26). On a
+  compensated base the residual has nothing of size left to learn (5 of 6 mismatched runs never beat episode 0,
+  s24) and residuals do not transfer across model error while the estimator holds +-15 % (s23). ROSCO's tower
+  damper is worth ~0 J at 600 s (s23). Literature scan: `docs/literature_2026-09-16.md`.
 - **Residual on the MPC base** (`--base mpc [--base_mm_cp 0.95]`, n = 3, s17-s18): adds +0.3 (fixed
   reward) / +1.0 (LLM reward) to the exact-model MPC, within noise, half the runs never beat episode 0;
   repairs the x0.95 model (8.5 / 3.6 -> 14.2 / 15.4 fixed, 12.7 / 18.3 LLM). LLM reward vs fixed on

@@ -956,3 +956,31 @@ residual is "the most actuation-efficient controller" was wrong: at the same 1.5
 against the residual's 5.3; the MPC family dominates the learned residual at every duty level. (3) The knee
 points were scored on the supervisor winds only (one deterministic evaluation each); stage 3 (`campaign_control3.sh`)
 evaluates three of them on both 600 s held-out sets, the knee also with Cp/Ct x0.95.
+
+## 26. Stage 3: the duty knee holds on held-out winds - same J at 38 % of the actuation (2026-09-17 10:07; `campaign_control3.sh`)
+
+Three Pareto settings of s25 on both 600 s held-out sets (duty = pitch travel per scored second; xGSPI = travel
+relative to the paired GSPI run; terms P / w / T / B on the same set):
+
+| setting | model | seeds 3-6: J, duty, xGSPI | seeds 7-10: J, duty, xGSPI | P / w / T / B (3-6) |
+|---|---|---|---|---|
+| J-selected point (s21 LLM best, N20 r .255 qt 3.25 rls) | exact | 21.37, 1.73, 7.7x | 22.75, 1.71, 8.0x | 25.0 / 34.8 / 22.9 / 2.8 |
+| offset-free reference (N20 r .3 qt 3) | exact | 20.89, 1.67, 7.4x | 21.71, 1.64, 7.6x | 24.6 / 33.6 / 22.3 / 3.1 |
+| knee3 (N15 r .29 qt 4.3 offset) | exact | 21.56, 0.86, 3.8x | 22.03, 0.87, 4.0x | 21.9 / 35.9 / 23.0 / 5.3 |
+| **knee2 (N15 r .41 qt 3.7 offset)** | exact | **20.86, 0.63, 2.8x** | **21.46, 0.64, 3.0x** | 21.4 / 34.7 / 21.6 / 5.8 |
+| knee1 (N15 r .53 qt 3.4 offset) | exact | 18.48, 0.52, 2.3x | 18.82, 0.52, 2.4x | 19.5 / 31.8 / 17.5 / 5.0 |
+| offset-free reference | Cp x0.95 | 21.26, 1.56, 6.9x | 22.26, 1.54, 7.1x | 26.1 / 35.1 / 21.0 / 2.7 |
+| **knee2** | Cp x0.95 | **21.52, 0.64, 2.8x** | **21.87, 0.63, 2.9x** | 23.6 / 36.5 / 20.6 / 5.4 |
+
+Reading. (1) The knee transfers: knee2 matches the offset-free reference's J on both held-out sets and both
+models (-0.03 / -0.25 exact, +0.26 / -0.39 x0.95) at **38-41 % of its pitch travel**; knee3 is at or above the
+reference at 52 %. (2) The composition shifts the right way for a load-aware reader: the cheaper settings give
+up 2-3 points of power MSE and keep tower fatigue, and their blade-root DEL reduction roughly doubles
+(3 -> 5-6 %), presumably because the smoother pitch stops exciting the blades. (3) Below the knee the cost is
+real: knee1 (2.3x) loses 2.4-2.9 J, mostly tower fatigue. (4) Together with s22 and s25 this is the
+control-direction result: selecting an MPC on J alone lands at 7-8x the baseline's actuation; a duty
+constraint at ~3x recovers the same objective with better blade fatigue. The learned residual arms sit
+below the MPC front at every duty level (s25).
+
+Artefacts: `~/wtrl/exp/mpcsearch600/refs/eval_knee{1,2,3}_*.json`, `docs/tables/pareto_duty.csv`,
+`docs/figures/pareto_duty.png`. Machine idle after 10:07.
