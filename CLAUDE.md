@@ -42,6 +42,14 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   compensated base the residual has nothing of size left to learn (5 of 6 mismatched runs never beat episode 0,
   s24) and residuals do not transfer across model error while the estimator holds +-15 % (s23). ROSCO's tower
   damper is worth ~0 J at 600 s (s23). Literature scan: `docs/literature_2026-09-16.md`.
+- **Wind-range protocol (2026-09-18, roadmap s27-s28; the main evaluation set from here on):** 12-24 m/s in 2 m/s
+  steps, IEC turbulence class B, 600 s, TurbSim seeds 1-6 (42 held-out episodes; `campaign_must1_range.sh`,
+  `scripts/dev/range_table.py`, `docs/tables/range_*.csv`). Several s19-s26 statements are specific to the
+  low-turbulence 8 / 12.5 / 15 m/s set: over the range the MPC rows travel 1.7-2.2x the GSPI (not 7.6x), Cp/Ct x0.95
+  costs the nominal MPC 0.7 J (not half), offset-free compensation is +1.0 J but a trade (+5.6 power, +5.9 speed,
+  -6.6 tower, all intervals exclude 0) and every compensated MPC has a negative tower term from 20 m/s up while the
+  nominal MPC never does. Report per-wind-speed terms; differences between deterministic controllers are paired
+  bootstraps over episodes (`scripts/dev/paired_bootstrap.py`).
 - **Residual on the MPC base** (`--base mpc [--base_mm_cp 0.95]`, n = 3, s17-s18): adds +0.3 (fixed
   reward) / +1.0 (LLM reward) to the exact-model MPC, within noise, half the runs never beat episode 0;
   repairs the x0.95 model (8.5 / 3.6 -> 14.2 / 15.4 fixed, 12.7 / 18.3 LLM). LLM reward vs fixed on
