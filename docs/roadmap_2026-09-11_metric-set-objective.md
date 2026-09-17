@@ -1077,3 +1077,47 @@ carried into a paper as general:
 Consequence for the evaluation protocol: report the range set as the main table (it is what the literature scan
 of `docs/literature_2026-09-16.md` found to be expected), report per-wind-speed terms next to the aggregate, and
 treat "no term negative at any wind speed" as the load constraint instead of the set mean.
+
+## 29. Tuned ROSCO baseline: three quarters of the MPC margin belongs to an untuned baseline (2026-09-18 01:32-03:15; `scripts/rosco_tune.py`, stage A of `campaign_must2.sh`)
+
+Question. Every percentage in this repository is a reduction relative to the GSPI baseline as ROSCO ships it for
+the NREL 5 MW. What is left of the margins when that baseline gets the budget every other controller got?
+
+Search. Four parameters of the baseline's own pitch loop: factors on the gain-scheduled proportional and integral
+gain tables (0.4-3), corner of the generator-speed low-pass filter (0.6-4 rad/s; the upper bound keeps the corner
+near the 3P frequency at rated speed, 3.8 rad/s), gain of ROSCO's fore-aft tower damper (0-0.004). 40 candidates
+(20 random, 20 local search around the incumbent), each a copy of the OpenFAST case with an edited `DISCON.IN`,
+scored under J against the ORIGINAL GSPI baselines on the 600 s supervisor winds (8 / 12.5 / 15 m/s, TurbSim
+seeds 1-2). Identity check of the template-editing path: the untuned start scores J = -0.04 (the filter corner is
+rounded to three digits).
+
+Result. Best candidate: proportional x1.13, integral x1.02, **filter corner 1.57 -> 3.42 rad/s**, tower damper
+0.00102. Supervisor J 16.90; held-out **16.19** (wind seeds 3-6: 22.6 / 35.1 / 4.9 / 2.1) and **17.07** (wind
+seeds 7-10: 23.4 / 35.9 / 7.4 / 1.6), all four terms positive on both sets, energy +0.07 %, **pitch travel 1.08x
+the untuned GSPI**. No overfit to the supervisor winds. The random half of the box is mostly destructive
+(18 of 20 below -10 J; its one hit is the 16.90 point, which the local search never beat), the neighbourhood of
+that point is a broad plateau: 17 of 20 local candidates positive, 11 of them at 9.8-16.5 J with filter corners
+2.3-3.8 rad/s and travel 0.75-1.3x; one of them (x1.02 / x0.86 / 3.43 rad/s) scores 15.6 with LESS travel than the untuned GSPI (0.94x)
+and 11 % tower fatigue. The lever is the speed filter: the shipped corner costs the loop phase, and a faster
+filter buys regulation (40 % power and speed MSE at 15 m/s, the same as the MPC rows) at no actuation cost.
+
+Paired bootstrap over the 24 held-out 600 s episodes (`docs/tables/paired_bootstrap.csv`):
+
+| A - B | diff in J | 95 % interval | travel of A / B (x untuned GSPI) |
+|---|---|---|---|
+| nominal MPC - tuned ROSCO | +0.95 | [+0.22, +1.74] | 7.5 / 1.08 |
+| offset-free reference - tuned ROSCO | +4.67 | [+3.81, +5.57] | 7.5 / 1.08 |
+| J-selected point - tuned ROSCO | +5.43 | [+4.47, +6.44] | 7.8 / 1.08 |
+| knee2 - tuned ROSCO | +4.53 | [+3.53, +5.55] | 2.9 / 1.08 |
+
+Per mean wind (power / speed / tower / blade): tuned ROSCO 12.5 m/s 6 / 31 / 12 / 5 and 15 m/s 40 / 40 / 7 / 1;
+offset-free reference 8 / 27 / 56 / 10 and 43 / 43 / 10 / -1.
+
+Reading. (1) On this set the MPC rows keep **4.5-5.4 J of their 21-22 J** against a tuned baseline; the nominal
+MPC keeps 1 J while spending 7x the actuation. Roughly three quarters of every margin reported in s18-s26 was the
+untuned speed filter. (2) What the MPC keeps is specific: tower fatigue at 12.5 m/s (56-62 % vs 12 %), i.e. the
+term that needs a tower model. Regulation at 15 m/s is a tie. (3) Every comparison in a paper has to carry the
+tuned ROSCO as a baseline row, and the MPC claim becomes "tower fatigue near rated at equal regulation", not
+"better regulation". (4) The tuned ROSCO on the wind-range set (s28) is queued in `campaign_must3.sh`.
+
+Artefacts: `~/wtrl/exp/roscotune600/{history.jsonl,best.json,cache/}`.

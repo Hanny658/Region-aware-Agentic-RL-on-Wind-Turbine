@@ -26,6 +26,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.mpc_param_search import INCUMBENT0, key_of  # noqa: E402
+from scripts.rosco_tune import clip as rosco_clip, key_of as rosco_key  # noqa: E402
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--exp", default=os.path.expanduser("~/wtrl/exp"))
@@ -39,6 +40,8 @@ JSEL = {"horizon": 20, "r": 0.255, "qt": 3.25, "wc_v": 0.38, "tau_adapt": 5.2, "
 
 def files(kind, cp="cp1"):
     k0, kj = key_of(INCUMBENT0), key_of(JSEL)
+    rb = f"{a.exp}/roscotune600/best.json"
+    kr = rosco_key(rosco_clip(json.load(open(rb))["params"])) if os.path.exists(rb) else "none"
     m = {"offset-free reference": [f"{R}/cache/eval_{k0}_{cp}_{s}.json" for s in ("s3456", "s78910")],
          "J-selected point": [f"{R}/cache/eval_{kj}_{cp}_{s}.json" for s in ("s3456", "s78910")],
          "knee2 (2.9x GSPI travel)": [f"{R}/refs/eval_knee2_{cp}_{s}.json" for s in ("s3456", "s78910")],
@@ -47,7 +50,8 @@ def files(kind, cp="cp1"):
          "nominal MPC": [f"{R}/refs/eval_nominal_{cp}_{s}.json" for s in ("s3456", "s78910")],
          "adaptive (RLS) reference": [f"{R}/refs/eval_rls_{cp}_{s}.json" for s in ("s3456", "s78910")],
          "offset-free + 3P notch": [f"{R}/refs/eval_offset_notch5_{cp}_{s}.json" for s in ("s3456", "s78910")],
-         "ROSCO + tower damper": [f"{R}/refs/eval_towerdamper_{s}.json" for s in ("s3456", "s78910")]}
+         "ROSCO + tower damper": [f"{R}/refs/eval_towerdamper_{s}.json" for s in ("s3456", "s78910")],
+         "tuned ROSCO": [f"{a.exp}/roscotune600/cache/eval_{kr}_{s}.json" for s in ("s3456", "s78910")]}
     return m[kind]
 
 
@@ -111,11 +115,15 @@ compare("offset-free reference", "nominal MPC", "cp0.95")
 compare("adaptive (RLS) reference", "offset-free reference")
 compare("offset-free + 3P notch", "offset-free reference")
 compare("ROSCO + tower damper", "nominal MPC")
+compare("nominal MPC", "tuned ROSCO")
+compare("offset-free reference", "tuned ROSCO")
+compare("J-selected point", "tuned ROSCO")
+compare("knee2 (2.9x GSPI travel)", "tuned ROSCO")
 
 print("\nper controller, both held-out sets (exact model): J, actuator duty, peak generator speed, energy change")
 print(f"{'controller':>28} {'J':>6} {'duty':>6} {'xGSPI':>6} {'peak speed':>10} {'energy':>7}   per mean wind: P / w / T / B")
 for name in ("nominal MPC", "offset-free reference", "J-selected point", "knee3 (4.0x)", "knee2 (2.9x GSPI travel)",
-             "knee1 (2.4x)", "ROSCO + tower damper"):
+             "knee1 (2.4x)", "ROSCO + tower damper", "tuned ROSCO"):
     E = episodes(files(name))
     if not E:
         continue

@@ -10,3 +10,7 @@ offset-free reference,nominal MPC,cp0.95,24,21.759,9.086,12.674,11.329,14.054,1.
 adaptive (RLS) reference,offset-free reference,cp1,24,21.781,21.301,0.48,0.239,0.759,1.0
 offset-free + 3P notch,offset-free reference,cp1,24,19.716,21.301,-1.585,-1.841,-1.336,0.0
 ROSCO + tower damper,nominal MPC,cp1,24,-0.129,17.582,-17.711,-18.696,-16.752,0.0
+nominal MPC,tuned ROSCO,cp1,24,17.582,16.628,0.954,0.217,1.743,0.9954
+offset-free reference,tuned ROSCO,cp1,24,21.301,16.628,4.673,3.815,5.571,1.0
+J-selected point,tuned ROSCO,cp1,24,22.062,16.628,5.434,4.475,6.436,1.0
+knee2 (2.9x GSPI travel),tuned ROSCO,cp1,24,21.16,16.628,4.532,3.534,5.55,1.0
