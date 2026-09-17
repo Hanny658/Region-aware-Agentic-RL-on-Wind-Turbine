@@ -43,6 +43,27 @@ ROWS = [  # label, path glob of the eval json (one per run), scored window [s]
     ("x0.95 offset-free base + agent-reward residual", sorted(glob.glob(f"{E}/morC3t_s*/eval_heldout_s3456_ckpt_best.json")), 130.0),
     ("offset-free base + fixed-reward residual", sorted(glob.glob(f"{E}/mo3t_s*/eval_heldout_s3456_ckpt_best.json")), 130.0),
 ]
+# 600 s rows (scored window 580 s): the references of the 600 s protocol, with and without the 3P notch
+R6 = f"{E}/mpcsearch600/refs"
+try:
+    import sys
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+    from scripts.mpc_param_search import INCUMBENT0, key_of
+    _off600 = f"{E}/mpcsearch600/cache/eval_{key_of(INCUMBENT0)}_cp1_s3456.json"
+    _off600m = f"{E}/mpcsearch600/cache/eval_{key_of(INCUMBENT0)}_cp0.95_s3456.json"
+except Exception:  # noqa: BLE001
+    _off600 = _off600m = ""
+ROWS += [
+    ("600 s: LPV-MPC, nominal", [f"{R6}/eval_nominal_cp1_s3456.json"], 580.0),
+    ("600 s: LPV-MPC, adaptive (RLS)", [f"{R6}/eval_rls_cp1_s3456.json"], 580.0),
+    ("600 s: LPV-MPC, offset-free", [_off600], 580.0),
+    ("600 s: LPV-MPC, offset-free + 3P notch Q5", [f"{R6}/eval_offset_notch5_cp1_s3456.json"], 580.0),
+    ("600 s: LPV-MPC, offset-free, Cp x0.95", [_off600m], 580.0),
+    ("600 s: offset-free + 3P notch Q5, Cp x0.95", [f"{R6}/eval_offset_notch5_cp0.95_s3456.json"], 580.0),
+    ("600 s: ROSCO with tower damper", [f"{R6}/eval_towerdamper_s3456.json"], 580.0),
+    ("600 s: x0.95 offset-free base + fixed-reward residual", sorted(glob.glob(f"{E}/moC3t_s*/eval_heldout600_s3456.json")), 580.0),
+    ("600 s: x0.95 offset-free base + agent-reward residual", sorted(glob.glob(f"{E}/morC3t_s*/eval_heldout600_s3456.json")), 580.0),
+]
 
 
 def stats(path):

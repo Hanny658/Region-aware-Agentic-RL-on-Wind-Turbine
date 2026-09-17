@@ -41,6 +41,20 @@ ROWS = [
     ("x0.95 offset-free base + fixed reward", sorted(glob.glob(f"{E}/moC3t_s*/eval_heldout_s3456_ckpt_best.csv"))),
     ("x0.95 offset-free base + agent reward", sorted(glob.glob(f"{E}/morC3t_s*/eval_heldout_s3456_ckpt_best.csv"))),
 ]
+R6 = f"{E}/mpcsearch600/refs"
+try:
+    import sys as _sys
+    _sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+    from scripts.mpc_param_search import INCUMBENT0 as _I0, key_of as _key
+    _off600 = f"{E}/mpcsearch600/cache/eval_{_key(_I0)}_cp1_s3456.csv"
+except Exception:  # noqa: BLE001
+    _off600 = ""
+ROWS += [
+    ("600 s: LPV-MPC, offset-free", [_off600]),
+    ("600 s: LPV-MPC, offset-free + 3P notch Q5", [f"{R6}/eval_offset_notch5_cp1_s3456.csv"]),
+    ("600 s: LPV-MPC, adaptive (RLS)", [f"{R6}/eval_rls_cp1_s3456.csv"]),
+    ("600 s: ROSCO with tower damper", [f"{R6}/eval_towerdamper_s3456.csv"]),
+]
 
 
 def read(paths):
