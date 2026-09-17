@@ -46,6 +46,14 @@ def load(tag):
     return json.load(open(p))["per_episode"] if os.path.exists(p) else None
 
 
+def peak_speed(tag):
+    """largest generator speed over all episodes, relative to rated (from the per-episode CSV of the evaluation)"""
+    q = f"{a.dir}/eval_{tag}.csv"
+    if not os.path.exists(q):
+        return float("nan")
+    return max(float(r["gen_speed_max_rel"]) for r in csv.DictReader(open(q)))
+
+
 def terms_of(recs):
     out = []
     for t in TERMS:
@@ -63,7 +71,7 @@ def objective(recs):
 
 
 rows, wind_rows, pair_rows = [], [], []
-print(f"{'controller':>30} {'J':>6} {'duty':>6} {'xGSPI':>6} {'energy':>7} | power / speed / tower / blade | J by mean wind")
+print(f"{'controller':>30} {'J':>6} {'duty':>6} {'xGSPI':>6} {'energy':>7} {'peak w':>6} | power / speed / tower / blade | J by mean wind")
 for tag in ORDER:
     per = load(tag)
     if per is None:
@@ -80,10 +88,10 @@ for tag in ORDER:
         wind_rows.append({"controller": NAMES.get(tag, tag), "mean_wind": u, "n": len(by[u]), "J": round(ju, 2),
                           **{s: round(x, 2) for s, x in zip(SHORT, tu)},
                           "duty_x_gspi": round(np.mean([r["pitch_travel_deg"] for r in by[u]]) / np.mean([r["pitch_travel_base_deg"] for r in by[u]]), 3)})
-    print(f"{NAMES.get(tag, tag):>30} {J:6.2f} {trav / a.scored_s:6.3f} {trav / base:6.2f} {-loss:+6.2f}% | "
+    print(f"{NAMES.get(tag, tag):>30} {J:6.2f} {trav / a.scored_s:6.3f} {trav / base:6.2f} {-loss:+6.2f}% {peak_speed(tag):6.3f} | "
           + " / ".join(f"{x:5.1f}" for x in t) + " | " + " ".join(f"{x:5.1f}" for x in jw))
     rows.append({"controller": NAMES.get(tag, tag), "n_episodes": len(per), "J": round(J, 2), **{s: round(x, 2) for s, x in zip(SHORT, t)},
-                 "energy_change_pct": round(-loss, 3), "duty_deg_per_s": round(trav / a.scored_s, 4), "duty_x_gspi": round(trav / base, 3),
+                 "energy_change_pct": round(-loss, 3), "duty_deg_per_s": round(trav / a.scored_s, 4), "duty_x_gspi": round(trav / base, 3), "peak_gen_speed_rel": round(peak_speed(tag), 4),
                  **{f"J_U{u:g}": round(x, 2) for u, x in zip(sorted(by), jw)}})
 
 rng = np.random.default_rng(0)

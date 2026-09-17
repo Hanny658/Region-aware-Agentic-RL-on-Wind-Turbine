@@ -1070,6 +1070,9 @@ carried into a paper as general:
    saturate at 70-77 % while the tower term falls from 55-60 % to ~0; the blade term is 16-20 % at 12 m/s and ~0
    above 16 m/s.
 5. The ROSCO tower damper is worth nothing here either (-0.05 [-0.34, +0.21]; tower +0.5, speed -0.6).
+6. **Overspeed margin.** Largest generator speed over the 42 episodes: GSPI 1.106 x rated, nominal MPC 1.068,
+   compensated rows 1.056-1.063 (`peak_gen_speed_rel` in `range_controllers.csv`). Every MPC row roughly halves the
+   peak excursion above rated; none comes near a trip level.
 
 Consequence for the evaluation protocol: report the range set as the main table (it is what the literature scan
 of `docs/literature_2026-09-16.md` found to be expected), report per-wind-speed terms next to the aggregate, and
