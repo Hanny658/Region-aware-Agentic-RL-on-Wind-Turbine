@@ -984,3 +984,93 @@ below the MPC front at every duty level (s25).
 
 Artefacts: `~/wtrl/exp/mpcsearch600/refs/eval_knee{1,2,3}_*.json`, `docs/tables/pareto_duty.csv`,
 `docs/figures/pareto_duty.png`. Machine idle after 10:07.
+
+## 27. Paired statistics for the deterministic controllers (2026-09-17; `scripts/dev/paired_bootstrap.py`, no simulations)
+
+An MPC evaluation is deterministic given the wind file, so the uncertainty of "controller A vs controller B" is
+the wind realisation, not a training seed. All reference controllers ran on the same 24 held-out 600 s episodes
+(8 / 12.5 / 15 m/s x TurbSim seeds 3-10), so differences are paired by episode: 20 000 bootstrap resamples,
+A and B drawn with the same indices, stratified by mean wind, J recomputed on every resample exactly as
+`eval/fitness.py` does. `docs/tables/paired_bootstrap.csv`.
+
+| A - B | model | diff in J | 95 % interval |
+|---|---|---|---|
+| offset-free - nominal MPC | exact | +3.72 | [+3.02, +4.48] |
+| offset-free - nominal MPC | Cp/Ct x0.95 | +12.67 | [+11.33, +14.05] |
+| adaptive (RLS) - offset-free | exact | +0.48 | [+0.24, +0.76] |
+| J-selected point - offset-free reference | exact | +0.76 | [+0.41, +1.14] |
+| knee2 - offset-free reference | exact | -0.14 | [-0.68, +0.43] |
+| knee2 - offset-free reference | Cp/Ct x0.95 | -0.07 | [-0.72, +0.61] |
+| knee3 - offset-free reference | exact | +0.49 | [-0.32, +1.29] |
+| knee1 - offset-free reference | exact | -2.65 | [-3.21, -2.07] |
+| knee2 - J-selected point | exact | -0.90 | [-1.43, -0.37] |
+| offset-free + 3P notch - offset-free | exact | -1.58 | [-1.84, -1.34] |
+
+Reading. The statements of s19-s26 that were made on set means survive pairing: compensation beats the nominal
+MPC, the J-selected point of the verified search beats the hand-set reference, the 3P notch costs J, knee1 is
+below the knee. "knee2 equals the reference at 38-41 % of the travel" is an equivalence within +-0.7 J, and knee2
+is 0.9 J below the J-selected point: the duty constraint is not free against the best J, it is free against the
+hand-set reference. Known gap: the peak generator-speed column of the script reads NaN (the quantity is in the
+evaluation CSV, not in the per-episode JSON).
+
+## 28. Wind coverage: 12-24 m/s, IEC turbulence class B, 600 s, six realisations (2026-09-17 12:20 - 09-18 01:32; `campaign_must1_range.sh`, `scripts/dev/range_table.py`)
+
+Protocol. 42 new wind fields `U{12,14,...,24}_TIB_S{1..6}` (650 s, TurbSim normal turbulence model class B:
+turbulence intensity ~17 % at 12 m/s to ~14 % at 24 m/s) added to the separate 600 s bank `~/wtrl/wind600`;
+paired GSPI baselines in `~/wtrl600`; the canonical bank is untouched. None of these winds selected anything,
+so all 42 episodes are held-out for every controller. Identity check J = 0.00. Every controller is the base of
+the environment with a zero residual. Tables: `docs/tables/range_{controllers,per_wind,paired}.csv`.
+
+| controller | J | duty deg/s | x GSPI | energy | power / speed / tower / blade | J at 12 / 14 / 16 / 18 / 20 / 22 / 24 m/s |
+|---|---|---|---|---|---|---|
+| ROSCO + tower damper | -0.05 | 0.478 | 1.00 | -0.00 % | -0.3 / -0.6 / 0.5 / 0.2 | -0.4 0.1 -0.1 -0.1 -0.0 0.0 0.1 |
+| nominal MPC | 28.48 | 0.955 | 2.01 | +0.23 % | 42.0 / 46.9 / 20.9 / 4.1 | 19.9 22.5 20.0 29.1 34.1 36.5 37.3 |
+| offset-free MPC | 29.50 | 0.940 | 1.97 | +0.23 % | 47.6 / 52.7 / 14.3 / 3.3 | 20.8 21.9 24.4 31.8 34.7 36.1 36.7 |
+| J-selected MPC (s21) | 29.76 | 1.065 | 2.24 | +0.35 % | 47.8 / 53.4 / 14.8 / 3.0 | 22.5 23.1 25.2 32.1 34.5 35.5 35.5 |
+| duty knee 3 (s26) | 30.28 | 0.979 | 2.05 | +0.24 % | 47.2 / 54.8 / 15.4 / 3.7 | 22.6 24.2 25.8 32.6 34.4 36.0 36.4 |
+| duty knee 2 (s26) | 29.66 | 0.799 | 1.68 | +0.23 % | 46.2 / 53.2 / 14.6 / 4.7 | 22.4 23.3 24.8 31.8 33.9 35.3 36.1 |
+| nominal MPC, Cp/Ct x0.95 | 27.78 | 0.979 | 2.06 | +0.47 % | 43.5 / 45.0 / 19.0 / 3.7 | 19.2 20.7 19.8 29.0 33.4 35.7 36.6 |
+| offset-free MPC, Cp/Ct x0.95 | 29.50 | 0.958 | 2.01 | +0.21 % | 48.1 / 53.5 / 13.3 / 3.1 | 20.4 21.4 24.8 32.1 34.9 36.2 36.8 |
+| duty knee 2, Cp/Ct x0.95 | 29.63 | 0.809 | 1.70 | +0.21 % | 46.8 / 53.9 / 13.2 / 4.5 | 21.7 22.8 24.6 32.2 34.3 35.6 36.2 |
+
+Paired bootstrap over the 42 episodes (A - B, 95 % interval; J and the four terms):
+
+| A - B | J | power | speed | tower | blade |
+|---|---|---|---|---|---|
+| offset-free - nominal | +1.02 [+0.59, +1.45] | +5.56 [+4.77, +6.34] | +5.85 [+5.10, +6.60] | **-6.59 [-7.06, -6.13]** | -0.76 [-1.37, -0.17] |
+| offset-free - nominal, both x0.95 | +1.72 [+1.12, +2.31] | +4.60 | +8.52 | -5.61 [-6.30, -4.91] | -0.64 |
+| nominal x0.95 - nominal exact | -0.70 [-1.12, -0.27] | +1.48 | -1.92 | -1.99 | -0.39 |
+| offset-free x0.95 - offset-free exact | -0.00 [-0.14, +0.14] | +0.52 | +0.75 | -1.01 | -0.26 |
+| knee2 - offset-free | +0.16 [-0.09, +0.39] | -1.43 [-1.74, -1.13] | +0.45 | +0.25 | +1.35 [+1.06, +1.64] |
+| knee3 - offset-free | +0.78 [+0.54, +1.03] | -0.39 | +2.10 | +1.09 | +0.34 |
+| J-selected - offset-free | +0.26 [+0.05, +0.46] | +0.21 | +0.70 | +0.46 | -0.34 |
+| knee2 - J-selected | -0.10 [-0.39, +0.19] | -1.64 | -0.25 | -0.21 | +1.68 [+1.26, +2.14] |
+| knee2 x0.95 - knee2 exact | -0.03 [-0.14, +0.08] | +0.67 | +0.75 | -1.35 | -0.18 |
+| ROSCO tower damper - GSPI | -0.05 [-0.34, +0.21] | -0.28 | -0.60 | +0.47 [-0.00, +0.84] | +0.19 |
+
+Reading - several earlier statements are specific to the low-turbulence 8 / 12.5 / 15 m/s set and must not be
+carried into a paper as general:
+
+1. **Actuation.** "The MPC buys its J with ~7.6x the GSPI pitch travel" (s22) holds at turbulence intensity 8 %,
+   where the GSPI barely moves (0.22 deg/s). At class B the GSPI itself travels 0.48 deg/s and every MPC row is at
+   **1.7-2.2x**; the ratio grows with wind speed (1.2x at 14 m/s, 3.0x at 24 m/s). The knee still orders the same
+   way: knee2 has the J of the reference (+0.16 [-0.09, +0.39]) at 85 % of its travel and 75 % of the travel of the
+   J-selected point, with +1.4 / +1.7 points of blade fatigue. The margin is 15-25 % here, not 60 %.
+2. **Model-error fragility.** Cp/Ct x0.95 costs the nominal MPC 0.70 J [0.27, 1.12] over the range, not half of
+   its J (16.3 -> 8.5 on the low-turbulence set, where the 8 m/s episodes carry the loss). The compensated rows do
+   not move at all (-0.00 and -0.03, intervals +-0.14). Compensation is worth +1.0 J exact and +1.7 J at x0.95.
+3. **Composition of the compensation.** Offset-free compensation is a trade, not a gain on every term: +5.6 power,
+   +5.9 speed, **-6.6 tower** (all intervals exclude 0). Per wind speed (`range_per_wind.csv`) the tower term of
+   every compensated row - reference, J-selected, knee2, knee3 - is **negative from 20 m/s up** (-1...-9 % at
+   20-24 m/s, i.e. worse tower fatigue than the GSPI), while the nominal MPC stays non-negative at every wind speed
+   (58.8 % at 12 m/s down to 0.9 % at 24 m/s). With "better regulation without degrading loads" as the claim, the
+   aggregate J hides a per-wind-speed violation. All MPC settings were selected on 8 / 12.5 / 15 m/s winds; the
+   tower weight that is right at 12-15 m/s is too small at 20+ m/s.
+4. **Where the J comes from.** J rises with wind speed (20 at 12 m/s, 37 at 24 m/s) because the regulation terms
+   saturate at 70-77 % while the tower term falls from 55-60 % to ~0; the blade term is 16-20 % at 12 m/s and ~0
+   above 16 m/s.
+5. The ROSCO tower damper is worth nothing here either (-0.05 [-0.34, +0.21]; tower +0.5, speed -0.6).
+
+Consequence for the evaluation protocol: report the range set as the main table (it is what the literature scan
+of `docs/literature_2026-09-16.md` found to be expected), report per-wind-speed terms next to the aggregate, and
+treat "no term negative at any wind speed" as the load constraint instead of the set mean.
