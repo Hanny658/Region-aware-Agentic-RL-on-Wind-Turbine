@@ -65,6 +65,9 @@ arm_args() {  # prefix -> train.py arguments
     mo3t)   echo "--supervisor guard         --reward v3 --knobs_json $KNOBS --base mpc --base_adapt offset" ;;
     moC3t)  echo "--supervisor guard         --reward v3 --knobs_json $KNOBS --base mpc --base_adapt offset --base_mm_cp 0.95" ;;
     morC3t) echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS --base mpc --base_adapt offset --base_mm_cp 0.95" ;;
+    # must-do 3 (2026-09-17): the residual trained over the whole model-error range (domain randomisation)
+    mgR3t)  echo "--supervisor guard         --reward v3 --knobs_json $KNOBS --base mpc --base_mm_cp_range 0.85 1.15" ;;
+    mrwR3t) echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS --base mpc --base_mm_cp_range 0.85 1.15" ;;
     # the RL analogue of the MPC's qt grid: the tuned default with the tower weight at 3 / 10 / 30
     # (the 30-episode fork search never keeps a higher lambda_tower — tower DEL responds too slowly)
     jg3L3)  echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT3.json" ;;

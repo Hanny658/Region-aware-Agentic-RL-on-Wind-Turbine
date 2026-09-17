@@ -121,6 +121,9 @@ def main():
     ap.add_argument("--base_adapt", default="none", choices=["none", "offset", "rls"],
                     help="with --base mpc: model-error compensation of the MPC (offset-free / adaptive)")
     ap.add_argument("--base_tau_adapt", type=float, default=5.0, help="time constant of --base_adapt [s]")
+    ap.add_argument("--base_mm_cp_range", nargs=2, type=float, default=None, metavar=("LO", "HI"),
+                    help="with --base mpc: draw the MPC model's Cp/Ct scale uniformly from [LO, HI] every training "
+                         "episode (domain randomisation); deterministic evaluations use a fixed grid over the range")
     ap.add_argument("--base_mm_cp", type=float, default=1.0,
                     help="with --base mpc: Cp/Ct scale of the MPC's internal model (aerodynamic mismatch)")
     ap.add_argument("--knobs_json", default=None,
@@ -221,6 +224,8 @@ def main():
         from envs.factory import mpc_base_kw
         cfg.base_ctrl, cfg.mpc_kw, cfg.obs_base = "mpc", mpc_base_kw(args.base_mm_cp, adapt=args.base_adapt,
                                                                       tau_adapt=args.base_tau_adapt), True
+        if args.base_mm_cp_range:
+            cfg.mpc_kw = {**cfg.mpc_kw, "cp_scale_range": [float(args.base_mm_cp_range[0]), float(args.base_mm_cp_range[1])]}
         cfg_over["base_ctrl"], cfg_over["mpc_kw"], cfg_over["obs_base"] = "mpc", cfg.mpc_kw, True
     cfg_over["reward"] = cfg.reward
     obs_dim = (5 + (2 if cfg.region_flag_in_obs else 0) + (1 if cfg.obs_fa_acc else 0)

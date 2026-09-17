@@ -14,20 +14,23 @@ HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE.parent / "data" / "wind" / "templates" / "turbsim_5mw.inp"
 
 
-def wind_name(u: float, ti: float, seed: int) -> str:
-    return f"U{u:g}_TI{ti:g}_S{seed}"
+def wind_name(u: float, ti, seed: int) -> str:
+    return f"U{u:g}_TI{ti.upper() if isinstance(ti, str) else format(ti, 'g')}_S{seed}"
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--means", nargs="+", type=float, required=True)
     ap.add_argument("--seeds", nargs="+", type=int, default=[1])
-    ap.add_argument("--ti", type=float, default=8.0, help="turbulence intensity in percent")
+    ap.add_argument("--ti", default="8", help="turbulence intensity in percent, or an IEC turbulence class A / B / C "
+                                              "(TurbSim then applies the normal turbulence model's TI(V))")
     ap.add_argument("--time", type=float, default=200.0, help="AnalysisTime [s]")
     ap.add_argument("--out", type=str, required=True)
     ap.add_argument("--jobs", type=int, default=4)
     args = ap.parse_args()
 
+    args.ti = args.ti.upper() if args.ti.strip().upper() in ("A", "B", "C") else float(args.ti)
+    ti_field = f'"{args.ti}"' if isinstance(args.ti, str) else f"{args.ti:g}"
     out = Path(os.path.expanduser(args.out))
     out.mkdir(parents=True, exist_ok=True)
     tmpl = TEMPLATE.read_text()
@@ -39,7 +42,7 @@ def main():
             if (out / f"{name}.bts").exists():
                 continue
             txt = (tmpl.replace("{{SEED}}", str(s)).replace("{{URef}}", f"{u:g}")
-                   .replace("{{TI}}", f"{args.ti:g}").replace("{{TIME}}", f"{args.time:g}"))
+                   .replace("{{TI}}", ti_field).replace("{{TIME}}", f"{args.time:g}"))
             inp.write_text(txt)
             procs.append(subprocess.Popen(["turbsim", str(inp)], cwd=out,
                                           stdout=open(out / f"{name}.log", "w"), stderr=subprocess.STDOUT))

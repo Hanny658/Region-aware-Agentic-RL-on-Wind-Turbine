@@ -123,7 +123,10 @@ class ResidualPitchEnv(gym.Env):
         if cfg.base_ctrl == "mpc":
             from controllers.mpc import LPVMPC
             cp_path = os.path.expanduser(os.environ.get("WTRL_HOME", "~/wtrl")) + "/runs/toy_discon/Cp_Ct_Cq.NREL5MW.txt"
-            self.mpc = LPVMPC(self.tb, cp_path, **cfg.mpc_kw)
+            kw = dict(cfg.mpc_kw)
+            # domain randomisation of the MPC's aerodynamic model error: [lo, hi] for the Cp/Ct scale
+            self._cp_range = kw.pop("cp_scale_range", None)
+            self.mpc = LPVMPC(self.tb, cp_path, **kw)
             self.mpc_hold = max(1, int(round(self.mpc.Ts / self.dt)))
             self._k_base = 0
         n_obs = (5 + (2 if cfg.region_flag_in_obs else 0) + (1 if cfg.obs_fa_acc else 0)
@@ -220,6 +223,15 @@ class ResidualPitchEnv(gym.Env):
             self.mpc.reset()
             self._beta_base = None
             self._k_base = 0
+        if self.mpc is not None and getattr(self, "_cp_range", None):
+            lo, hi = float(self._cp_range[0]), float(self._cp_range[1])
+            if options and options.get("eval"):
+                # deterministic rollouts: a fixed grid over the range, by episode index (repeatable selection)
+                grid = [0.0, 1.0, 1.0 / 3, 2.0 / 3, 1.0 / 6, 5.0 / 6]
+                u = grid[self._ep_idx % len(grid)]
+            else:
+                u = float(self.rng.uniform())
+            self.mpc.cp_scale = lo + u * (hi - lo)
         m = self._sim_reset(self.spec_ep)
         self.router.reset(R3 if self.spec_ep.mean_wind > self.tb["rated_wind_ms"] else R2)
         self.region = self.router.update(m["beta_native"], m["min_pit"])

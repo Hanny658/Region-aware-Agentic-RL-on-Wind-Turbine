@@ -13,8 +13,19 @@ WTRL = os.path.expanduser(os.environ.get("WTRL_HOME", "~/wtrl"))
 TEMPLATE = os.path.expanduser(os.environ.get("WTRL_TEMPLATE", f"{WTRL}/runs/template_5mw"))
 
 
-def wind_path(mean: float, ti: float = 8.0, seed: int = 1) -> str:
-    return f"{WIND_DIR}/U{mean:g}_TI{ti:g}_S{seed}.bts"
+def ti_label(ti) -> str:
+    """Turbulence label of a wind file: the intensity in percent (8 -> "8") or an IEC class ("B")."""
+    return ti.upper() if isinstance(ti, str) else f"{ti:g}"
+
+
+def parse_ti(text):
+    """argparse type: a turbulence intensity in percent, or an IEC turbulence class A / B / C."""
+    t = str(text).strip().upper()
+    return t if t in ("A", "B", "C") else float(text)
+
+
+def wind_path(mean: float, ti=8.0, seed: int = 1) -> str:
+    return f"{WIND_DIR}/U{mean:g}_TI{ti_label(ti)}_S{seed}.bts"
 
 
 def episode_list(means, seeds=(1,), ti=8.0, episode_s=150.0, warmup_s=20.0) -> list[EpisodeSpec]:

@@ -105,7 +105,7 @@ def run_episode(env, policy_set: dict, hidden, episode_index: int, deterministic
         env.set_knobs(knobs)
     if seed is not None:
         torch.manual_seed(seed)
-    obs, info = env.reset(options={"episode_index": episode_index})
+    obs, info = env.reset(options={"episode_index": episode_index, "eval": bool(deterministic)})
     O, A, LP, RW, RG = [], [], [], [], []
     # rotation-held IPC (Coquelet-style train-slow): a separate slow actor decides (theta_d,
     # theta_q) once per `ipc_hold_s` and the value is held; its macro-transitions are returned

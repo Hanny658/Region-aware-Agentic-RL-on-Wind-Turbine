@@ -14,7 +14,7 @@ from pathlib import Path
 
 import numpy as np
 
-from envs.factory import baseline_dir, episode_list, make_env
+from envs.factory import baseline_dir, episode_list, make_env, parse_ti
 
 
 def run_one(args):
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     ap.add_argument("--backend", required=True, choices=["toy", "openfast"])
     ap.add_argument("--means", nargs="+", type=float, required=True)
     ap.add_argument("--seeds", nargs="+", type=int, default=[1])
-    ap.add_argument("--ti", type=float, default=8.0)
+    ap.add_argument("--ti", type=parse_ti, default=8.0, help="turbulence intensity [%] or IEC class A / B / C")
     ap.add_argument("--episode_s", type=float, default=150.0)
     ap.add_argument("--warmup_s", type=float, default=20.0)
     ap.add_argument("--jobs", type=int, default=1)

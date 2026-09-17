@@ -20,7 +20,7 @@ import yaml
 from agents.rollout import WorkerPool
 from controllers.router import R2, R3
 from envs.base_env import PROJ
-from envs.factory import baseline_dir, episode_list
+from envs.factory import baseline_dir, episode_list, parse_ti, ti_label
 from eval.fitness import baseline_metrics, fitness
 
 
@@ -31,7 +31,7 @@ def main():
     ap.add_argument("--backend", default="toy", choices=["toy", "openfast"])
     ap.add_argument("--means", nargs="+", type=float, default=[8, 12.5, 15])
     ap.add_argument("--seeds", nargs="+", type=int, default=[1])
-    ap.add_argument("--ti", type=float, default=8.0,
+    ap.add_argument("--ti", type=parse_ti, default=8.0,
                     help="turbulence intensity [%] selecting the wind bank / baseline files "
                          "(U<mean>_TI<ti>_S<seed>); the stress classes use 14 and 22")
     ap.add_argument("--episode_s", type=float, default=150.0)
@@ -122,7 +122,7 @@ def main():
     tgt = args.fitness_target or cfg_run.get("reward", {}).get("fitness_target", "blade")
     fit = fitness(res, base, target=tgt)
     # default tag unchanged at TI 8 (the historical bank) so old campaign scripts keep their filenames
-    ti_tag = "" if args.ti == 8.0 else f"_ti{args.ti:g}"
+    ti_tag = "" if args.ti == 8.0 else f"_ti{ti_label(args.ti)}"
     tag = args.tag or (f"{args.backend}{ti_tag}_s{'-'.join(map(str, args.seeds))}"
                        + ("_gspi" if args.gspi else ""))
     out_dir = Path(os.path.expanduser(args.out)) if args.out else run
