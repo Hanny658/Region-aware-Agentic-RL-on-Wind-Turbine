@@ -68,6 +68,13 @@ arm_args() {  # prefix -> train.py arguments
     # must-do 3 (2026-09-17): the residual trained over the whole model-error range (domain randomisation)
     mgR3t)  echo "--supervisor guard         --reward v3 --knobs_json $KNOBS --base mpc --base_mm_cp_range 0.85 1.15" ;;
     mrwR3t) echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS --base mpc --base_mm_cp_range 0.85 1.15" ;;
+    # residual on the TUNED ROSCO under the constrained objectives (2026-09-18, campaign_agent_rt.sh sets
+    # WTRL_HOME / WTRL_WIND / WTRL_TEMPLATE so that the base, the reward reference and the paired baselines are
+    # the tuned ROSCO): C = regulation target, loads constrained; CT = tower target, regulation + blade constrained.
+    # --objective given last overrides the J of run().
+    tgC3t)  echo "--supervisor guard         --reward v3 --knobs_json $KNOBS --objective C" ;;
+    trwC3t) echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective C" ;;
+    tgT3t)  echo "--supervisor guard         --reward v3 --knobs_json $KNOBS --objective CT" ;;
     # the RL analogue of the MPC's qt grid: the tuned default with the tower weight at 3 / 10 / 30
     # (the 30-episode fork search never keeps a higher lambda_tower — tower DEL responds too slowly)
     jg3L3)  echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT3.json" ;;

@@ -151,6 +151,8 @@ def main():
           f"powerMSE {fit['J_power_mse_red_pct']:+.1f}%  speedMSE {fit['J_gen_speed_mse_red_pct']:+.1f}%  "
           f"towerDEL {fit['J_TwrBsMyt_DEL_red_pct']:+.1f}%  bladeDEL {fit['J_RootMyc1_DEL_red_pct']:+.1f}%"
           + ("" if fit["energy_ok"] else "  [ENERGY > 1 %]"))
+    print(f"   C={fit['C']:.2f} (regulation {fit['C_goal']:.2f}, violation {fit['C_violation_pct']:.2f} %)   "
+          f"CT={fit['CT']:.2f} (tower {fit['CT_goal']:.2f}, violation {fit['CT_violation_pct']:.2f} %)")
     for pe in fit["per_episode"]:
         print(f"   U{pe['mean_wind']:g}: DELred {pe['del_red_pct']:6.2f}%  E {pe['energy_MWh']:.4f}/{pe['energy_base_MWh']:.4f} MWh  "
               f"pitch travel {pe['pitch_travel_deg']:.0f}/{pe['pitch_travel_base_deg']:.0f} deg  |dbeta| {pe['dbeta_abs_mean_deg']:.2f} deg")

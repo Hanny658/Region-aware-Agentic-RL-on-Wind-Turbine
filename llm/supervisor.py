@@ -52,6 +52,30 @@ against the paired ROSCO baseline on identical wind, and none of your choices en
   its four terms (J_power_mse_red_pct, J_gen_speed_mse_red_pct, J_TwrBsMyt_DEL_red_pct,
   J_RootMyc1_DEL_red_pct) are reported as continuous quantities in evaluation_now."""
 
+C_OBJECTIVE_TEXT = """Ground-truth objective C (you cannot change it; it is measured on deterministic evaluation episodes
+against the paired baseline controller on identical wind, and none of your choices enter its computation):
+  C = mean(power-output MSE reduction %, generator-speed MSE reduction %)   [both on above-rated steps]
+      - 20 * [ max(0, -1 - towerDEL_red%) + max(0, -1 - bladeDEL_red%) + max(0, energy_loss% - 1) ]
+  i.e. regulation is the TARGET and the two fatigue loads are CONSTRAINTS: tower-base fore-aft DEL and
+  blade-root out-of-plane DEL may not get more than 1 % worse than the baseline, energy loss at most 1 %.
+  A violated constraint costs 20 points per %, so C is only large when the loads are held. The terms are
+  reported as continuous quantities in evaluation_now (C, C_goal, C_violation_pct and the four
+  J_*_red_pct terms)."""
+
+CT_OBJECTIVE_TEXT = """Ground-truth objective CT (you cannot change it; it is measured on deterministic evaluation episodes
+against the paired baseline controller on identical wind, and none of your choices enter its computation):
+  CT = tower-base fore-aft fatigue DEL reduction %
+       - 20 * [ max(0, -1 - powerMSE_red%) + max(0, -1 - speedMSE_red%) + max(0, -1 - bladeDEL_red%) + max(0, energy_loss% - 1) ]
+  i.e. tower fatigue is the TARGET and regulation and blade fatigue are CONSTRAINTS: power MSE, speed MSE
+  (above-rated steps) and blade-root DEL may not get more than 1 % worse than the baseline, energy loss at
+  most 1 %. A violated constraint costs 20 points per %. The terms are reported as continuous quantities in
+  evaluation_now (CT, CT_goal, CT_violation_pct and the four J_*_red_pct terms)."""
+
+
+def objective_text(objective: str) -> str:
+    return {"J": J_OBJECTIVE_TEXT, "C": C_OBJECTIVE_TEXT, "CT": CT_OBJECTIVE_TEXT}.get(objective, F_OBJECTIVE_TEXT)
+
+
 SYSTEM_PROMPT = """You are a senior wind-turbine control engineer supervising a reinforcement-learning experiment.
 
 Plant: NREL 5 MW onshore turbine in OpenFAST (or its 1-DOF digital twin), ROSCO gain-scheduled PI baseline.
@@ -160,7 +184,7 @@ class RandomSupervisor:
 
 def system_prompt(load_signal: str = "M_oop", fitness_target: str = "blade", objective: str = "F",
                   reward_version: str = "v1") -> str:
-    s = SYSTEM_PROMPT.replace("{OBJECTIVE}", J_OBJECTIVE_TEXT if objective == "J" else F_OBJECTIVE_TEXT)
+    s = SYSTEM_PROMPT.replace("{OBJECTIVE}", objective_text(objective))
     if reward_version in ("v2", "v3"):
         s = s.replace(
             "  R2: w_power*(P/P_gspi - 1) - lambda_load_R2*load_proxy_t - 0.1*(dbeta/0.1)^2\n"
@@ -218,7 +242,7 @@ def build_summary(decision_index: int, episode: int, total_episodes: int, curren
         "current_knobs": current_knobs,
         "evaluation_now": ({k: v for k, v in fit.items()
                             if k != "per_episode" and k not in ("tier", "F_strict", "F_tol2", "constraints_ok")}
-                           if "J" in fit and fit.get("_objective") == "J" else
+                           if "J" in fit and fit.get("_objective") in ("J", "C", "CT") else
                            {k: v for k, v in fit.items() if k != "per_episode"}),
         "evaluation_per_episode": fit["per_episode"],
         "training_last_window": train_window,
@@ -515,7 +539,7 @@ class LLMHparamSupervisor(LLMCandidateSupervisor):
         LLMSupervisor.__init__(self, client)
         self.K = n_candidates
         tail = CANDIDATES_TAIL.replace("FIELD", '"knobs": {...all the hyper-parameters...}')
-        head = HPARAM_PROMPT.replace("{OBJECTIVE}", J_OBJECTIVE_TEXT if objective == "J" else F_OBJECTIVE_TEXT)
+        head = HPARAM_PROMPT.replace("{OBJECTIVE}", objective_text(objective))
         self.system = head + tail.replace("K candidates", f"{n_candidates} candidates")
 
 
@@ -529,7 +553,7 @@ class LLMComboSupervisor(LLMCandidateSupervisor):
         self.K = n_candidates
         tail = CANDIDATES_TAIL.replace("FIELD", '"knobs": {...the knobs you change...}, "reward_code": "<optional expression>"')
         head = (COMBO_PROMPT
-                .replace("{OBJECTIVE}", J_OBJECTIVE_TEXT if objective == "J" else F_OBJECTIVE_TEXT)
+                .replace("{OBJECTIVE}", objective_text(objective))
                 .replace("{VARIABLES}", {"v2": REWARD_VARS_V2, "v3": REWARD_VARS_V3}.get(reward_version, REWARD_VARS_V1)))
         self.system = head + tail.replace("K candidates", f"{n_candidates} candidates")
 
@@ -624,7 +648,7 @@ class LLMRewardSupervisor(LLMCandidateSupervisor):
         self.K = n_candidates
         tail = CANDIDATES_TAIL.replace("FIELD", '"reward_code": "<one Python expression>"')
         head = (REWARD_PROMPT
-                .replace("{OBJECTIVE}", J_OBJECTIVE_TEXT if objective == "J" else F_OBJECTIVE_TEXT)
+                .replace("{OBJECTIVE}", objective_text(objective))
                 .replace("{VARIABLES}", {"v2": REWARD_VARS_V2, "v3": REWARD_VARS_V3}.get(reward_version, REWARD_VARS_V1)))
         self.system = head + tail.replace("K candidates", f"{n_candidates} candidates")
 

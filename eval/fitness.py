@@ -50,6 +50,25 @@ def objective_J(extra: dict, energy_loss_pct: float, weights=J_WEIGHTS) -> tuple
     return comp - pen, {"J_metric_mean": comp, "J_energy_penalty": pen, **{f"J_{m}": v for m, v in terms.items()}}
 
 
+# ---- constrained objectives (2026-09-18): one term is maximised, the others may not get worse than -C_TOL %.
+#   C  : target = mean of the two regulation reductions; constraints tower DEL, blade DEL, energy
+#   CT : target = tower DEL reduction;                    constraints power MSE, speed MSE, blade DEL, energy
+# A violation costs PENALTY points per % (as the energy penalty of J), i.e. the constraints are effectively hard.
+C_TOL = 1.0
+
+
+def objective_C(J_in: dict, energy_loss_pct: float, target: str = "reg") -> tuple[float, dict]:
+    """`J_in[m]` = per-episode-clipped mean reduction of metric m (as objective_J receives it)."""
+    t = {m: (0.0 if J_in.get(m) is None or J_in[m] != J_in[m] else max(-J_CLIP, min(J_CLIP, float(J_in[m])))) for m in J_METRICS}
+    p, w, tw, bl = (t[m] for m in J_METRICS)
+    if target == "tower":
+        goal, cons = tw, (p, w, bl)
+    else:
+        goal, cons = 0.5 * (p + w), (tw, bl)
+    viol = sum(max(0.0, -C_TOL - c) for c in cons) + max(0.0, energy_loss_pct - ENERGY_TOL_PCT)
+    return goal - PENALTY * viol, {"goal": goal, "violation_pct": viol}
+
+
 def baseline_metrics(baseline_dir: str, episodes: list[EpisodeSpec], dt: float, wg_rated: float,
                      relabel_wind: float | None = None) -> dict:
     """{wind_file: metrics} computed from the zero-residual npz logs with the same code path.
@@ -127,8 +146,12 @@ def fitness(results: list[dict], base: dict, target: str = "blade") -> dict:
         pe = [v for v in pe_red.get(name, []) if v == v]
         J_in[name] = float(np.mean(np.clip(pe, -J_CLIP, J_CLIP))) if pe else float("nan")
     J, J_parts = objective_J(J_in, energy_loss_pct)
+    C, C_parts = objective_C(J_in, energy_loss_pct, "reg")
+    CT, CT_parts = objective_C(J_in, energy_loss_pct, "tower")
     return {
         "F": float(F), "J": float(J), "energy_ok": bool(energy_loss_pct <= ENERGY_TOL_PCT), **J_parts,
+        "C": float(C), "C_goal": C_parts["goal"], "C_violation_pct": C_parts["violation_pct"],
+        "CT": float(CT), "CT_goal": CT_parts["goal"], "CT_violation_pct": CT_parts["violation_pct"],
         "del_red_pct": del_red_pct, "energy_loss_pct": float(energy_loss_pct),
         "speed_std_ratio": speed_std_ratio, "constraints_ok": bool(pen_e == 0 and pen_s == 0),
         "terminated_any": any(r["terminated"] for r in results),
