@@ -112,6 +112,11 @@ def main():
                     if sel.sum() < 500:                 # not enough states of this region here
                         continue
                     hid = (sub["critic"]["v.0.weight"].shape[0], sub["critic"]["v.2.weight"].shape[0])
+                    n_in = sub["critic"]["v.0.weight"].shape[1]
+                    if n_in != obs.shape[1]:
+                        # MPC-base runs observe the base command as an extra input that a GSPI baseline log cannot supply
+                        print(f"{os.path.basename(run)} {wind} {tag}: skipped (critic expects {n_in} inputs, the baseline log gives {obs.shape[1]})")
+                        continue
                     c = Critic(obs.shape[1], hid)
                     c.load_state_dict(sub["critic"])
                     c.eval()
