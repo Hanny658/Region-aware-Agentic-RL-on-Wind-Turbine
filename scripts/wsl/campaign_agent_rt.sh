@@ -54,7 +54,9 @@ mkdir -p "$RT"
 
 echo "--- 1: training $(date +%H:%M)"
 ( export WTRL_HOME=$RT WTRL_WIND=$HOME/wtrl/wind
-  KNOBS=configs/knobs_j_v3_tuned.json ARMS="tgC3t trwC3t tgC3L10 tgT3L10 trwT3t tgT3t" $RUN bash scripts/wsl/campaign_j_core.sh 0 1 2 )
+  # 15:30: per-wind constrained arms first (the set-mean C of the first four runs was gamed across wind speeds, see
+  # campaign_j_core.sh); the set-mean agent arm finishes its remaining seeds last, the other set-mean arms are dropped
+  KNOBS=configs/knobs_j_v3_tuned.json ARMS="trwCw3t tgCw3L10 trwTw3t tgTw3L10 tgC3t trwC3t" $RUN bash scripts/wsl/campaign_j_core.sh 0 1 2 )
 ps -o sid= -p $$ | tr -d ' ' > "$EXP/campaign_agent_rt.sid"
 
 echo "--- 2: absolute rows vs the ORIGINAL GSPI (wind seeds 3-6) $(date +%H:%M)"
@@ -66,7 +68,7 @@ abs() {  # run port
   WTRL_HOME=$HOME/wtrl WTRL_WIND=$HOME/wtrl/wind $RUN python scripts/evaluate.py --run "$EXP/$run" --ckpt ckpt_best.pt \
       --backend openfast --seeds 3 4 5 6 --workers 6 --port0 "$port" --tag abs_gspi_s3456 2>&1 | grep -E "J=|C=|Traceback|rror:"
 }
-RUNS=$(cd "$EXP" && ls -d tgC3t_s? trwC3t_s? tgC3L10_s? tgT3L10_s? trwT3t_s? tgT3t_s? 2>/dev/null)
+RUNS=$(cd "$EXP" && ls -d trwCw3t_s? tgCw3L10_s? trwTw3t_s? tgTw3L10_s? tgC3t_s? trwC3t_s? 2>/dev/null)
 i=0; A=""; B=""
 for r in $RUNS; do if [ $((i % 2)) -eq 0 ]; then A="$A $r"; else B="$B $r"; fi; i=$((i + 1)); done
 ( for r in $A; do abs "$r" 5900; done ) &
@@ -84,7 +86,7 @@ rng() {  # run port
       --tag range_TIB 2>&1 | grep -E "J=|C=|Traceback|rror:"
 }
 # the best seed of every arm by its held-out objective vs the tuned ROSCO (C for the C arms, CT for the CT arms)
-BEST=$($RUN python scripts/dev/pick_best_seed.py --exp "$EXP" --arms tgC3t trwC3t tgC3L10 tgT3L10 trwT3t tgT3t)
+BEST=$($RUN python scripts/dev/pick_best_seed.py --exp "$EXP" --arms trwCw3t tgCw3L10 trwTw3t tgTw3L10 trwC3t)
 echo "range set for: $BEST"
 i=0; A=""; B=""
 for r in $BEST; do if [ $((i % 2)) -eq 0 ]; then A="$A $r"; else B="$B $r"; fi; i=$((i + 1)); done

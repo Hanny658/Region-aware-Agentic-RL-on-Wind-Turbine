@@ -72,8 +72,21 @@ against the paired baseline controller on identical wind, and none of your choic
   evaluation_now (CT, CT_goal, CT_violation_pct and the four J_*_red_pct terms)."""
 
 
+PER_WIND_TEXT = """
+  PER WIND SPEED: every constraint above is checked separately at EACH mean wind speed of the evaluation set
+  (8, 12.5 and 15 m/s); the violation is the average over wind speeds of how far a constrained term falls below
+  -1 % there. A load reduction at one wind speed therefore cannot pay for a load increase at another: the
+  residual must hold the constrained terms at every wind speed, in particular above rated (15 m/s), where the
+  regulation target lives. evaluation_now reports the objective, its goal and violation, the four set-mean
+  terms and per_wind_terms (term -> mean wind -> reduction %)."""
+
+
 def objective_text(objective: str) -> str:
-    return {"J": J_OBJECTIVE_TEXT, "C": C_OBJECTIVE_TEXT, "CT": CT_OBJECTIVE_TEXT}.get(objective, F_OBJECTIVE_TEXT)
+    return {"J": J_OBJECTIVE_TEXT, "C": C_OBJECTIVE_TEXT, "CT": CT_OBJECTIVE_TEXT,
+            "Cw": C_OBJECTIVE_TEXT.replace("objective C ", "objective Cw ").replace("C = mean", "Cw = mean").replace("C is only", "Cw is only")
+                  .replace("(C, C_goal, C_violation_pct", "(Cw, Cw_goal, Cw_violation_pct") + PER_WIND_TEXT,
+            "CTw": CT_OBJECTIVE_TEXT.replace("objective CT ", "objective CTw ").replace("CT = tower", "CTw = tower")
+                   .replace("(CT, CT_goal, CT_violation_pct", "(CTw, CTw_goal, CTw_violation_pct") + PER_WIND_TEXT}.get(objective, F_OBJECTIVE_TEXT)
 
 
 SYSTEM_PROMPT = """You are a senior wind-turbine control engineer supervising a reinforcement-learning experiment.
@@ -242,7 +255,7 @@ def build_summary(decision_index: int, episode: int, total_episodes: int, curren
         "current_knobs": current_knobs,
         "evaluation_now": ({k: v for k, v in fit.items()
                             if k != "per_episode" and k not in ("tier", "F_strict", "F_tol2", "constraints_ok")}
-                           if "J" in fit and fit.get("_objective") in ("J", "C", "CT") else
+                           if "J" in fit and fit.get("_objective") in ("J", "C", "CT", "Cw", "CTw") else
                            {k: v for k, v in fit.items() if k != "per_episode"}),
         "evaluation_per_episode": fit["per_episode"],
         "training_last_window": train_window,

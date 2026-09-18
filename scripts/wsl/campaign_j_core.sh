@@ -80,6 +80,12 @@ arm_args() {  # prefix -> train.py arguments
     tgC3L10) echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT10.json --objective C" ;;
     tgT3L10) echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT10.json --objective CT" ;;
     trwT3t)  echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective CT" ;;
+    # per-wind constraints (Cw / CTw, 15:30): the set-mean C was gamed across wind speeds by trwC3t_s0 (tower +13 / +26 %
+    # at 8 / 12.5 m/s, -17.5 % at 15 m/s); these arms must hold the constrained terms at every mean wind speed
+    trwCw3t)  echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw" ;;
+    tgCw3L10) echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT10.json --objective Cw" ;;
+    trwTw3t)  echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective CTw" ;;
+    tgTw3L10) echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT10.json --objective CTw" ;;
     # the RL analogue of the MPC's qt grid: the tuned default with the tower weight at 3 / 10 / 30
     # (the 30-episode fork search never keeps a higher lambda_tower — tower DEL responds too slowly)
     jg3L3)  echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT3.json" ;;

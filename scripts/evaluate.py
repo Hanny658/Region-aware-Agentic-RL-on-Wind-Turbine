@@ -153,6 +153,10 @@ def main():
           + ("" if fit["energy_ok"] else "  [ENERGY > 1 %]"))
     print(f"   C={fit['C']:.2f} (regulation {fit['C_goal']:.2f}, violation {fit['C_violation_pct']:.2f} %)   "
           f"CT={fit['CT']:.2f} (tower {fit['CT_goal']:.2f}, violation {fit['CT_violation_pct']:.2f} %)")
+    print(f"   per-wind: Cw={fit['Cw']:.2f} (violation {fit['Cw_violation_pct']:.2f} %)   CTw={fit['CTw']:.2f} (violation {fit['CTw_violation_pct']:.2f} %)   "
+          + "  ".join(f"U{u:g}: " + "/".join(f"{fit['per_wind_terms'].get(m, {}).get(u, float('nan')):.0f}" for m in
+                      ("power_mse_red_pct", "gen_speed_mse_red_pct", "TwrBsMyt_DEL_red_pct", "RootMyc1_DEL_red_pct"))
+                      for u in sorted({pe["mean_wind"] for pe in fit["per_episode"]})))
     for pe in fit["per_episode"]:
         print(f"   U{pe['mean_wind']:g}: DELred {pe['del_red_pct']:6.2f}%  E {pe['energy_MWh']:.4f}/{pe['energy_base_MWh']:.4f} MWh  "
               f"pitch travel {pe['pitch_travel_deg']:.0f}/{pe['pitch_travel_base_deg']:.0f} deg  |dbeta| {pe['dbeta_abs_mean_deg']:.2f} deg")

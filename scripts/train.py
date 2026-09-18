@@ -101,7 +101,7 @@ def main():
                     help="standardise the critic's regression targets. Without it the R3 value target is "
                          "O(1e4) (reward ~16/step at gamma 0.998) and the critic saturates into a constant "
                          "— see scripts/dev/critic_health.py. Off by default for reproducibility.")
-    ap.add_argument("--objective", default="F", choices=["F", "J", "C", "CT"],
+    ap.add_argument("--objective", default="F", choices=["F", "J", "C", "CT", "Cw", "CTw"],
                     help="F: tower-DEL priority with constraint penalties and tiers (historical) | "
                          "J: the baseline paper's metric set as one continuous scalar (2026-09-11): "
                          "mean of the four %% reductions, energy penalised, no tiers; selection, "
@@ -109,7 +109,7 @@ def main():
     ap.add_argument("--reward", default="v1", choices=["v1", "v2", "v3"],
                     help="v2: quadratic (MSE-matched) speed term + tower AND blade load proxies "
                          "(configs/reward.yaml); v1 is the historical reward")
-    ap.add_argument("--sup_objective", default=None, choices=["F", "J", "C", "CT"],
+    ap.add_argument("--sup_objective", default=None, choices=["F", "J", "C", "CT", "Cw", "CTw"],
                     help="ablation: the objective the SUPERVISOR is told about and shown (prompt text, "
                          "evaluation_now, fork outcomes) — selection and rollback still use --objective")
     ap.add_argument("--sup_once", action="store_true",
@@ -655,7 +655,7 @@ def main():
                     history[-1]["outcome"] = {kk: fit[kk] for kk in ("del_red_pct", "energy_loss_pct", "speed_std_ratio")}
                 # guardrail (Lakhani-style supervisor): if F fell by > rollback_drop below the best evaluation
                 # so far, restore the best state (knobs + policies) and continue from there
-                if OBJ in ("J", "C", "CT"):
+                if OBJ in ("J", "C", "CT", "Cw", "CTw"):
                     # no tiers under J / C / CT: roll back on a drop of the objective, or on the one hard
                     # physical constraint (energy loss > 1 %)
                     do_rollback = use_rollback and k >= args.rollback_after and (

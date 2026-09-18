@@ -18,10 +18,12 @@ import numpy as np
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--exp", default=os.path.expanduser("~/wtrl/exp"))
-ap.add_argument("--arms", nargs="+", default=["tgC3t", "trwC3t", "tgC3L10", "tgT3L10", "trwT3t", "tgT3t"])
+ap.add_argument("--arms", nargs="+", default=["trwCw3t", "tgCw3L10", "trwTw3t", "tgTw3L10", "tgC3t", "trwC3t"])
 ap.add_argument("--csv", default=None)
 a = ap.parse_args()
-DESC = {"tgC3t": "fixed reward (J-tuned, tower weight 1), objective C", "trwC3t": "agent-written reward, objective C",
+DESC = {"trwCw3t": "agent-written reward, objective Cw (per-wind constraints)", "tgCw3L10": "fixed reward, tower weight 10, objective Cw",
+        "trwTw3t": "agent-written reward, objective CTw (per-wind constraints)", "tgTw3L10": "fixed reward, tower weight 10, objective CTw",
+        "tgC3t": "fixed reward (J-tuned, tower weight 1), objective C (set-mean)", "trwC3t": "agent-written reward, objective C (set-mean)",
         "tgC3L10": "fixed reward, tower weight 10, objective C", "tgT3L10": "fixed reward, tower weight 10, objective CT",
         "trwT3t": "agent-written reward, objective CT", "tgT3t": "fixed reward (J-tuned, tower weight 1), objective CT"}
 T = ("J_power_mse_red_pct", "J_gen_speed_mse_red_pct", "J_TwrBsMyt_DEL_red_pct", "J_RootMyc1_DEL_red_pct")
@@ -50,7 +52,7 @@ for arm in a.arms:
         summ = load(f"{d}/summary.json")
         if not os.path.exists(f"{d}/evals.csv"):
             continue
-        obj = (summ or {}).get("objective", "C" if "C3" in run else "CT")
+        obj = (summ or {}).get("objective") or ("Cw" if "Cw3" in run else "CTw" if "Tw3" in run else "C" if "C3" in run else "CT")
         ev = [r for r in csv.DictReader(open(f"{d}/evals.csv")) if r["tag"] in ("init", "eval")]
         best = max(ev, key=lambda r: float(r[obj]))
         h1, h2 = load(f"{d}/eval_heldout_s3456_ckpt_best.json"), load(f"{d}/eval_heldout2_s78910.json")

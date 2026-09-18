@@ -69,6 +69,26 @@ def objective_C(J_in: dict, energy_loss_pct: float, target: str = "reg") -> tupl
     return goal - PENALTY * viol, {"goal": goal, "violation_pct": viol}
 
 
+def objective_Cw(J_in: dict, per_wind: dict, energy_loss_pct: float, target: str = "reg") -> tuple[float, dict]:
+    """C / CT with the constraints taken per mean wind speed: `per_wind[m][u]` = per-episode-clipped mean reduction of
+    metric m over the episodes of mean wind u. A term that is not defined at a wind speed (power / speed MSE below
+    rated) is skipped there. The target stays the set mean (as C / CT); energy stays a set-level constraint."""
+    t = {m: (0.0 if J_in.get(m) is None or J_in[m] != J_in[m] else max(-J_CLIP, min(J_CLIP, float(J_in[m])))) for m in J_METRICS}
+    p, w, tw, bl = (t[m] for m in J_METRICS)
+    if target == "tower":
+        goal, cons = tw, J_METRICS[:2] + J_METRICS[3:]
+    else:
+        goal, cons = 0.5 * (p + w), J_METRICS[2:]
+    viol, worst = 0.0, {}
+    for m in cons:
+        vals = [v for v in per_wind.get(m, {}).values() if v == v]
+        if vals:
+            viol += float(np.mean([max(0.0, -C_TOL - v) for v in vals]))
+            worst[m] = float(min(vals))
+    viol += max(0.0, energy_loss_pct - ENERGY_TOL_PCT)
+    return goal - PENALTY * viol, {"goal": goal, "violation_pct": viol, "worst_wind_terms": worst}
+
+
 def baseline_metrics(baseline_dir: str, episodes: list[EpisodeSpec], dt: float, wg_rated: float,
                      relabel_wind: float | None = None) -> dict:
     """{wind_file: metrics} computed from the zero-residual npz logs with the same code path.
@@ -148,10 +168,23 @@ def fitness(results: list[dict], base: dict, target: str = "blade") -> dict:
     J, J_parts = objective_J(J_in, energy_loss_pct)
     C, C_parts = objective_C(J_in, energy_loss_pct, "reg")
     CT, CT_parts = objective_C(J_in, energy_loss_pct, "tower")
+    per_wind = {}
+    for name in J_METRICS:
+        if name not in pe_red:
+            continue
+        for u in sorted({r["mean_wind"] for r in results}):
+            v = [x for r, x in zip(results, pe_red[name]) if r["mean_wind"] == u and x == x]
+            if v:
+                per_wind.setdefault(name, {})[u] = float(np.mean(np.clip(v, -J_CLIP, J_CLIP)))
+    Cw, Cw_parts = objective_Cw(J_in, per_wind, energy_loss_pct, "reg")
+    CTw, CTw_parts = objective_Cw(J_in, per_wind, energy_loss_pct, "tower")
     return {
         "F": float(F), "J": float(J), "energy_ok": bool(energy_loss_pct <= ENERGY_TOL_PCT), **J_parts,
         "C": float(C), "C_goal": C_parts["goal"], "C_violation_pct": C_parts["violation_pct"],
         "CT": float(CT), "CT_goal": CT_parts["goal"], "CT_violation_pct": CT_parts["violation_pct"],
+        "Cw": float(Cw), "Cw_goal": Cw_parts["goal"], "Cw_violation_pct": Cw_parts["violation_pct"],
+        "CTw": float(CTw), "CTw_goal": CTw_parts["goal"], "CTw_violation_pct": CTw_parts["violation_pct"],
+        "per_wind_terms": per_wind,
         "del_red_pct": del_red_pct, "energy_loss_pct": float(energy_loss_pct),
         "speed_std_ratio": speed_std_ratio, "constraints_ok": bool(pen_e == 0 and pen_s == 0),
         "terminated_any": any(r["terminated"] for r in results),
