@@ -369,7 +369,9 @@ def main():
     run_tag = re.sub(r"[^A-Za-z0-9_.-]", "_", out.name)[:40]
     pool = WorkerPool(args.workers, args.backend, cur_episodes + episodes + eval_episodes, cfg_over,
                       hidden=pcfg.hidden, port0=args.port0, tag=f"wk_{run_tag}")
-    relabel = float(cfg.turbine["rated_wind_ms"]) if OBJ == "J" else None
+    # the metric-set family (J and the constrained C / CT / Cw / CTw) scores power / speed MSE on the wind-labelled
+    # above-rated subset on both sides (roadmap 16, finding 4); F keeps the oracle rule
+    relabel = float(cfg.turbine["rated_wind_ms"]) if OBJ in ("J", "C", "CT", "Cw", "CTw") else None
     base = baseline_metrics(baseline_dir(args.backend), eval_episodes, dt, wg_rated, relabel_wind=relabel)
     proposes = args.supervisor in ("random", "llm", "schedule", "schedule_comp")
     forks = args.supervisor in ("llm_fork", "random_fork", "llm_hparam", "random_hparam", "llm_reward", "llm_combo", "random_reward")

@@ -60,7 +60,7 @@ def main():
     cfg_run = json.load(open(run / "config.json"))
     summ = json.load(open(run / "summary.json")) if (run / "summary.json").exists() else {}
     knobs = summ.get("final_knobs", cfg_run.get("knobs0"))
-    if cfg_run.get("objective") == "J" and not args.relabel_wind:
+    if cfg_run.get("objective") in ("J", "C", "CT", "Cw", "CTw") and not args.relabel_wind:
         # J-trained runs were selected with wind-labelled R3 subsets (roadmap v2, D3): score them
         # the same way so the held-out J is comparable to the training-time J
         args.relabel_wind = True

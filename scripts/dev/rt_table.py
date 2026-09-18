@@ -55,6 +55,10 @@ for arm in a.arms:
         obj = (summ or {}).get("objective") or ("Cw" if "Cw3" in run else "CTw" if "Tw3" in run else "C" if "C3" in run else "CT")
         ev = [r for r in csv.DictReader(open(f"{d}/evals.csv")) if r["tag"] in ("init", "eval")]
         best = max(ev, key=lambda r: float(r[obj]))
+        if os.path.exists(f"{d}/ckpt_best.pt"):
+            import torch
+            ck = torch.load(f"{d}/ckpt_best.pt", weights_only=False, map_location="cpu")
+            best = {"episode": ck.get("episode", best["episode"]), obj: ck.get("F", best[obj])}
         h1, h2 = load(f"{d}/eval_heldout_s3456_ckpt_best.json"), load(f"{d}/eval_heldout2_s78910.json")
         ab, rg = load(f"{d}/eval_abs_gspi_s3456.json"), load(f"{d}/eval_range_TIB.json")
         o1 = f"{h1[obj]:6.2f} {h1[obj + '_violation_pct']:5.2f}" if h1 else "     -     -"
