@@ -10,9 +10,14 @@
 #   reference       paired baselines of the SAME tuned ROSCO on the canonical 150 s bank, in the separate home
 #                   ~/wtrl_rt (the canonical wind bank is read, never regenerated), so every reduction is
 #                   "on top of the tuned ROSCO"; the identity check (zero residual) must give C = CT = J = 0
-#   arms            tgC3t  guard (fixed reward v3)      objective C   (regulation target, loads constrained)
-#                   trwC3t llm_reward                   objective C
-#                   tgT3t  guard                        objective CT  (tower target, regulation + blade constrained)
+#   arms            tgC3t   guard (fixed reward v3, J-tuned weights)  objective C   (regulation target, loads constrained)
+#                   trwC3t  llm_reward                                objective C
+#                   tgC3L10 guard, reward tower weight 10             objective C
+#                   tgT3L10 guard, reward tower weight 10             objective CT  (tower target, regulation + blade constrained)
+#                   trwT3t  llm_reward                                objective CT
+#                   tgT3t   guard (J-tuned weights)                   objective CT
+#                   (ordered by information value; the fixed J-tuned reward under C learns to buy regulation with tower
+#                   fatigue and is rolled back to episode 0 every evaluation, seen at 13:30 on the first two runs)
 #                   3 seeds each, 300 episodes, 150 s bank, the j_core stage evaluates both held-out sets vs the
 #                   tuned ROSCO (WTRL_HOME=~/wtrl_rt)
 #   afterwards      absolute rows vs the ORIGINAL GSPI on wind seeds 3-6 (WTRL_HOME=~/wtrl), and the 600 s range
@@ -49,7 +54,7 @@ mkdir -p "$RT"
 
 echo "--- 1: training $(date +%H:%M)"
 ( export WTRL_HOME=$RT WTRL_WIND=$HOME/wtrl/wind
-  KNOBS=configs/knobs_j_v3_tuned.json ARMS="tgC3t trwC3t tgT3t" $RUN bash scripts/wsl/campaign_j_core.sh 0 1 2 )
+  KNOBS=configs/knobs_j_v3_tuned.json ARMS="tgC3t trwC3t tgC3L10 tgT3L10 trwT3t tgT3t" $RUN bash scripts/wsl/campaign_j_core.sh 0 1 2 )
 ps -o sid= -p $$ | tr -d ' ' > "$EXP/campaign_agent_rt.sid"
 
 echo "--- 2: absolute rows vs the ORIGINAL GSPI (wind seeds 3-6) $(date +%H:%M)"
@@ -61,8 +66,11 @@ abs() {  # run port
   WTRL_HOME=$HOME/wtrl WTRL_WIND=$HOME/wtrl/wind $RUN python scripts/evaluate.py --run "$EXP/$run" --ckpt ckpt_best.pt \
       --backend openfast --seeds 3 4 5 6 --workers 6 --port0 "$port" --tag abs_gspi_s3456 2>&1 | grep -E "J=|C=|Traceback|rror:"
 }
-( for r in tgC3t_s0 tgC3t_s1 tgC3t_s2 trwC3t_s0 trwC3t_s1; do abs "$r" 5900; done ) &
-( for r in trwC3t_s2 tgT3t_s0 tgT3t_s1 tgT3t_s2; do abs "$r" 6300; done ) &
+RUNS=$(cd "$EXP" && ls -d tgC3t_s? trwC3t_s? tgC3L10_s? tgT3L10_s? trwT3t_s? tgT3t_s? 2>/dev/null)
+i=0; A=""; B=""
+for r in $RUNS; do if [ $((i % 2)) -eq 0 ]; then A="$A $r"; else B="$B $r"; fi; i=$((i + 1)); done
+( for r in $A; do abs "$r" 5900; done ) &
+( for r in $B; do abs "$r" 6300; done ) &
 wait
 
 echo "--- 3: range set (12-24 m/s class B, 600 s, vs the original GSPI) $(date +%H:%M)"
@@ -75,7 +83,12 @@ rng() {  # run port
       --backend openfast --means 12 14 16 18 20 22 24 --seeds 1 2 3 4 5 6 --ti B --episode_s 600 --workers 6 --port0 "$port" \
       --tag range_TIB 2>&1 | grep -E "J=|C=|Traceback|rror:"
 }
-( for r in tgC3t_s0 tgC3t_s1 tgC3t_s2 trwC3t_s0 trwC3t_s1; do rng "$r" 5900; done ) &
-( for r in trwC3t_s2 tgT3t_s0 tgT3t_s1 tgT3t_s2; do rng "$r" 6300; done ) &
+# the best seed of every arm by its held-out objective vs the tuned ROSCO (C for the C arms, CT for the CT arms)
+BEST=$($RUN python scripts/dev/pick_best_seed.py --exp "$EXP" --arms tgC3t trwC3t tgC3L10 tgT3L10 trwT3t tgT3t)
+echo "range set for: $BEST"
+i=0; A=""; B=""
+for r in $BEST; do if [ $((i % 2)) -eq 0 ]; then A="$A $r"; else B="$B $r"; fi; i=$((i + 1)); done
+( for r in $A; do rng "$r" 5900; done ) &
+( for r in $B; do rng "$r" 6300; done ) &
 wait
 echo "=== residual on the tuned ROSCO done $(date) ==="
