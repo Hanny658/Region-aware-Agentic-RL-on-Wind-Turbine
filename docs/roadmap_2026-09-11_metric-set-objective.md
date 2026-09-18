@@ -1121,3 +1121,47 @@ tuned ROSCO as a baseline row, and the MPC claim becomes "tower fatigue near rat
 "better regulation". (4) The tuned ROSCO on the wind-range set (s28) is queued in `campaign_must3.sh`.
 
 Artefacts: `~/wtrl/exp/roscotune600/{history.jsonl,best.json,cache/}`.
+
+## 30. Domain-randomised residual: training over the whole model-error range does not rescue the residual (2026-09-18 03:15-09:31; stage B of `campaign_must2.sh`, arms `mgR3t` / `mrwR3t`)
+
+Question. s23 trained the residual at ONE model error (Cp/Ct x0.95) and found it does not transfer. The fair best
+effort for the learning side is to train it over the whole range: every training episode draws the nominal
+MPC's Cp/Ct scale uniformly from [0.85, 1.15] (`--base_mm_cp_range`, `cp_scale_range` in the MPC base of
+`envs/base_env.py`); deterministic evaluations during training use a fixed grid over the range assigned by
+episode index, so checkpoint selection scores the range and is repeatable. Fixed reward (`mgR3t`) and agent-written
+reward (`mrwR3t`), 3 seeds each, 300 episodes, 150 s bank as every residual arm. Held-out sets are evaluated with the
+exact model (as in s17-s18); the transfer row re-evaluates the selected checkpoint at fixed errors on wind seeds
+3-6 (`eval_gen_cp<cp>_s3456.json`).
+
+| run | best episode | held-out exact (seeds 3-6 / 7-10) | x0.85 | x0.9 | x0.95 | x1.05 | x1.15 |
+|---|---|---|---|---|---|---|---|
+| fixed reward, seed 0 | 184 | 15.02 / 13.93 | -3.6 | 12.4 | 15.1 | 4.0 | -24.8 |
+| fixed reward, seed 1 | 300 | 13.94 / 13.11 | -23.8 | 5.6 | 14.2 | 5.4 | -24.7 |
+| fixed reward, seed 2 | 96 | 10.06 / 7.27 | -6.7 | 8.3 | 7.2 | 2.6 | -24.6 |
+| **fixed reward, mean** | | **13.0 / 11.4** | **-11.4** | **8.8** | **12.2** | **4.0** | **-24.7** |
+| agent reward, seed 0 | 32 | 15.30 / 18.87 | -20.9 | 6.4 | 17.5 | 4.1 | -26.3 |
+| agent reward, seed 1 | 0 | 16.47 / 16.99 | -23.7 | -15.9 | 8.9 | 5.4 | -24.5 |
+| agent reward, seed 2 | 32 | 4.28 / 4.21 | -8.9 | 12.6 | 14.1 | -14.3 | -42.6 |
+| **agent reward, mean** | | **12.0 / 13.4** | **-17.8** | **1.0** | **13.5** | **-1.6** | **-31.1** |
+| nominal MPC alone (s23) | | 16.3 / 17.2 | -24.0 | -16.1 | 8.5 | 5.7 | -24.6 |
+| x0.95-trained residual, fixed (s23) | | | -12.2 | 7.2 | 14.2 | 5.4 | -24.7 |
+| **offset-free MPC alone (s23)** | | **20.5 / 21.7** | **21.8** | **21.6** | **21.7** | **20.0** | **15.8** |
+
+Reading. (1) The domain-randomised residual lands where the x0.95-trained one did: it repairs the underestimate
+side partially (x0.85: -24 -> -11 on average, -3.6 for the best seed; x0.9: -16 -> +9) and does **nothing at
++15 %** (-24.7 vs -24.6 for the bare MPC, in every seed). The in-training objective over the grid never rose
+above -5.6 (from -12 at the zero residual): the overestimate side dominates the mean and the bounded, region-gated
+residual cannot reach it in 300 episodes. (2) The price is paid at the exact model: 13.0 / 11.4 against 16.3 / 17.2
+for the bare MPC, 3-6 J. (3) The agent-written reward does not help here: one seed never left episode 0 (its
+held-out rows are the bare MPC), one collapsed at x1.05 / x1.15 (-14 / -43), the mean transfer is worse than the
+fixed reward. (4) The estimator without learning is 10-40 J above every residual at every error and costs nothing
+at the exact model. Together with s23 (single-error training) and s24 (nothing left to learn on a compensated base)
+this closes the residual-repairs-the-model line from the learning side as well: the fair best effort for the
+learner (range training, agent reward, 3 seeds) does not change the ordering.
+
+Infrastructure note. The post-training "critic health" diagnostic of `campaign_j_core.sh` fails on these runs
+(`scripts/dev/critic_health.py` builds the critic for the 6-dimensional GSPI-base observation while MPC-base runs
+observe the base command as a 7th input); it is a diagnostic only, the campaign continued and every evaluation
+completed.
+
+Artefacts: `~/wtrl/exp/{mgR3t,mrwR3t}_s{0,1,2}/eval_*.json`.
