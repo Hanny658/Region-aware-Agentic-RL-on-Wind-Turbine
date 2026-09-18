@@ -50,7 +50,7 @@ class LPVMPC:
                  err_ref: float = 1.0, dbeta_ref: float = 0.1, xd_ref: float = 0.2,
                  cp_scale: float = 1.0, ftower_scale: float = 1.0, mass_scale: float = 1.0,
                  adapt: str = "none", tau_adapt: float = 5.0, wc_acc: float = 2.0,
-                 notch_3p_q: float = 0.0):
+                 notch_3p_q: float = 0.0, qt_sched=None):
         import osqp
         import scipy.sparse as sp
         from scipy.linalg import expm
@@ -67,6 +67,9 @@ class LPVMPC:
         self.rate_max = float(tb["max_pitch_rate_rads"])
         self.N, self.Ts = int(horizon), float(ts)
         self.q, self.r, self.qt = float(q), float(r), float(qt)
+        # wind-scheduled tower weight (roadmap s31): [qt_hi, v_lo, v_hi] -> qt below v_lo, qt_hi above v_hi, linear between,
+        # on the filtered wind-speed estimate at every solve. None = constant qt.
+        self.qt_sched = tuple(float(x) for x in qt_sched) if qt_sched else None
         self.err_ref, self.dbeta_ref, self.xd_ref = float(err_ref), float(dbeta_ref), float(xd_ref)
         # model-mismatch study (2026-09-13): the controller's model may deviate from the plant in
         # aerodynamic efficiency (Cp/Ct scale), tower frequency and modal mass; the plant is unchanged
@@ -186,6 +189,13 @@ class LPVMPC:
         ct = self.Ct(np.rad2deg(beta_rad), lam) * sc
         return A * cp * v ** 3 / max(w, 0.05), A * ct * v ** 2
 
+    def _qt_eff(self, v: float) -> float:
+        if not self.qt_sched:
+            return self.qt
+        qt_hi, v_lo, v_hi = self.qt_sched
+        u = 0.0 if v_hi <= v_lo else min(1.0, max(0.0, (float(v) - v_lo) / (v_hi - v_lo)))
+        return self.qt + (qt_hi - self.qt) * u
+
     def solve(self, w: float, beta: float, v_est: float, floor: float) -> float:
         """-> collective pitch target [rad] for the next Ts. Call observe() every sim step."""
         if self.w_f is not None:
@@ -246,7 +256,7 @@ class LPVMPC:
         ix = iw + 2
         Wq = np.zeros(3 * N)
         Wq[iw] = self.q / (self.err_ref * self.w_rated) ** 2
-        Wq[ix] = self.qt / self.xd_ref ** 2
+        Wq[ix] = self._qt_eff(v_est) / self.xd_ref ** 2
         ref = np.zeros(3 * N)
         ref[iw] = self.w_rated
         rr = self.r / self.dbeta_ref ** 2

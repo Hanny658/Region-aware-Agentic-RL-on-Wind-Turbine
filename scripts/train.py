@@ -36,7 +36,7 @@ from agents.ppo import PPOConfig, PPOLearner, SharedCriticPPO
 from agents.rollout import WorkerPool
 from controllers.router import R2, R3
 from envs.base_env import PROJ, default_config
-from envs.factory import baseline_dir, episode_list
+from envs.factory import baseline_dir, episode_list, parse_ti
 from envs.reward import compile_reward_code
 from eval.fitness import baseline_metrics, fitness
 from llm.supervisor import (HPARAM_BOUNDS, KNOBS, ROLLBACK_DROP, CompetenceScheduleSupervisor,
@@ -61,6 +61,7 @@ def main():
     ap.add_argument("--seeds", nargs="+", type=int, default=[1])
     ap.add_argument("--eval_seeds", nargs="+", type=int, default=None,
                     help="TurbSim seeds for the supervisor's evaluation F (default: same as --seeds). P2: 1 2")
+    ap.add_argument("--ti", type=parse_ti, default=8.0, help="turbulence intensity [%%] or IEC class A / B / C of the training and evaluation winds")
     ap.add_argument("--episode_s", type=float, default=150.0)
     ap.add_argument("--warmup_s", type=float, default=20.0)
     ap.add_argument("--lambda_load", type=float, default=None)
@@ -234,8 +235,8 @@ def main():
     act_dim = 1 + (1 if args.dtau_max > 0.0 else 0) + (2 if args.ipc_max > 0.0 and args.ipc_hold <= 0.0 else 0)
     dt, wg_rated = float(cfg.turbine["dt_ctrl_s"]), float(cfg.turbine["rated_gen_speed_rads"])
 
-    episodes = episode_list(args.means, args.seeds, episode_s=args.episode_s, warmup_s=args.warmup_s)
-    eval_episodes = episode_list(args.eval_means or args.means, args.eval_seeds or args.seeds,
+    episodes = episode_list(args.means, args.seeds, ti=args.ti, episode_s=args.episode_s, warmup_s=args.warmup_s)
+    eval_episodes = episode_list(args.eval_means or args.means, args.eval_seeds or args.seeds, ti=args.ti,
                                  episode_s=args.episode_s, warmup_s=args.warmup_s)
     # wind curriculum (Coquelet's implicit condition, roadmap 19): first `curriculum_until`
     # episodes on a clean low-TI bank, then the main bank; supervisor eval / fitness stay on the
