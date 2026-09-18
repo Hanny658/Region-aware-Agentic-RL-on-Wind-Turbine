@@ -1165,3 +1165,58 @@ observe the base command as a 7th input); it is a diagnostic only, the campaign 
 completed.
 
 Artefacts: `~/wtrl/exp/{mgR3t,mrwR3t}_s{0,1,2}/eval_*.json`.
+
+## 31. Range set: the tuned ROSCO row, and the tower weight is not the lever for the high-wind tower term (2026-09-18 09:31-10:54; `campaign_must3.sh`)
+
+Both stages on the wind-range set of s28 (12-24 m/s, IEC class B, 600 s, 42 held-out episodes).
+Tables regenerated: `docs/tables/range_{controllers,per_wind,paired}.csv`.
+
+**A. Tuned ROSCO (s29) on the range.** J **15.39** (23.2 / 29.2 / 5.4 / 3.8), pitch travel 1.14x the untuned
+GSPI, peak generator speed 1.104 x rated (the untuned GSPI: 1.106), energy +0.12 %. Per mean wind 12 -> 24 m/s:
+10.4 15.5 16.9 19.1 16.7 15.1 14.2, i.e. flat, while every MPC row climbs from ~20 to ~37.
+
+| A - B (42 episodes) | J | power | speed | tower | blade | travel A / B |
+|---|---|---|---|---|---|---|
+| tuned ROSCO - GSPI | +15.39 [+14.87, +15.90] | +23.2 | +29.2 | +5.4 | +3.8 | 1.14 / 1.00 |
+| offset-free MPC - tuned ROSCO | +14.11 [+13.42, +14.80] | +24.4 | +23.5 | +9.0 [+7.6, +10.4] | -0.5 [-1.2, +0.2] | 1.97 / 1.14 |
+| duty knee 2 - tuned ROSCO | +14.26 [+13.52, +15.02] | +23.0 | +24.0 | +9.2 | +0.9 [+0.1, +1.6] | 1.68 / 1.14 |
+
+Reading. On the low-turbulence set (s29) the tuned ROSCO tied the MPC on regulation and the MPC kept 4.5-5.4 J
+of tower fatigue near rated. At class B over the full above-rated range the MPC keeps **~14 J**: 23-24 points of
+power and speed MSE (the faster speed filter does not reach the MPC's 70-77 % regulation at 18-24 m/s) plus 9
+points of tower fatigue, at 1.5-1.7x the tuned ROSCO's travel. The margin over a tuned baseline is
+condition-dependent in the opposite direction from the actuation story: small at low turbulence, large at
+class B and high wind.
+
+**B. Tower-weight sweep for the compensated MPC** (diagnosis of s28 finding 3, the negative tower term from
+20 m/s up; selects nothing, these winds stay held-out). Offset-free reference (N20 r .3 wc_v .35 tau 5) with qt
+3 (reference) / 6 / 12 / 24, and the duty knee with qt 11 (3x its 3.68):
+
+| setting | J | travel x GSPI | power / speed / tower / blade | tower term at 12 / 16 / 20 / 24 m/s | J at 12 m/s |
+|---|---|---|---|---|---|
+| qt 3 (reference) | 29.50 | 1.97 | 47.6 / 52.7 / 14.3 / 3.3 | 55 / 13 / -0.9 / -6.2 | 20.8 |
+| qt 6 | 27.27 | 2.39 | 41.0 / 46.3 / 19.8 / 2.0 | 65 / 16 / 1.7 / 0.6 | 20.5 |
+| qt 12 | 18.03 | 3.24 | 26.9 / 27.2 / 18.9 / -0.9 | 66 / 13 / 0.5 / 0.3 | -9.2 |
+| qt 24 | -3.32 | 4.65 | -5.1 / -12.7 / 11.7 / -7.2 | 65 / 5 / -10.7 / -8.8 | -73.5 |
+| knee2 qt 11 (vs knee2 29.66) | 21.27 | 2.26 | 30.7 / 29.5 / 21.9 / 3.0 | 68 / 19 / 2.1 / 1.6 | -29.4 |
+| nominal MPC (s28) | 28.48 | 2.01 | 42.0 / 46.9 / 20.9 / 4.1 | 59 / 20 / 5.5 / 0.9 | 19.9 |
+
+Paired: qt 6 - qt 3 = -2.23 [-2.52, -1.92] (power -6.6, speed -6.4, tower +5.5, blade -1.4);
+qt 6 - nominal MPC = -1.21 [-1.75, -0.64], every term below the nominal.
+
+Reading. (1) Doubling the tower weight does make the tower term non-negative at every wind speed (+0.5 to +1.7 %
+at 20-24 m/s), so the per-wind load constraint of s28 is satisfiable, at a price of 2.2 J, 6.5 points of each
+regulation term and **20 % more pitch travel** (the MPC damps the tower actively, which costs pitch action).
+(2) Above that the tower term saturates: qt 12 gains nothing on the tower (0.3-0.5 % at 20-24 m/s) and loses
+20 points of regulation; qt 24 and knee2 at qt 11 destabilise the 12 m/s episodes (speed MSE -41 to -100 %) and
+the tower term goes negative again at high wind. The achievable tower-fatigue reduction of a collective-pitch
+controller at 20-24 m/s is ~0-2 % under this objective; the nominal MPC's 0.9-5.5 % there is the ceiling of the
+tested settings. (3) With the per-wind load constraint imposed, the nominal MPC (28.48, 2.0x, every term
+non-negative everywhere) beats the constrained compensated MPC (27.27, 2.4x): compensation buys regulation by
+giving up tower fatigue, and a global weight cannot undo that trade without giving the regulation back. A
+wind-scheduled weight (qt 3 up to 18 m/s, 6 from 20 m/s) would, from the per-wind rows, score ~28.7 on this set
+with the constraint met, i.e. the nominal MPC's J with the estimator's robustness to model error; it has to be
+selected on TurbSim seeds 1-2 and reported on 3-6 if it is ever used.
+
+Artefacts: `~/wtrl/exp/mpcsearch600/range/eval_{rosco_tuned,offset_qt6_cp1,offset_qt12_cp1,offset_qt24_cp1,knee2_qt11_cp1}.json`,
+tuned ROSCO case template `~/wtrl/runs/template_5mw_rosco_tuned`. Machine idle after 10:54.

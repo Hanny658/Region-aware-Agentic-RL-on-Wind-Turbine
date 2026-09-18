@@ -50,6 +50,16 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   -6.6 tower, all intervals exclude 0) and every compensated MPC has a negative tower term from 20 m/s up while the
   nominal MPC never does. Report per-wind-speed terms; differences between deterministic controllers are paired
   bootstraps over episodes (`scripts/dev/paired_bootstrap.py`).
+- **Tuned ROSCO baseline (roadmap s29, s31; `scripts/rosco_tune.py`, template `~/wtrl/runs/template_5mw_rosco_tuned`):**
+  the shipped speed-filter corner (1.57 rad/s) is the untuned part of the GSPI; 3.42 rad/s with kp x1.13 scores
+  16.2 / 17.1 on the low-turbulence held-out sets and 15.4 on the range set at 1.1x pitch travel. Against it the
+  MPC rows keep 4.5-5.4 J at low turbulence (tower fatigue near rated only) and ~14 J at class B over the range
+  (23-24 points of regulation plus 9 of tower). **Every comparison table must carry this row.**
+- **Residual line closed from the learning side (s30):** the residual trained over Cp/Ct in [0.85, 1.15] repairs
+  only the underestimate side, nothing at +15 %, and costs 3-6 J at the exact model; the estimator is 10-40 J above
+  every residual at every error. The tower weight is not the lever for the compensated MPC's negative high-wind
+  tower term (s31): qt 6 makes it non-negative at -2.2 J and +20 % travel, larger weights destabilise 12 m/s;
+  under a per-wind load constraint the nominal MPC (28.5) beats the constrained compensated MPC (27.3).
 - **Residual on the MPC base** (`--base mpc [--base_mm_cp 0.95]`, n = 3, s17-s18): adds +0.3 (fixed
   reward) / +1.0 (LLM reward) to the exact-model MPC, within noise, half the runs never beat episode 0;
   repairs the x0.95 model (8.5 / 3.6 -> 14.2 / 15.4 fixed, 12.7 / 18.3 LLM). LLM reward vs fixed on
