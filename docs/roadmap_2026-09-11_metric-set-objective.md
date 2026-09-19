@@ -1353,3 +1353,61 @@ own -2.9 % power term at 12 m/s, which the schedule does not touch. (5) The cont
 therefore: offset-free LPV-MPC, tower weight scheduled on wind speed, selected by a per-wind load rule.
 
 Artefacts: `~/wtrl/exp/mpcsearch600/qtsched/eval_*_s12.json` (selection), `eval_{off_q6_18_22,knee2_q11_18_22}_s3456.json`.
+
+## 34. With the formulation fixed, the agent-written reward gives a load-holding gain on top of the tuned ROSCO; the fixed reward does not (2026-09-20 01:35 - 06:59; stage B of `campaign_next1.sh`)
+
+Setup. The first training campaign after the three defects of s32 were fixed (per-wind constraints, wind-labelled
+subset on both sides, fork candidates ranked by the run's own objective; identity at episode 0: Cw = -0.02 / -0.00).
+Base = tuned ROSCO; training winds = the ABOVE-RATED range bank (12-24 m/s, IEC class B, first 150 s of the 600 s
+fields, TurbSim seed 1 for training, seeds 1-2 for the supervisor's evaluations, 14 episodes); paired tuned-ROSCO
+baselines at 150 s in `~/wtrl_rt_range`; objective Cw (regulation target, tower / blade constrained per wind speed,
+energy <= 1 %); 300 episodes; arms: agent-written reward (`trwCwR3t`) and fixed reward v3 with tower weight 10
+(`tgCwR3L10`), 3 seeds each.
+
+Held-out at 150 s (range winds, TurbSim seeds 3-6, 28 episodes, against the tuned ROSCO):
+
+| arm | seed | selected episode | Cw | per-wind violation | power / speed / tower / blade | pitch travel x tuned ROSCO |
+|---|---|---|---|---|---|---|
+| agent reward | 0 | 224 | **+1.12** | 0.00 % | +0.7 / +1.5 / +2.6 / +1.3 | 1.13 |
+| agent reward | 1 | 280 | **+6.22** | 0.12 % | +6.9 / +10.3 / +3.6 / +2.3 | 1.34 |
+| agent reward | 2 | 256 | **+7.07** | 0.16 % | +8.8 / +11.9 / +1.3 / +1.3 | 1.21 |
+| fixed reward | 0 | 64 | -27.87 | 1.54 % | +3.0 / +2.7 / -1.2 / +0.7 | 1.08 |
+| fixed reward | 1 | 64 | -7.94 | 0.67 % | +4.7 / +6.2 / -0.4 / +0.6 | 1.06 |
+| fixed reward | 2 | 152 | -3.67 | 0.38 % | +3.2 / +4.8 / +0.6 / +0.2 | 1.04 |
+
+Per wind (12 -> 24 m/s): the agent runs hold the tower term at or above -1.9 % everywhere (seed 1: +10.4 +8.6 +4.0 -1.8
+-0.1 +2.5 +1.6) and gain their regulation from 18 m/s up (power MSE +1 to +4 % for seed 0, +11 to +21 % for seeds 1
+and 2); all three lose power MSE at 12 m/s
+(-3.9 / -15.2 / -4.1 %), which the objective allows because regulation is its set-mean target. The fixed reward finds
+the same kind of regulation gain at a smaller size (+3 to +10 % from 18 m/s up) but pays with the tower at 12-16 m/s
+(-3.3 to -7.2 % at 12 m/s, down to -4.8 % at 16 m/s): it does not hold the per-wind constraint in any seed.
+
+600 s range set (seeds 3-6, 28 episodes, against the ORIGINAL GSPI; the best seed of each arm by held-out Cw):
+
+| controller | J | pitch travel x GSPI | power / speed / tower / blade | tower term 12 -> 24 m/s |
+|---|---|---|---|---|
+| tuned ROSCO alone | 15.24 | 1.15 | 23.1 / 28.9 / 5.3 / 3.6 | 7.6 16.6 3.1 4.5 2.1 2.0 1.3 |
+| + fixed-reward residual (seed 2) | 16.41 | 1.19 | 25.2 / 31.9 / 5.3 / 3.3 | 3.4 14.4 0.9 5.6 4.4 4.5 3.8 |
+| **+ agent-reward residual (seed 2)** | **19.62** | 1.38 | 29.4 / 36.9 / 7.6 / 4.5 | 14.7 23.2 6.0 3.6 1.7 1.9 1.9 |
+
+Paired bootstrap over the 28 episodes against the tuned ROSCO alone: agent residual **J +4.37 [+4.12, +4.61]**, power
++6.27 [+5.87, +6.68], speed +8.01 [+7.72, +8.35], tower +2.25 [+1.74, +2.74], blade +0.96 [+0.36, +1.41] - every term's
+interval excludes zero; fixed residual J +1.17 [+0.88, +1.41], tower -0.04 [-0.53, +0.42], blade -0.33 [-0.97, +0.15].
+The agent row's worst per-wind differences against the tuned ROSCO are tower -0.9 % at 18 m/s and power -1.1 % at
+12 m/s; the episodes are four times longer than any the policy trained on.
+
+Reading. (1) This is the answer to the question of s32 under the corrected formulation: **yes, on a PI base** - the
+agent-supervised residual adds regulation (+6 to +8 points at 600 s) AND both fatigue loads (+2.3 / +1.0) on top of a
+tuned industrial baseline, holds the loads per wind speed, and costs 20 % more pitch travel (1.38x vs 1.15x GSPI).
+(2) The gain is agentic in the sense that matters for the paper: with the same base, winds, budget, objective and
+selection rule, the fixed reward with a tower weight of 10 is negative on held-out Cw in 3 of 3 seeds and the
+agent-written reward positive in 3 of 3 (mean +4.8 vs -13.2). What the agent changes is the SHAPE of the reward
+(tanh-saturated regulation terms gated by the wind label, bounded load terms centred on the baseline level - e.g.
+`-38*region_w*tanh(|d_wg|/.005) - .85*tanh(max(0, load_t-1)) - .95*tanh(max(0, load_b-1)) - .1*tanh(act)` for seed 2),
+a change of vocabulary that a weight search over the fixed expression cannot reach. (3) Scale: the scheduled MPC of s33 is at 28.95 with 2.14x
+travel on the same episodes; the agent layer is an improvement of the industrial PI loop, not a substitute for the
+model-based controller. (4) Open: the 600 s rows of the other two agent seeds and of the fixed seeds (queued in
+`campaign_next3.sh`); the same comparison on the canonical 150 s bank (`campaign_next2.sh`, running); n = 3 per arm.
+
+Artefacts: `~/wtrl/exp/{trwCwR3t,tgCwR3L10}_s{0,1,2}/` (`eval_heldout_s3456_ckpt_best.json` = 150 s range winds vs the
+tuned ROSCO, `eval_range_TIB_s3456.json` = 600 s vs the original GSPI), discarded first attempts `*_badlabel`.

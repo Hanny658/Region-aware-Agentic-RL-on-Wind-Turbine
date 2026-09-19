@@ -31,4 +31,17 @@ NOM='{"horizon": 20, "r": 0.3, "qt": 3.0, "wc_v": 0.35}'
 ( ev sched_cp0.95_s3456 6600 0.95 "$SCH"; ev sched_cp0.85_s3456 6600 0.85 "$SCH"; ev sched_cp1.15_s3456 6600 1.15 "$SCH"; ev nominal_cp0.85_s3456 6600 0.85 "$NOM" ) &
 ( ev offset_cp0.85_s3456 7000 0.85 "{$OFF}"; ev offset_cp1.15_s3456 7000 1.15 "{$OFF}"; ev nominal_cp1.15_s3456 7000 1.15 "$NOM" ) &
 wait
+
+echo "--- 600 s range rows (seeds 3-6, vs the original GSPI) of the remaining range-wind residual seeds (s34) $(date +%H:%M)"
+export WTRL_TEMPLATE=$HOME/wtrl/runs/template_5mw_rosco_tuned
+rng() {  # run port
+  local run=$1 port=$2
+  [ -f "$EXP/$run/ckpt_best.pt" ] || { echo "missing $run"; return; }
+  [ -f "$EXP/$run/eval_range_TIB_s3456.json" ] && { echo "skip $run range"; return; }
+  echo "== $run range $(date +%H:%M)"
+  WTRL_HOME=$HOME/wtrl600 WTRL_WIND=$HOME/wtrl/wind600 $RUN python scripts/evaluate.py --run "$EXP/$run" --ckpt ckpt_best.pt \n      --backend openfast --means $MEANS --seeds 3 4 5 6 --ti B --episode_s 600 --workers 6 --port0 "$port" \n      --tag range_TIB_s3456 2>&1 | grep -E "J=|per-wind|Traceback|rror:"
+}
+( rng trwCwR3t_s1 6600; rng tgCwR3L10_s0 6600 ) &
+( rng trwCwR3t_s0 7000; rng tgCwR3L10_s1 7000 ) &
+wait
 echo "=== follow-up 3 done $(date) ==="

@@ -65,6 +65,12 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   2.14x travel with NO term below -1 % at any wind speed (tower +1.6 / +0.2 / +0.1 % at 20 / 22 / 24 m/s vs +0.4 / -2.5 /
   -6.3 % unscheduled), -0.56 J for the schedule, +13.7 J [13.0, 14.4] over the tuned ROSCO. Model-error rows on the
   range set: `campaign_next3.sh`.
+- **Agent layer on the tuned ROSCO (roadmap s34; first campaign after the three defects of s32 were fixed):** residual
+  trained on the above-rated range winds under per-wind Cw. Held-out Cw (150 s, 28 episodes, vs the tuned ROSCO): agent
+  reward +1.1 / +6.2 / +7.1 (3/3 positive, per-wind violation <= 0.16 %), fixed reward with tower weight 10 -27.9 / -7.9 /
+  -3.7 (0/3; tower -3 to -7 % at 12-16 m/s). 600 s range set, best seed: tuned ROSCO 15.24 -> **19.62** at 1.38x travel,
+  +4.37 J [4.12, 4.61] with power +6.3, speed +8.0, tower +2.3, blade +1.0 all excluding zero; fixed residual +1.17.
+  An improvement layer for the PI loop, not a substitute for the MPC (28.95 at 2.14x).
 - **Residual on the tuned ROSCO, constrained objectives (roadmap s32; `eval/fitness.py` C / CT / Cw / CTw, `--objective`):**
   18 runs, no checkpoint holds the constraints per wind speed on held-out winds; what the agent-written rewards find
   are trades (regulation for tower fatigue near rated, tower fatigue for regulation above rated). Two defects found:
