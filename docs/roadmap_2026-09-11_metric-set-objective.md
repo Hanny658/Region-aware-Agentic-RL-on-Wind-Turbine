@@ -1220,3 +1220,76 @@ selected on TurbSim seeds 1-2 and reported on 3-6 if it is ever used.
 
 Artefacts: `~/wtrl/exp/mpcsearch600/range/eval_{rosco_tuned,offset_qt6_cp1,offset_qt12_cp1,offset_qt24_cp1,knee2_qt11_cp1}.json`,
 tuned ROSCO case template `~/wtrl/runs/template_5mw_rosco_tuned`. Machine idle after 10:54.
+
+## 32. Residual on the tuned ROSCO under constrained objectives: no one-sided gain, and two defects of the formulation (2026-09-18 12:36 - 09-19 23:30; `campaign_agent_rt.sh`, `campaign_rt_fix.sh`, `scripts/dev/rt_table.py`)
+
+Question (user, 2026-09-18). The control-only claim of s27-s31 is not novel. Can the agent-supervised residual give
+a ONE-SIDED gain on top of a tuned baseline - regulation up with both fatigue loads not worse, or tower fatigue down
+with regulation and blade not worse? Every earlier residual arm was selected under J, which lets one term pay for
+another, and none was tried on the tuned ROSCO.
+
+Setup. Base = tuned ROSCO of s29 (`WTRL_TEMPLATE`), reference = paired baselines of the SAME tuned ROSCO on the
+canonical 150 s winds in the separate home `~/wtrl_rt` (identity J = C = CT = 0.00), so every reduction is "on top of
+the tuned ROSCO". New objectives in `eval/fitness.py`, used for checkpoint selection, rollback and the supervisors'
+fitness (the reward is unchanged):
+
+    C  = mean(power MSE red, speed MSE red) - 20 * [violations of tower >= -1 %, blade >= -1 %, energy loss <= 1 %]
+    CT = tower DEL red                      - 20 * [violations of power, speed, blade >= -1 %, energy loss <= 1 %]
+    Cw / CTw = the same with every constraint taken PER MEAN WIND SPEED (violation = mean over wind speeds of
+               max(0, -1 - term at that wind)); the target stays the set mean, energy stays a set-level constraint
+
+18 runs, 300 episodes, 3 seeds per arm: fixed reward with the J-tuned weights under C; agent-written reward under C;
+agent-written reward and fixed reward with tower weight 10 under Cw; the same two under CTw.
+
+**Defect 1 - a set-mean constraint is gamed across wind speeds.** The first agent-reward run under C reported
+"all four terms positive" on held-out seeds 3-6 (9.3 / 9.3 / 7.4 / 3.1). Per wind: tower +13.5 % at 8 m/s (below-rated
+peak shaving, bought with 0.9 % energy), +26.3 % at 12.5 m/s, **-17.5 % at 15 m/s in every episode**. Hence Cw / CTw.
+
+**Defect 2 - the constrained objectives were trained and scored on the wrong above-rated subset.** `train.py` and
+`evaluate.py` enabled the wind-labelled subset (roadmap 16, finding 4) only for objective "J"; the C family used the
+oracle rule, which leaves the 12.5 m/s episodes out of the regulation terms. Fixed in a969ce9; the six runs whose
+selected checkpoint is not episode 0 were re-evaluated (`campaign_rt_fix.sh`, the oracle files are kept as
+`*_oracle.json`). The re-evaluation is what the table reports. **All 18 runs were still TRAINED and selected under
+the oracle subset**, so the table is evidence about that formulation; the clean re-run is `campaign_next2.sh`.
+
+Held-out, wind-labelled subset, against the tuned ROSCO (objective / power / speed / tower / blade), and against the
+original GSPI (J; the tuned ROSCO alone is 14.2 on these winds):
+
+| arm | seed | selected episode | seeds 3-6: objective, P / w / T / B | seeds 7-10: objective | J vs GSPI |
+|---|---|---|---|---|---|
+| fixed reward (tower weight 1), C | 0, 1, 2 | 0, 0, 0 | 0 (tuned ROSCO alone) | | 14.2 |
+| fixed reward (tower weight 10), Cw | 0, 1, 2 | 0, 0, 0 | 0 | | 14.2 |
+| fixed reward (tower weight 10), CTw | 0, 1, 2 | 0, 0, 0 | 0 | | 14.2 |
+| agent reward, Cw | 0, 2 | 0, 0 | 0 | | 14.2 |
+| agent reward, Cw | 1 | 280 | -10.96: -5.4 / -7.6 / +4.2 / +2.2 | -11.44 | 13.2 |
+| agent reward, CTw | 0, 2 | 0, 0 | 0 | | 14.2 |
+| agent reward, CTw | 1 | 280 | -215.9: -4.9 / -6.8 / +4.1 / +2.1 | -217.0 | 13.4 |
+| agent reward, C (set mean) | 0 | 280 | -36.3: -27.2 / -45.4 / +7.4 / +3.1 | -62.4 | -6.1 |
+| agent reward, C (set mean) | 1 | 300 | -28.9: -15.5 / -42.2 / +2.4 / +3.7 | -120.8 | 1.4 |
+| agent reward, C (set mean) | 2 | 300 | -31.7: -19.9 / -43.5 / +2.8 / +4.0 | -36.3 | -2.7 |
+
+Per wind speed (seeds 3-6; `rt_perwind.py`): the set-mean agent runs gain 9-14 % of regulation at 15 m/s and lose
+15-19 % of tower fatigue there, gain 17-26 % of tower fatigue at 12.5 m/s and lose **45-64 % of power MSE and
+139-234 % of speed MSE** there (the part the oracle subset hid), with 1.1-1.6 % energy loss at 12.5 m/s. The two seed-1
+per-wind runs learned a small near-rated offset (|dbeta| 0.03 deg on average): tower +14 % and blade +7 % at 12.5 m/s
+for -11 % power and -15 % speed MSE there, and -1.7 % tower at 15 m/s. On the range set (12-24 m/s class B, 600 s, vs
+the original GSPI) the episode-0 runs reproduce the tuned ROSCO (15.23-15.25 at 1.14x travel); the best set-mean
+agent run scores 16.17 (23.3 / 31.2 / 5.2 / 4.9) at **4.06x** the GSPI pitch travel: +0.8 J for 3.6x the actuation.
+
+Reading. (1) In-training, the fixed reward under C never beat episode 0 in any seed: the residual buys up to 5 points of
+regulation with 2-13 % of tower fatigue and is rolled back at every evaluation; raising the tower weight of the
+reward from 1 to 10 does not change that (seed 0: tower -2.4 to -13 % in every evaluation). (2) No arm produced a
+checkpoint that holds the constraints per wind speed on held-out winds; what the agent-written rewards find are
+trades - regulation for tower fatigue near rated, tower fatigue for regulation above rated - and a set-mean score
+hides them. (3) This is the third base on which the residual only re-allocates (nominal MPC s17-s18, compensated
+MPC s24, tuned ROSCO here). (4) The conclusion is conditional on defect 2: selection never saw the 12.5 m/s
+regulation damage, and the agent was told the truth only about the subset it was scored on. `campaign_next2.sh`
+re-runs the three informative arms with the fixed labelling; `campaign_next1.sh` stage B trains on the above-rated
+range winds, where the two labellings nearly coincide.
+
+Reproducibility note. On wind seeds 7-10 the zero-residual re-run of one 8 m/s episode (TurbSim seed 8) differs from
+its own baseline by tower -18.5 % / blade +13.8 % with identical energy; the set carries a -1.2 % tower / +1.3 %
+blade offset at identity (a per-wind objective of -18 for a zero residual). Seeds 3-6 are the primary held-out set.
+
+Artefacts: `~/wtrl/exp/{tgC3t,trwC3t,trwCw3t,tgCw3L10,trwTw3t,tgTw3L10}_s{0,1,2}/`, `docs/tables/tuned_rosco_residual.csv`,
+`~/wtrl/exp/agent_rt_identity/` (identity and tuned-ROSCO-alone rows: 17.14 / 14.20 / 17.09 on seeds 1-2 / 3-6 / 7-10).

@@ -60,6 +60,12 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   every residual at every error. The tower weight is not the lever for the compensated MPC's negative high-wind
   tower term (s31): qt 6 makes it non-negative at -2.2 J and +20 % travel, larger weights destabilise 12 m/s;
   under a per-wind load constraint the nominal MPC (28.5) beats the constrained compensated MPC (27.3).
+- **Residual on the tuned ROSCO, constrained objectives (roadmap s32; `eval/fitness.py` C / CT / Cw / CTw, `--objective`):**
+  18 runs, no checkpoint holds the constraints per wind speed on held-out winds; what the agent-written rewards find
+  are trades (regulation for tower fatigue near rated, tower fatigue for regulation above rated). Two defects found:
+  a set-mean constraint is gamed across wind speeds (use the per-wind Cw / CTw), and the wind-labelled above-rated
+  subset was enabled for objective J only (fixed in a969ce9; those 18 runs were trained under the oracle subset, the
+  clean re-run is `campaign_next2.sh`). Third base on which the residual only re-allocates.
 - **Residual on the MPC base** (`--base mpc [--base_mm_cp 0.95]`, n = 3, s17-s18): adds +0.3 (fixed
   reward) / +1.0 (LLM reward) to the exact-model MPC, within noise, half the runs never beat episode 0;
   repairs the x0.95 model (8.5 / 3.6 -> 14.2 / 15.4 fixed, 12.7 / 18.3 LLM). LLM reward vs fixed on
