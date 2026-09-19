@@ -16,7 +16,8 @@ ps -o sid= -p $$ | tr -d ' ' > "$EXP/campaign_rt_fix.sid"
 RUNS="trwCw3t_s1 trwTw3t_s1 trwC3t_s0 trwC3t_s1 trwC3t_s2 tgC3t_s0"
 echo "=== rt fix-up (wind-labelled subset for the constrained objectives) start $(date) ==="
 for r in $RUNS; do
-  for f in eval_heldout_s3456_ckpt_best eval_heldout2_s78910 eval_abs_gspi_s3456 eval_range_TIB; do
+  # range files are not moved: every range row of these runs was produced after the label fix (relaunch of 09-19 22:00)
+  for f in eval_heldout_s3456_ckpt_best eval_heldout2_s78910 eval_abs_gspi_s3456; do
     [ -f "$EXP/$r/$f.json" ] && mv "$EXP/$r/$f.json" "$EXP/$r/${f}_oracle.json"
     [ -f "$EXP/$r/$f.csv" ] && mv "$EXP/$r/$f.csv" "$EXP/$r/${f}_oracle.csv"
   done
