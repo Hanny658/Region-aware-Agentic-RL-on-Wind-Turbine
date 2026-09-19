@@ -90,6 +90,11 @@ arm_args() {  # prefix -> train.py arguments
     # WTRL_WIND=~/wtrl/wind600, WTRL_HOME=~/wtrl_rt_range, HELD_MEANS / HELD_TI / HELD2=0): where the tuned ROSCO trails the MPC
     trwCwR3t)  echo "--supervisor llm_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B" ;;
     tgCwR3L10) echo "--supervisor guard      --reward v3 --knobs_json configs/knobs_j_v3_lamT10.json --objective Cw --means 12 14 16 18 20 22 24 --ti B" ;;
+    # clean re-run (campaign_next2.sh): identical to trwCw3t / tgCw3L10 / trwTw3t, but trained after the label fix (a969ce9), so
+    # selection, rollback and the supervisor see power / speed MSE on the wind-labelled above-rated subset (12.5 m/s included)
+    trwCwF3t)  echo "--supervisor llm_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw" ;;
+    tgCwF3L10) echo "--supervisor guard      --reward v3 --knobs_json configs/knobs_j_v3_lamT10.json --objective Cw" ;;
+    trwTwF3t)  echo "--supervisor llm_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective CTw" ;;
     # the RL analogue of the MPC's qt grid: the tuned default with the tower weight at 3 / 10 / 30
     # (the 30-episode fork search never keeps a higher lambda_tower — tower DEL responds too slowly)
     jg3L3)  echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT3.json" ;;
