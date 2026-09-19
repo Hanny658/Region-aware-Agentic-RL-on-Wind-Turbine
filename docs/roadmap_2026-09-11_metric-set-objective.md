@@ -1293,3 +1293,54 @@ blade offset at identity (a per-wind objective of -18 for a zero residual). Seed
 
 Artefacts: `~/wtrl/exp/{tgC3t,trwC3t,trwCw3t,tgCw3L10,trwTw3t,tgTw3L10}_s{0,1,2}/`, `docs/tables/tuned_rosco_residual.csv`,
 `~/wtrl/exp/agent_rt_identity/` (identity and tuned-ROSCO-alone rows: 17.14 / 14.20 / 17.09 on seeds 1-2 / 3-6 / 7-10).
+
+## 33. A wind-scheduled tower weight closes the high-wind load gap of the compensated MPC (2026-09-19 22:55 - 09-20 00:30; stage A of `campaign_next1.sh`, `scripts/dev/qt_sched_select.py`)
+
+Problem (s28, s31). Every compensated MPC has a negative tower term from 20 m/s up, and a global tower weight cannot
+repair it without giving the regulation back. Remedy tried here: `qt_sched = [qt_hi, v_lo, v_hi]` in
+`controllers/mpc.py` - the tower weight stays at qt up to v_lo and ramps linearly to qt_hi at v_hi, on the filtered
+wind-speed estimate, re-evaluated at every solve (the QP is rebuilt every solve anyway).
+
+Protocol. Range bank (12-24 m/s, IEC class B, 600 s). SELECTION on TurbSim seeds 1-2 (14 episodes): offset-free
+reference (qt 3) with qt_hi 6 / 9 over 16-20 and 18-22 m/s and 12 over 18-22 m/s, the duty knee with 11 over
+18-22 m/s; rule = per-wind load rule of s28 (no term below -1 % at any mean wind speed), then J. REPORT on seeds 3-6
+(28 episodes), which no selection touched; the unscheduled rows are the same 28 episodes of the s28 / s31 evaluations.
+
+Selection table (seeds 1-2): every schedule lifts the 20-24 m/s tower term from -3.6 / -7.4 / -6.0 to between -2.7 and
++2.0; higher qt_hi buys nothing more (the saturation of s31) and costs J and travel (qt_hi 12: 26.9 at 2.43x). With two
+episodes per wind speed no candidate - not even the nominal MPC (worst term -2.5) - meets the -1 % rule, so the rule fell
+back to "least infeasible": offset-free 3 -> 6 over 18-22 m/s (28.97, worst -5.2) and knee2 3.68 -> 11 (28.65).
+Two episodes per wind are too few for a 1 % rule; the selection should use all the supervisor episodes it can get.
+
+Held-out (seeds 3-6, 28 episodes):
+
+| controller | J | travel x GSPI | power / speed / tower / blade | tower term at 12 / 14 / 16 / 18 / 20 / 22 / 24 m/s | worst per-wind term |
+|---|---|---|---|---|---|
+| **offset-free, qt 3 -> 6 over 18-22 m/s** | **28.95** | 2.14 | 45.7 / 50.7 / 16.5 / 2.9 | 55.6 40.7 13.5 3.9 **1.6 0.2 0.1** | -0.8 (blade, 16 m/s) |
+| knee2, qt 3.68 -> 11 over 18-22 m/s | 28.90 | 1.95 | 43.6 / 50.5 / 17.3 / 4.2 | 59.3 43.4 13.3 3.8 -0.1 0.4 1.0 | -2.9 (power, 12 m/s) |
+| offset-free, unscheduled | 29.51 | 1.98 | 47.3 / 52.4 / 15.0 / 3.4 | 55.6 40.7 13.5 3.7 0.4 -2.5 -6.3 | -6.3 (tower, 24 m/s) |
+| knee2, unscheduled | 29.74 | 1.69 | 45.9 / 53.0 / 15.1 / 5.0 | 59.3 43.4 13.3 3.3 -1.5 -4.4 -7.8 | -7.8 (tower, 24 m/s) |
+| nominal MPC | 28.49 | 2.01 | 41.5 / 46.7 / 21.5 / 4.2 | 58.4 48.4 20.9 11.4 6.8 3.7 0.9 | none negative |
+| tuned ROSCO | 15.24 | 1.15 | 23.1 / 28.9 / 5.3 / 3.6 | 7.6 16.6 3.1 4.5 2.1 2.0 1.3 | none negative |
+
+Paired bootstrap over the 28 episodes (A - B, 95 % interval):
+
+| A - B | J | power | speed | tower | blade |
+|---|---|---|---|---|---|
+| scheduled - unscheduled offset-free | -0.56 [-0.67, -0.43] | -1.59 | -1.63 | +1.49 [+1.22, +1.76] | -0.50 |
+| scheduled offset-free - nominal MPC | +0.46 [-0.06, +1.02] | +4.18 [+3.21, +5.15] | +4.02 [+3.16, +4.88] | -5.00 [-5.62, -4.37] | -1.36 |
+| scheduled - unscheduled knee2 | -0.83 [-1.06, -0.65] | -2.37 | -2.44 | +2.24 | -0.76 |
+| scheduled offset-free - tuned ROSCO | +13.71 [+13.00, +14.39] | +22.56 | +21.80 | +11.18 [+9.61, +12.69] | -0.72 [-1.59, +0.16] |
+
+Reading. (1) The schedule does what the global weight could not: on winds no selection touched, the compensated MPC
+with qt 3 -> 6 over 18-22 m/s has **no term below -1 % at any wind speed** (tower +1.6 / +0.2 / +0.1 % at 20 / 22 /
+24 m/s instead of +0.4 / -2.5 / -6.3 %), for 0.56 J and 8 % more pitch travel. (2) Against the nominal MPC it is
+the same J within the interval with a different composition (+4 regulation, -5 tower); what it adds is the
+estimator, i.e. the robustness to model error - measured so far on the low-turbulence set (s19, s23) and at x0.95 for
+the unscheduled rows (s28); `campaign_next3.sh` measures it for the scheduled controller at x0.85 / x0.95 / x1.15 on
+these 28 episodes. (3) Against the tuned ROSCO the margin is +13.7 J with every term except blade fatigue clearly
+positive (blade -0.7 [-1.6, +0.2]). (4) The knee with a schedule keeps its low travel (1.95x) but carries the knee's
+own -2.9 % power term at 12 m/s, which the schedule does not touch. (5) The controller of the paper's main claim is
+therefore: offset-free LPV-MPC, tower weight scheduled on wind speed, selected by a per-wind load rule.
+
+Artefacts: `~/wtrl/exp/mpcsearch600/qtsched/eval_*_s12.json` (selection), `eval_{off_q6_18_22,knee2_q11_18_22}_s3456.json`.

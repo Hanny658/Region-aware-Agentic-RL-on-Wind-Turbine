@@ -60,6 +60,11 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   every residual at every error. The tower weight is not the lever for the compensated MPC's negative high-wind
   tower term (s31): qt 6 makes it non-negative at -2.2 J and +20 % travel, larger weights destabilise 12 m/s;
   under a per-wind load constraint the nominal MPC (28.5) beats the constrained compensated MPC (27.3).
+- **Main-claim controller (roadmap s33): offset-free LPV-MPC with a wind-scheduled tower weight** (`qt_sched=[6, 18, 22]`
+  via `--base_mpc_json`, qt 3 below 18 m/s): selected on range seeds 1-2, on held-out seeds 3-6 (28 episodes) J 28.95 at
+  2.14x travel with NO term below -1 % at any wind speed (tower +1.6 / +0.2 / +0.1 % at 20 / 22 / 24 m/s vs +0.4 / -2.5 /
+  -6.3 % unscheduled), -0.56 J for the schedule, +13.7 J [13.0, 14.4] over the tuned ROSCO. Model-error rows on the
+  range set: `campaign_next3.sh`.
 - **Residual on the tuned ROSCO, constrained objectives (roadmap s32; `eval/fitness.py` C / CT / Cw / CTw, `--objective`):**
   18 runs, no checkpoint holds the constraints per wind speed on held-out winds; what the agent-written rewards find
   are trades (regulation for tower fatigue near rated, tower fatigue for regulation above rated). Two defects found:
