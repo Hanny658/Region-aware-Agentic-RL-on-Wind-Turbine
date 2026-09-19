@@ -86,6 +86,10 @@ arm_args() {  # prefix -> train.py arguments
     tgCw3L10) echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT10.json --objective Cw" ;;
     trwTw3t)  echo "--supervisor llm_reward    --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective CTw" ;;
     tgTw3L10) echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT10.json --objective CTw" ;;
+    # per-wind Cw on the ABOVE-RATED range winds (12-24 m/s, class B, first 150 s of the 600 s bank; campaign_next1.sh sets
+    # WTRL_WIND=~/wtrl/wind600, WTRL_HOME=~/wtrl_rt_range, HELD_MEANS / HELD_TI / HELD2=0): where the tuned ROSCO trails the MPC
+    trwCwR3t)  echo "--supervisor llm_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B" ;;
+    tgCwR3L10) echo "--supervisor guard      --reward v3 --knobs_json configs/knobs_j_v3_lamT10.json --objective Cw --means 12 14 16 18 20 22 24 --ti B" ;;
     # the RL analogue of the MPC's qt grid: the tuned default with the tower weight at 3 / 10 / 30
     # (the 30-episode fork search never keeps a higher lambda_tower — tower DEL responds too slowly)
     jg3L3)  echo "--supervisor guard         --reward v3 --knobs_json configs/knobs_j_v3_lamT3.json" ;;
@@ -138,10 +142,11 @@ for arm in $ARMS; do
     [ -f "$EXP/$r/ckpt_best.pt" ] || continue
     for spec in "heldout_s3456_ckpt_best:3 4 5 6" "heldout2_s78910:7 8 9 10"; do
       tag=${spec%%:*}; seeds=${spec#*:}
+      [ "${HELD2:-1}" = "0" ] && [ "$tag" = "heldout2_s78910" ] && continue
       [ -f "$EXP/$r/eval_${tag}.json" ] && continue
       echo "--- $r $tag $(date +%H:%M:%S)"
-      python scripts/evaluate.py --run "$EXP/$r" --ckpt ckpt_best.pt --backend openfast --means 8 12.5 15 \
-         --seeds $seeds --workers 8 --port0 $((6400 + 20 * (j % 8))) --tag "$tag" 2>&1 \
+      python scripts/evaluate.py --run "$EXP/$r" --ckpt ckpt_best.pt --backend openfast --means ${HELD_MEANS:-8 12.5 15} \
+         ${HELD_TI:+--ti $HELD_TI} --seeds $seeds --workers 8 --port0 $((6400 + 20 * (j % 8))) --tag "$tag" 2>&1 \
          | grep "F_strict\|   J=\|Traceback\|Error"
       j=$((j + 1))
     done
