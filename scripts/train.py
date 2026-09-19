@@ -217,7 +217,8 @@ def main():
         cfg.reward["version"] = args.reward      # v3 = v2 with the speed term gated by the wind label
     OBJ = args.objective
     SUP_OBJ = args.sup_objective or OBJ        # what the agent reads; OBJ is what the run selects on
-    if OBJ == "J":
+    METRIC_SET = ("J", "C", "CT", "Cw", "CTw")   # J and its constrained variants: no tiers, wind-labelled subset
+    if OBJ in METRIC_SET:
         # the MSE terms of J are R3-only; label that subset by wind speed (controller-independent)
         # on every row, RL and reference controllers alike — routing still uses the oracle rule
         cfg_over["region_label_by_wind"] = True
@@ -371,7 +372,7 @@ def main():
                       hidden=pcfg.hidden, port0=args.port0, tag=f"wk_{run_tag}")
     # the metric-set family (J and the constrained C / CT / Cw / CTw) scores power / speed MSE on the wind-labelled
     # above-rated subset on both sides (roadmap 16, finding 4); F keeps the oracle rule
-    relabel = float(cfg.turbine["rated_wind_ms"]) if OBJ in ("J", "C", "CT", "Cw", "CTw") else None
+    relabel = float(cfg.turbine["rated_wind_ms"]) if OBJ in METRIC_SET else None
     base = baseline_metrics(baseline_dir(args.backend), eval_episodes, dt, wg_rated, relabel_wind=relabel)
     proposes = args.supervisor in ("random", "llm", "schedule", "schedule_comp")
     forks = args.supervisor in ("llm_fork", "random_fork", "llm_hparam", "random_hparam", "llm_reward", "llm_combo", "random_reward")
@@ -658,7 +659,7 @@ def main():
                     history[-1]["outcome"] = {kk: fit[kk] for kk in ("del_red_pct", "energy_loss_pct", "speed_std_ratio")}
                 # guardrail (Lakhani-style supervisor): if F fell by > rollback_drop below the best evaluation
                 # so far, restore the best state (knobs + policies) and continue from there
-                if OBJ in ("J", "C", "CT", "Cw", "CTw"):
+                if OBJ in METRIC_SET:
                     # no tiers under J / C / CT: roll back on a drop of the objective, or on the one hard
                     # physical constraint (energy loss > 1 %)
                     do_rollback = use_rollback and k >= args.rollback_after and (
@@ -747,8 +748,8 @@ def main():
                         outcomes.append({"i": ci, "style": c.get("style", "?"), "knobs": kc, "notes": notes,
                                          "rationale": str(c.get("rationale", ""))[:200], "fit": fit_c,
                                          "state": learners_state(), "k_after": k})
-                    if OBJ == "J":
-                        best_c = max(outcomes, key=lambda o_: (bool(o_["fit"].get("energy_ok", True)), o_["fit"]["J"]))
+                    if OBJ in METRIC_SET:
+                        best_c = max(outcomes, key=lambda o_: (bool(o_["fit"].get("energy_ok", True)), o_["fit"][OBJ]))
                     else:
                         best_c = max(outcomes, key=lambda o_: (TIER_RANK.get(o_["fit"].get("tier"), 0), o_["fit"]["F"], o_["fit"].get("F_tol2", 0.0)))
                     learners_load(best_c["state"])
