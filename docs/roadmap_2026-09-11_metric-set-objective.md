@@ -1287,6 +1287,15 @@ regulation damage, and the agent was told the truth only about the subset it was
 re-runs the three informative arms with the fixed labelling; `campaign_next1.sh` stage B trains on the above-rated
 range winds, where the two labellings nearly coincide.
 
+**Defect 3 (found 2026-09-20 01:30) - the agent arms chose among their forked candidates by F.** `train.py` ranked
+the forked reward candidates of a decision by `(energy_ok, J)` only for objective "J" and by the historical tier / F
+ranking (tower-DEL priority) for every other objective, so the agent-reward arms of this section verified their
+candidates against the wrong objective; checkpoint selection and rollback did use C / Cw / CTw. The same J-only test
+guarded the RUN side of the wind labelling, which made a969ce9 (baseline side only) inconsistent for training: the
+first two range-wind runs of `campaign_next1.sh` read P +13.4 / w +5.4 at the zero residual and were discarded
+(`*_badlabel`). Both fixed in 4901e94 (`METRIC_SET`); identity after the fix: Cw = -0.02 / -0.00 at episode 0. The
+agent rows of the table above therefore carry defects 2 AND 3; `campaign_next2.sh` is the clean re-run.
+
 Reproducibility note. On wind seeds 7-10 the zero-residual re-run of one 8 m/s episode (TurbSim seed 8) differs from
 its own baseline by tower -18.5 % / blade +13.8 % with identical energy; the set carries a -1.2 % tower / +1.3 %
 blade offset at identity (a per-wind objective of -18 for a zero residual). Seeds 3-6 are the primary held-out set.
