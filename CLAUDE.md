@@ -63,8 +63,9 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
 - **Main-claim controller (roadmap s33): offset-free LPV-MPC with a wind-scheduled tower weight** (`qt_sched=[6, 18, 22]`
   via `--base_mpc_json`, qt 3 below 18 m/s): selected on range seeds 1-2, on held-out seeds 3-6 (28 episodes) J 28.95 at
   2.14x travel with NO term below -1 % at any wind speed (tower +1.6 / +0.2 / +0.1 % at 20 / 22 / 24 m/s vs +0.4 / -2.5 /
-  -6.3 % unscheduled), -0.56 J for the schedule, +13.7 J [13.0, 14.4] over the tuned ROSCO. Model-error rows on the
-  range set: `campaign_next3.sh`.
+  -6.3 % unscheduled), -0.56 J for the schedule, +13.7 J [13.0, 14.4] over the tuned ROSCO. Model error on the same
+  episodes (s36): scheduled 28.81 / 29.00 / 28.95 / 28.44 at Cp/Ct x0.85 / 0.95 / 1 / 1.15 (worst per-wind term -2.1 % at
+  x0.85), nominal MPC 21.38 / 28.17 / 28.49 / 23.07 (-7.1 and -5.4 J at +-15 %).
 - **Agent layer on the tuned ROSCO (roadmap s34; first campaign after the three defects of s32 were fixed):** residual
   trained on the above-rated range winds under per-wind Cw. Held-out Cw (150 s, 28 episodes, vs the tuned ROSCO): agent
   reward +1.1 / +6.2 / +7.1 (3/3 positive, per-wind violation <= 0.16 %), fixed reward with tower weight 10 -27.9 / -7.9 /

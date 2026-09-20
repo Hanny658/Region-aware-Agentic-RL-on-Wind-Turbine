@@ -1445,3 +1445,46 @@ agent layer pays where the baseline leaves room, and the paper has to say so. (3
 it carries the identity offset of s32 (one chaotic 8 m/s episode; -18 at the zero residual).
 
 Artefacts: `~/wtrl/exp/{trwCwF3t,tgCwF3L10,trwTwF3t}_s{0,1,2}/`.
+
+## 36. Model error on the range set: the scheduled compensated MPC is flat over +-15 %, the nominal MPC is not (2026-09-20 13:41 - 22:59; `campaign_next3.sh`)
+
+The estimator's robustness had been measured on the low-turbulence set (s19, s23) and at x0.95 on the range set
+(s28). Here: the Cp/Ct table of the MPC's model scaled by 0.85 / 0.95 / 1 / 1.15, held-out range seeds 3-6 (28
+episodes, 600 s, class B); the x0.95 rows of the nominal and unscheduled controllers are the same 28 episodes of s28.
+
+| controller | Cp/Ct x | J | travel x GSPI | power / speed / tower / blade | tower term 12 -> 24 m/s | worst per-wind term |
+|---|---|---|---|---|---|---|
+| nominal MPC | 0.85 | 21.38 | 2.18 | 40.2 / 27.3 / 15.9 / 2.2 | 49 40 15 7.1 2.9 0.4 -3.3 | speed -31.0 % at 12 m/s |
+| nominal MPC | 0.95 | 28.17 | 2.06 | 43.3 / 45.5 / 19.7 / 4.2 | 58 48 18 9.5 4.5 2.1 -0.7 | -0.7 |
+| nominal MPC | 1 | 28.49 | 2.01 | 41.5 / 46.7 / 21.5 / 4.2 | 58 48 21 11.4 6.8 3.7 0.9 | none |
+| nominal MPC | 1.15 | 23.07 | 1.86 | 28.2 / 32.8 / 24.4 / 6.9 | 65 53 25 14.7 8.4 3.8 1.4 | power -17.4 % at 16 m/s |
+| offset-free, unscheduled | 0.85 | 29.33 | 2.09 | 48.5 / 55.3 / 11.1 / 2.4 | 49 35 9.5 0.7 -2.2 -5.0 -8.9 | tower -8.9 % at 24 m/s |
+| offset-free, unscheduled | 0.95 | 29.59 | 2.02 | 47.9 / 53.3 / 14.1 / 3.1 | 54 39 12.5 2.9 0.0 -3.3 -6.6 | tower -6.6 % |
+| offset-free, unscheduled | 1 | 29.51 | 1.98 | 47.3 / 52.4 / 15.0 / 3.4 | 56 41 13.5 3.7 0.4 -2.5 -6.3 | tower -6.3 % |
+| offset-free, unscheduled | 1.15 | 29.07 | 1.90 | 45.4 / 48.9 / 17.7 / 4.3 | 61 45 17.4 5.8 1.5 -1.5 -4.5 | tower -4.5 % |
+| **offset-free, scheduled (s33)** | 0.85 | **28.81** | 2.28 | 47.1 / 53.8 / 12.7 / 1.6 | 49 35 9.5 0.9 -1.1 -1.4 -2.1 | -2.1 (blade, 20 m/s) |
+| **offset-free, scheduled** | 0.95 | **29.00** | 2.18 | 46.4 / 51.7 / 15.5 / 2.4 | 54 39 12.5 3.1 0.8 0.1 -1.1 | -1.1 (tower, 24 m/s) |
+| **offset-free, scheduled** | 1 | **28.95** | 2.14 | 45.7 / 50.7 / 16.5 / 2.9 | 56 41 13.5 3.9 1.6 0.2 0.1 | -0.8 (blade, 16 m/s) |
+| **offset-free, scheduled** | 1.15 | **28.44** | 2.04 | 43.4 / 46.9 / 19.5 / 3.9 | 61 45 17.4 5.9 3.1 3.1 1.8 | none |
+
+Paired bootstrap over the 28 episodes (difference in J to the same controller with the exact model):
+nominal -7.11 [-8.54, -5.83] / -0.32 [-0.85, +0.19] / -5.43 [-6.21, -4.69] at x0.85 / x0.95 / x1.15;
+unscheduled offset-free -0.18 [-0.48, +0.15] / +0.08 / -0.44 [-0.62, -0.26];
+scheduled -0.14 [-0.46, +0.19] / +0.05 [-0.10, +0.22] / -0.51 [-0.75, -0.26].
+Scheduled - nominal at the same error: **+7.42 [+5.94, +9.02]** at x0.85, **+5.38 [+4.38, +6.35]** at x1.15.
+
+Reading. (1) On the range set +-15 % of aerodynamic model error costs the nominal MPC 5.4-7.1 J - concentrated near
+rated (speed MSE -31 % at 12 m/s, power MSE -17 % at 16 m/s) - and the compensated controllers 0.1-0.5 J. The
+"x0.95 costs 0.7 J" of s28 was the benign end of the range; the fragility of the nominal MPC is real on the class-B
+set as well. (2) The schedule and the estimator compose: the scheduled controller stays at 28.4-29.0 over the whole
+range, and its high-wind tower term stays within -2.1 % at x0.85 and is non-negative at x1.15, where the unscheduled
+controller is at -8.9 % / -4.5 %. With the model 15 % too weak the -1 % per-wind rule is missed by one point (tower
+-1.1 / -1.4 / -2.1 % at 20 / 22 / 24 m/s, blade -2.1 % at 20 m/s): to be stated as such. (3) This completes the evidence
+for the main-claim controller of s33: better regulation and tower fatigue than the tuned ROSCO at every wind speed
+(+13.7 J), and no dependence on the accuracy of the aerodynamic model that the nominal MPC needs.
+
+Infrastructure. The second stage of `campaign_next3.sh` (600 s rows of the other range-residual seeds) failed on a
+broken line continuation written through a shell heredoc (fixed in 4f7c91e); those rows are produced by the last
+stage of `campaign_next4.sh`, which evaluates every range-wind run that lacks its 600 s file.
+
+Artefacts: `~/wtrl/exp/mpcsearch600/qtsched/eval_{sched,offset,nominal}_cp*_s3456.json`.
