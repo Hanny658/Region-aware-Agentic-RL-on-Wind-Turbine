@@ -39,7 +39,9 @@ rng() {  # run port
   [ -f "$EXP/$run/ckpt_best.pt" ] || { echo "missing $run"; return; }
   [ -f "$EXP/$run/eval_range_TIB_s3456.json" ] && { echo "skip $run range"; return; }
   echo "== $run range $(date +%H:%M)"
-  WTRL_HOME=$HOME/wtrl600 WTRL_WIND=$HOME/wtrl/wind600 $RUN python scripts/evaluate.py --run "$EXP/$run" --ckpt ckpt_best.pt \n      --backend openfast --means $MEANS --seeds 3 4 5 6 --ti B --episode_s 600 --workers 6 --port0 "$port" \n      --tag range_TIB_s3456 2>&1 | grep -E "J=|per-wind|Traceback|rror:"
+  WTRL_HOME=$HOME/wtrl600 WTRL_WIND=$HOME/wtrl/wind600 $RUN python scripts/evaluate.py --run "$EXP/$run" --ckpt ckpt_best.pt \
+      --backend openfast --means $MEANS --seeds 3 4 5 6 --ti B --episode_s 600 --workers 6 --port0 "$port" \
+      --tag range_TIB_s3456 2>&1 | grep -E "J=|per-wind|Traceback|rror:"
 }
 ( rng trwCwR3t_s1 6600; rng tgCwR3L10_s0 6600 ) &
 ( rng trwCwR3t_s0 7000; rng tgCwR3L10_s1 7000 ) &
