@@ -71,6 +71,8 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   -3.7 (0/3; tower -3 to -7 % at 12-16 m/s). 600 s range set, best seed: tuned ROSCO 15.24 -> **19.62** at 1.38x travel,
   +4.37 J [4.12, 4.61] with power +6.3, speed +8.0, tower +2.3, blade +1.0 all excluding zero; fixed residual +1.17.
   An improvement layer for the PI loop, not a substitute for the MPC (28.95 at 2.14x).
+  Clean re-run on the low-turbulence 150 s bank (s35): no arm finds a load-holding gain there - the agent layer pays
+  where the baseline leaves room (class B from 18 m/s up), not where the tuned ROSCO already matches the MPC.
 - **Residual on the tuned ROSCO, constrained objectives (roadmap s32; `eval/fitness.py` C / CT / Cw / CTw, `--objective`):**
   18 runs, no checkpoint holds the constraints per wind speed on held-out winds; what the agent-written rewards find
   are trades (regulation for tower fatigue near rated, tower fatigue for regulation above rated). Two defects found:

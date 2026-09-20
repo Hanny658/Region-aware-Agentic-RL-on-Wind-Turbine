@@ -1411,3 +1411,37 @@ model-based controller. (4) Open: the 600 s rows of the other two agent seeds an
 
 Artefacts: `~/wtrl/exp/{trwCwR3t,tgCwR3L10}_s{0,1,2}/` (`eval_heldout_s3456_ckpt_best.json` = 150 s range winds vs the
 tuned ROSCO, `eval_range_TIB_s3456.json` = 600 s vs the original GSPI), discarded first attempts `*_badlabel`.
+
+## 35. Clean re-run on the low-turbulence bank: the negative result survives the fixes; the agent layer pays where the baseline leaves room (2026-09-20 07:01 - 13:41; `campaign_next2.sh`)
+
+Why. All 18 runs of s32 carried defects 2 and 3 (oracle-rule subset in training, agent candidates ranked by F). The
+three informative arms were re-run with the corrected code on the same base (tuned ROSCO), the same paired baselines
+(`~/wtrl_rt`), the same canonical 150 s bank (8 / 12.5 / 15 m/s, turbulence intensity 8 %) and the same budget:
+agent-written reward under Cw (`trwCwF3t`), fixed reward with tower weight 10 under Cw (`tgCwF3L10`), agent-written
+reward under CTw (`trwTwF3t`), 3 seeds each. Identity at episode 0: Cw -0.02 / -0.01 / -0.01.
+
+Held-out (wind seeds 3-6, 12 episodes, against the tuned ROSCO; J against the original GSPI, tuned ROSCO alone = 14.2):
+
+| arm | seed | selected episode | objective | per-wind violation | power / speed / tower / blade | J vs GSPI |
+|---|---|---|---|---|---|---|
+| agent reward, Cw | 0 | 0 | -0.01 | 0 | tuned ROSCO alone | 14.21 |
+| agent reward, Cw | 1 | 168 | -2.46 | 0.14 % | +0.5 / +0.2 / -0.4 / -0.4 | 14.12 |
+| agent reward, Cw | 2 | 168 | -1.97 | 0.09 % | -0.1 / -0.1 / -0.5 / -0.2 | 13.99 |
+| fixed reward (tower weight 10), Cw | 0, 1, 2 | 0, 0, 0 | -0.01 | 0 | tuned ROSCO alone | 14.2 |
+| agent reward, CTw | 0 | 280 | -1.18 | 0 | +1.6 / +1.7 / -1.2 / +2.8 | 15.15 |
+| agent reward, CTw | 1, 2 | 0, 0 | -0.1 | 0 | tuned ROSCO alone | 14.2 |
+
+In training the fixed reward never beats episode 0 (tower -2.4 to -13 % and speed MSE -1 to -11 % in every
+evaluation of seed 0); the two agent runs that leave episode 0 find checkpoints worth +0.3 / +1.3 on the supervisor
+winds that do not hold on held-out winds (tower -1.3 / -1.4 % at 15 m/s). The tower-target run gains regulation
+(+3.6 % at 15 m/s) and loses its own target (tower -3.8 % at 15 m/s).
+
+Reading. (1) With the formulation fixed, **no arm finds a load-holding gain on this bank** - the negative result of
+s32 was not an artefact of the defects. (2) Together with s34 the picture is consistent: on the low-turbulence
+8 / 12.5 / 15 m/s set the tuned ROSCO already regulates as well as the MPC (s29: 40 % vs 43 % at 15 m/s) and there is
+nothing for a residual to take without touching the tower; on the class-B range from 18 m/s up the tuned ROSCO trails
+the MPC by 20+ points of regulation, and there the agent-written reward takes 6-8 of them with the loads held. The
+agent layer pays where the baseline leaves room, and the paper has to say so. (3) The seeds 7-10 column is not shown:
+it carries the identity offset of s32 (one chaotic 8 m/s episode; -18 at the zero residual).
+
+Artefacts: `~/wtrl/exp/{trwCwF3t,tgCwF3L10,trwTwF3t}_s{0,1,2}/`.
