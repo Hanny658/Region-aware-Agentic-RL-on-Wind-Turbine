@@ -43,6 +43,8 @@ def main():
     ap.add_argument("--base_mm_cp", type=float, default=None, help="override the MPC base's Cp/Ct model scale")
     ap.add_argument("--base_mm_ft", type=float, default=None, help="override the MPC base's tower-frequency model scale")
     ap.add_argument("--base_mm_m", type=float, default=None, help="override the MPC base's modal-mass model scale")
+    ap.add_argument("--residual_gate", nargs=2, type=float, default=None, metavar=("V_LO", "V_HI"),
+                    help="wind gate of the residual [m/s]; default: the run's own setting")
     ap.add_argument("--base_mpc_json", default=None,
                     help="JSON dict merged into the MPC base's LPVMPC keyword arguments (e.g. '{\"qt\": 0}')")
     ap.add_argument("--out", default=None, help="directory for eval_<tag>.{csv,json} and logs_<tag>/ (default: the run)")
@@ -74,6 +76,10 @@ def main():
                 "ipc_max_rad": float(cfg_run.get("ipc_max", 0.0) or 0.0),
                 "ipc_hold_s": float(cfg_run.get("ipc_hold", 0.0) or 0.0),
                 "region_label_by_wind": bool(args.relabel_wind)}
+    gate = args.residual_gate if args.residual_gate else cfg_run.get("residual_gate")
+    if gate:
+        cfg_over["residual_gate"] = [float(gate[0]), float(gate[1])]
+        print(f"residual wind gate: 0 below {gate[0]:g} m/s, 1 above {gate[1]:g} m/s")
     if cfg_run.get("base") == "mpc":
         from envs.factory import mpc_base_kw
         mm = dict(cp_scale=float(cfg_run.get("base_mm_cp", 1.0)), ftower_scale=float(cfg_run.get("base_mm_ft", 1.0)),

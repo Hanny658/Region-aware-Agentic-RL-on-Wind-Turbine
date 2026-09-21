@@ -58,6 +58,8 @@ class EnvConfig:
                                          # the LPV-MPC target (2026-09-14); zero residual == wide-open MPC
     mpc_kw: dict = field(default_factory=dict)   # LPVMPC(**mpc_kw) when base_ctrl == "mpc"
     obs_base: bool = False               # append the base controller's pitch target to the observation
+    residual_gate: list | None = None    # [v_lo, v_hi] m/s: the residual is scaled by 0 below v_lo ... 1 above v_hi on a 10 s
+                                         # low-pass of the wind-speed estimate (the layer acts only where the base leaves room)
     region_label_by_wind: bool = False    # metrics only: label R3 by v_hub > rated instead of the
                                          # oracle rule. Needed whenever a *non-residual* controller
                                          # changes ROSCO's own pitch command (MPC override, ROSCO's
@@ -206,6 +208,7 @@ class ResidualPitchEnv(gym.Env):
 
     # ------------------------------------------------------------------ gym API
     def reset(self, *, seed=None, options=None):
+        self._v_gate = None                  # low-pass state of the residual's wind gate
         if seed is not None:
             self.rng = np.random.default_rng(seed)
         if options and "episode_index" in options:
@@ -255,12 +258,25 @@ class ResidualPitchEnv(gym.Env):
         self._m = m
         return self._obs(m, self.region), {"region": self.region}
 
+    def _gate(self, m: dict) -> float:
+        """Wind gate of the residual in [0, 1]; 1 when no gate is configured."""
+        g = getattr(self.cfg, "residual_gate", None)
+        if not g:
+            return 1.0
+        v = m.get("v_est", m.get("v_hub", 0.0))
+        v = v if v == v else 0.0
+        prev = getattr(self, "_v_gate", None)
+        self._v_gate = v if prev is None else prev + (self.dt / 10.0) * (v - prev)
+        lo, hi = float(g[0]), float(g[1])
+        return 1.0 if hi <= lo and self._v_gate >= lo else float(min(1.0, max(0.0, (self._v_gate - lo) / max(hi - lo, 1e-6))))
+
     def step(self, action):
         m_prev = self._m
         region = self.region
         base_off = self._base_offset(m_prev)
         # the residual is bounded and damped on top of the base command; the pitch limits apply to the sum
         dbeta = self.safety.apply(float(action[0]), region, m_prev["beta_native"] + base_off, m_prev["min_pit"])
+        dbeta *= self._gate(m_prev)
         i = 1
         dtau = 0.0
         if self.cfg.dtau_max_nm > 0.0:

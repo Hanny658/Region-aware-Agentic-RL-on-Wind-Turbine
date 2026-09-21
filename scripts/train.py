@@ -122,6 +122,8 @@ def main():
     ap.add_argument("--base_adapt", default="none", choices=["none", "offset", "rls"],
                     help="with --base mpc: model-error compensation of the MPC (offset-free / adaptive)")
     ap.add_argument("--base_tau_adapt", type=float, default=5.0, help="time constant of --base_adapt [s]")
+    ap.add_argument("--residual_gate", nargs=2, type=float, default=None, metavar=("V_LO", "V_HI"),
+                    help="wind gate of the residual [m/s]: 0 below V_LO, 1 above V_HI on a low-passed wind estimate")
     ap.add_argument("--base_mpc_json", default=None,
                     help="with --base mpc: JSON (or @file) merged into the MPC keywords, e.g. the wind-scheduled tower weight")
     ap.add_argument("--base_mm_cp_range", nargs=2, type=float, default=None, metavar=("LO", "HI"),
@@ -234,6 +236,9 @@ def main():
         if args.base_mm_cp_range:
             cfg.mpc_kw = {**cfg.mpc_kw, "cp_scale_range": [float(args.base_mm_cp_range[0]), float(args.base_mm_cp_range[1])]}
         cfg_over["base_ctrl"], cfg_over["mpc_kw"], cfg_over["obs_base"] = "mpc", cfg.mpc_kw, True
+    if args.residual_gate:
+        cfg.residual_gate = [float(args.residual_gate[0]), float(args.residual_gate[1])]
+        cfg_over["residual_gate"] = cfg.residual_gate
     cfg_over["reward"] = cfg.reward
     obs_dim = (5 + (2 if cfg.region_flag_in_obs else 0) + (1 if cfg.obs_fa_acc else 0)
                + (2 if args.ipc_max > 0.0 else 0) + (1 if cfg.obs_base else 0))
