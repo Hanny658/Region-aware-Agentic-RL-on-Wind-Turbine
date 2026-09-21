@@ -66,6 +66,12 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   -6.3 % unscheduled), -0.56 J for the schedule, +13.7 J [13.0, 14.4] over the tuned ROSCO. Model error on the same
   episodes (s36): scheduled 28.81 / 29.00 / 28.95 / 28.44 at Cp/Ct x0.85 / 0.95 / 1 / 1.15 (worst per-wind term -2.1 % at
   x0.85), nominal MPC 21.38 / 28.17 / 28.49 / 23.07 (-7.1 and -5.4 J at +-15 %).
+- **Verified design loop for the MPC (roadmap s38; `scripts/mpc_design_search.py`, `docs/tables/design_search.csv`):** from the
+  hand-set UNSCHEDULED reference, llm and es proposers both discover the wind schedule in 24 simulations and repair the
+  per-wind violation on held-out winds (S = J - 4 V: 25.66 -> 26.8-28.2); random search 0/48. They do NOT beat the hand design
+  of s33 (28.95) and llm = es in the result; llm proposals beat the reference more often (25/48 vs 15/48, p = 0.03). Selection on
+  8 episodes cannot rank schedules (rank correlation selection vs held-out -0.9 over the scheduled designs). Do not claim
+  "the agent designs a better controller" or "the LLM beats other search".
 - **Agent layer on the tuned ROSCO (roadmap s34; first campaign after the three defects of s32 were fixed):** residual
   trained on the above-rated range winds under per-wind Cw. Held-out Cw (150 s, 28 episodes, vs the tuned ROSCO): agent
   reward +1.1 / +6.2 / +7.1 (3/3 positive, per-wind violation <= 0.16 %), fixed reward with tower weight 10 -27.9 / -7.9 /

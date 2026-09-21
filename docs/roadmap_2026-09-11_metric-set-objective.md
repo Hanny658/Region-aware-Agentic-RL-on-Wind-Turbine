@@ -1533,3 +1533,70 @@ Reading.
 Artefacts: `~/wtrl/exp/{trwCwR3t,tgCwR3L10}_s{0..4}/`, `~/wtrl/exp/{trrCwR3t,tgCwR3t}_s{0,1,2}/`
 (`eval_heldout_s3456_ckpt_best.json` at 150 s vs the tuned ROSCO, `eval_range_TIB_s3456.json` at 600 s vs the GSPI).
 Machine idle after 10:38 on 2026-09-21.
+
+## 38. The verified design loop finds the wind schedule by itself, does not beat the hand design, and the proposer does not decide the outcome (2026-09-21 11:15 - 21:42; `scripts/mpc_design_search.py`, `campaign_design.sh`, `scripts/dev/design_search_table.py`, `docs/tables/design_search.csv`)
+
+Question (narrative decision of 2026-09-21: present the agent as the whole supervised design system, whose output
+with a model is the MPC). Is the main-claim controller of s33 something the verified design loop produces by itself,
+and does the proposer matter?
+
+Setup. Space = the six MPC parameters of s21 plus the tower-weight schedule (`qt_ratio` in [1, 8], `v_lo` in [13, 22]
+m/s, `v_span` in [1, 8] m/s; ratio 1 = unscheduled). Selection objective S = J - 4 V on range seeds 1-2 at 12 / 16 /
+20 / 24 m/s (8 episodes, 600 s, class B), V = mean over wind speeds of the shortfalls of the four per-wind terms
+below -1 % (the per-wind load rule as a soft constraint). Every arm starts from the hand-set UNSCHEDULED offset-free
+reference (S 20.03 = J 28.93 - 4 x 2.23). Budget 24 verified candidates; proposers llm / es / random, two repeats each,
+arms blind to each other. Report: the best candidate of every arm-run on range seeds 3-6 at all seven wind speeds
+(28 episodes, never seen by a proposer).
+
+Selection side:
+
+| arm-run | incumbent S after 8 / 16 / 24 | proposals that beat the reference | failed (unstable) | best candidate |
+|---|---|---|---|---|
+| llm, repeat 0 | 24.52 / 25.43 / 27.73 | 13 / 24 | 0 | N15 r .5 qt 4 -> x1.25 over 18-23 m/s, travel 1.60x |
+| llm, repeat 1 | 23.92 / 25.14 / 25.79 | 12 / 24 | 0 | N20 r .38 qt 4.4 -> x1.3 over 20-24 m/s, 2.01x |
+| es, repeat 0 | 22.48 / 22.48 / 25.96 | 6 / 24 | 0 | N20 r .38 qt 4 -> x1.52 over 19.8-22.1 m/s, 1.99x |
+| es, repeat 1 | 23.49 / 25.97 / 26.67 | 9 / 24 | 0 | N20 r .58 qt 3 -> x1.1 over 17.8-23 m/s, 1.49x |
+| random, repeat 0 / 1 | 20.03 throughout | 0 / 24, 0 / 24 | 3, 4 | the reference |
+
+Held-out side (28 episodes; S and V recomputed on these episodes; paired 95 % intervals on J):
+
+| controller | J | S | V | travel x GSPI | power / speed / tower / blade | worst per-wind term | J - hand-set reference | J - hand design (s33) |
+|---|---|---|---|---|---|---|---|---|
+| hand-set unscheduled reference (= both random runs) | 29.51 | 25.66 | 0.96 | 1.98 | 47.3 / 52.4 / 15.0 / 3.4 | tower -6.3 % at 24 m/s | | +0.56 |
+| **hand-designed schedule (s33)** | 28.95 | **28.95** | 0 | 2.14 | 45.7 / 50.7 / 16.5 / 2.9 | -0.8 | -0.56 [-0.67, -0.43] | |
+| nominal MPC | 28.49 | 28.49 | 0 | 2.01 | 41.5 / 46.7 / 21.5 / 4.2 | none | -1.02 | -0.46 [-1.03, +0.07] |
+| es, repeat 0 | 28.16 | 28.16 | 0 | 1.94 | 42.3 / 46.7 / 20.3 / 3.4 | -0.3 | -1.35 [-1.53, -1.17] | -0.79 [-0.95, -0.64] |
+| llm, repeat 1 | 28.34 | 27.95 | 0.10 | 1.95 | 42.3 / 47.7 / 19.9 / 3.4 | power -1.7 % at 12 m/s | -1.17 [-1.46, -0.86] | -0.62 [-0.89, -0.33] |
+| es, repeat 1 | 27.09 | 27.09 | 0 | **1.45** | 39.9 / 43.7 / 20.1 / 4.6 | -0.5 | -2.42 [-2.72, -2.13] | -1.86 [-2.18, -1.55] |
+| llm, repeat 0 | 28.40 | 26.77 | 0.41 | **1.56** | 42.0 / 47.7 / 18.5 / 5.3 | power -3.2 % at 12 m/s, tower -1.7 % at 24 m/s | -1.11 [-1.38, -0.83] | -0.55 [-0.82, -0.27] |
+| tuned ROSCO | 15.24 | 15.24 | 0 | 1.15 | 23.1 / 28.9 / 5.3 / 3.6 | none | -14.27 | -13.71 |
+
+The hand-designed schedule on the SELECTION episodes (evaluated afterwards): S 23.28 (J 28.48, V 1.30: tower -1.8 % and
+blade -1.6 % at 20 m/s, blade -4.8 % at 24 m/s), i.e. below all four searched designs on the set they were selected on.
+
+Reading.
+1. **The loop discovers the structure.** All four sequential runs end on a wind-scheduled tower weight starting at
+   18-20 m/s, from an unscheduled start, within 24 simulations; all four repair the per-wind violation of the reference
+   on winds they never saw (held-out V 0.96 -> 0 / 0 / 0.10 / 0.41) and raise the held-out design objective by 1.1-2.5 S.
+   Random search over the same box: 0 of 48 proposals beat the reference, 7 are unstable. Two searched designs cut the
+   pitch travel to 1.45-1.56x GSPI (the hand design: 2.14x) at a cost of 0.6-1.9 J.
+2. **It does not beat the hand design.** On held-out S the hand-designed schedule (28.95) is above every searched design
+   (26.8-28.2), and the nominal MPC (28.49) too. On the selection episodes the order is reversed. Over the five
+   scheduled designs the rank correlation between selection S and held-out S is **-0.9**: eight episodes with two
+   realisations per wind speed separate "scheduled vs unscheduled" (20.0 vs 23.3-27.7) reliably and cannot rank
+   schedules - the search fits the realisation noise of the per-wind terms (blade -4.8 % at 24 m/s on seeds 1-2 is
+   within -0.8 % on seeds 3-6). Same lesson as s33: a per-wind rule needs more realisations per wind speed than a set-mean J.
+3. **The proposer.** Final quality: llm 27.73 / 25.79 vs es 25.96 / 26.67 on selection, 26.77 / 27.95 vs 28.16 / 27.09
+   held-out - no difference. What differs is the quality of the individual proposal: 25 of 48 llm proposals beat the
+   reference against 15 of 48 es proposals (one-sided Fisher exact p = 0.031), and the llm runs are ahead at a budget
+   of 8 (24.5 / 23.9 vs 22.5 / 23.5). This matches s21 and the older proposer comparisons: the LLM is a better prior,
+   not a better optimiser.
+4. **What can be claimed.** (a) The headline numbers are those of the MPC family against the tuned ROSCO (+11.9 to
+   +13.7 J held-out for every per-wind-feasible design in the table) and do not depend on who designed the controller. (b) "A verified
+   sequential design loop recovers the wind schedule and the per-wind load rule from an unscheduled start in 24
+   simulations; random search does not; the LLM proposer makes better individual proposals and is equal to a (1+lambda)
+   search in the result." (c) NOT: "the agent designs a better controller than the engineer", and not "the LLM beats
+   other search".
+
+Artefacts: `~/wtrl/exp/mpcdesign/{llm,es,random}_r{0,1}/{history.jsonl,best.json}`, `~/wtrl/exp/mpcdesign/heldout/`,
+`~/wtrl/exp/mpcdesign/cache/` (the s33 controller on the selection episodes included). Machine idle after 21:50.

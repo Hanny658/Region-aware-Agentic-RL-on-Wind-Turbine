@@ -88,18 +88,20 @@ if rows:
         assert len(v) == 28 and all(x["mean_wind"] == y["mean_wind"] and abs(x["energy_base_MWh"] - y["energy_base_MWh"]) < 1e-9 for x, y in zip(v, base)), k
         j, t = J(v)
         trav = np.mean([r["pitch_travel_deg"] for r in v]) / np.mean([r["pitch_travel_base_deg"] for r in v])
-        tw, worst = [], (0.0, "")
+        tw, worst, short = [], (0.0, ""), 0.0
         for u in winds:
             tu = J([r for r in v if r["mean_wind"] == u])[1]
             tw.append(tu[2])
+            short += sum(max(0.0, -1.0 - x) for x in tu if np.isfinite(x))
             for nm, val in zip(("power", "speed", "tower", "blade"), tu):
                 if np.isfinite(val) and val < worst[0]:
                     worst = (val, f"{nm}@{u:g}")
+        V = short / len(winds)                      # the per-wind load rule of the design objective, on the held-out episodes
         d1, (l1, h1) = paired(v, base)
         d2, (l2, h2) = paired(v, rows["hand-designed schedule (s33)"]) if "hand-designed schedule (s33)" in rows else (float("nan"), (float("nan"),) * 2)
-        print(f"{k:>46} {j:6.2f} {trav:6.2f} | " + " / ".join(f"{x:5.1f}" for x in t) + " | " + " ".join(f"{x:5.1f}" for x in tw) +
+        print(f"{k:>46} {j:6.2f} {trav:6.2f} S {j - 4 * V:6.2f} V {V:4.2f} | " + " / ".join(f"{x:5.1f}" for x in t) + " | " + " ".join(f"{x:5.1f}" for x in tw) +
               f" | {worst[0]:5.1f} {worst[1]:<9} | {d1:+5.2f} [{l1:+.2f}, {h1:+.2f}] | {d2:+5.2f} [{l2:+.2f}, {h2:+.2f}]")
-        out.append({"controller": k, "heldout_J": round(j, 2), "travel_x_gspi": round(float(trav), 3), **{f"heldout_{m}": round(x, 2) for m, x in zip(T, t)},
+        out.append({"controller": k, "heldout_S": round(j - 4 * V, 2), "heldout_V": round(V, 3), "heldout_J": round(j, 2), "travel_x_gspi": round(float(trav), 3), **{f"heldout_{m}": round(x, 2) for m, x in zip(T, t)},
                     **{f"tower_U{u:g}": round(x, 2) for u, x in zip(winds, tw)}, "worst_term": round(worst[0], 2), "worst_at": worst[1],
                     "diff_handset": round(d1, 2), "diff_handset_lo": round(float(l1), 2), "diff_handset_hi": round(float(h1), 2),
                     "diff_s33": round(d2, 2), "diff_s33_lo": round(float(l2), 2), "diff_s33_hi": round(float(h2), 2), **sel.get(k, {})})
