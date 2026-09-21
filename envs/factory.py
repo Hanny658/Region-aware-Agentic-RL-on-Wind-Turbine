@@ -49,6 +49,16 @@ def mpc_base_kw(cp_scale: float = 1.0, ftower_scale: float = 1.0, mass_scale: fl
                 adapt=str(adapt), tau_adapt=float(tau_adapt), notch_3p_q=float(notch_3p_q))
 
 
+def load_mpc_json(text) -> dict:
+    """Keywords for the MPC base from a JSON string or from "@path" (a JSON file, relative to the working directory)."""
+    import json
+    if not text:
+        return {}
+    text = str(text).strip()
+    d = json.load(open(os.path.expanduser(text[1:]), encoding="utf-8")) if text.startswith("@") else json.loads(text)
+    return {k: v for k, v in d.items() if not k.startswith("_")}       # "_note" and the like are comments
+
+
 def make_env(backend: str, episodes: list[EpisodeSpec], cfg: EnvConfig | None = None,
              port: int = 5600, work_tag: str = "work", seed: int = 0, keep_outputs: bool = False):
     cfg = cfg or default_config()

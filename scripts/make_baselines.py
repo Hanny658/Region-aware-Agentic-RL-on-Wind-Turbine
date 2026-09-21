@@ -14,12 +14,17 @@ from pathlib import Path
 
 import numpy as np
 
-from envs.factory import baseline_dir, episode_list, make_env, parse_ti
+from envs.factory import baseline_dir, episode_list, load_mpc_json, make_env, mpc_base_kw, parse_ti
 
 
 def run_one(args):
-    backend, ep, out, port = args
-    env = make_env(backend, [ep], port=port, work_tag="work_base")
+    backend, ep, out, port, mpc_kw = args
+    cfg = None
+    if mpc_kw is not None:
+        # baselines of an MPC base controller (zero residual), for objectives taken relative to that MPC
+        from envs.base_env import default_config
+        cfg = default_config(baseline_dir=baseline_dir(backend), base_ctrl="mpc", mpc_kw=mpc_kw, obs_base=True)
+    env = make_env(backend, [ep], cfg=cfg, port=port, work_tag="work_base")
     env.reset(options={"episode_index": 0})
     done = False
     while not done:
@@ -47,6 +52,8 @@ if __name__ == "__main__":
     ap.add_argument("--warmup_s", type=float, default=20.0)
     ap.add_argument("--jobs", type=int, default=1)
     ap.add_argument("--port0", type=int, default=5700)
+    ap.add_argument("--base", default="gspi", choices=["gspi", "mpc"], help="base controller whose zero-residual rollouts are the baselines")
+    ap.add_argument("--base_mpc_json", default=None, help="with --base mpc: JSON (or @file) merged into the MPC keywords")
     ap.add_argument("--force", action="store_true",
                     help="overwrite baselines that already exist (default: skip them). Baselines are "
                          "the denominator of every reported number, so silently replacing them with a "
@@ -58,7 +65,10 @@ if __name__ == "__main__":
     out_dir.mkdir(parents=True, exist_ok=True)
     print(f"wind bank : {Path(eps[0].wind_file).parent}")
     print(f"baselines : {out_dir}   (episode {args.episode_s:g} s, warmup {args.warmup_s:g} s)")
-    jobs = [(args.backend, ep, str(out_dir / f"{Path(ep.wind_file).stem}.npz"), args.port0 + i)
+    mpc_kw = {**mpc_base_kw(), **load_mpc_json(args.base_mpc_json)} if args.base == "mpc" else None
+    if mpc_kw is not None:
+        print(f"base      : LPV-MPC {mpc_kw}")
+    jobs = [(args.backend, ep, str(out_dir / f"{Path(ep.wind_file).stem}.npz"), args.port0 + i, mpc_kw)
             for i, ep in enumerate(eps)]
     if not args.force:
         keep = [j for j in jobs if not Path(j[2]).exists()]

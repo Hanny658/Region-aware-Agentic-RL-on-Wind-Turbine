@@ -83,8 +83,9 @@ def main():
             if v is not None:
                 mm[k] = float(v)
         mpc_kw = mpc_base_kw(**mm)
-        if args.base_mpc_json:
-            mpc_kw.update(json.loads(args.base_mpc_json))
+        from envs.factory import load_mpc_json
+        # the run's own MPC keywords (train.py --base_mpc_json) unless the command line overrides them
+        mpc_kw.update(load_mpc_json(args.base_mpc_json if args.base_mpc_json else cfg_run.get("base_mpc_json")))
         cfg_over |= {"base_ctrl": "mpc", "mpc_kw": mpc_kw, "obs_base": True}
         print(f"base controller: LPV-MPC in the worker (model scales Cp/Ct {mm['cp_scale']:g}, "
               f"tower f {mm['ftower_scale']:g}, modal mass {mm['mass_scale']:g})")

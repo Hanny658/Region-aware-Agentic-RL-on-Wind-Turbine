@@ -1,0 +1,2 @@
+{"adapt": "offset", "tau_adapt": 5.0, "qt_sched": [6.0, 18.0, 22.0],
+ "_note": "main-claim controller of roadmap s33: offset-free LPV-MPC (N 20, r 0.3, qt 3, wc_v 0.35) with the tower weight ramped from 3 to 6 over 18-22 m/s"}
