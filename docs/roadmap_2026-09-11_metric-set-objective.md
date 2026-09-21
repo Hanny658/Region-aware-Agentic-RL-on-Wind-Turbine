@@ -1488,3 +1488,48 @@ broken line continuation written through a shell heredoc (fixed in 4f7c91e); tho
 stage of `campaign_next4.sh`, which evaluates every range-wind run that lacks its 600 s file.
 
 Artefacts: `~/wtrl/exp/mpcsearch600/qtsched/eval_{sched,offset,nominal}_cp*_s3456.json`.
+
+## 37. The agent layer with five seeds and two more controls: a structural reward search buys the level, the agent is what holds the loads (2026-09-20 22:59 - 09-21 10:38; `campaign_next4.sh`, `scripts/dev/range_residual_table.py`, `docs/tables/range_residual.csv`)
+
+Setup as in s34 (tuned ROSCO base, above-rated range winds at 150 s for training, per-wind objective Cw, 300
+episodes). Added: seeds 3-4 of the two s34 arms, and two controls with 3 seeds each - the fixed reward with the
+J-tuned weights (the default the agent starts from) and a RANDOM reward structure drawn from the fixed grammar with
+the same fork verification as the agent (the random-vocabulary control of v2 s9). Every run was then evaluated on the
+600 s range set (TurbSim seeds 3-6, 28 episodes) against the original GSPI; tuned ROSCO alone = 15.24 at 1.15x travel.
+
+| arm | held-out Cw at 150 s, per seed | positive | 600 s J, per seed | mean | J - tuned ROSCO | travel x GSPI | worst per-wind tower / blade difference to the tuned ROSCO at 600 s, per seed |
+|---|---|---|---|---|---|---|---|
+| **agent-written reward** | +1.12 +6.22 +7.07 +5.79 -2.50 | **4/5** | 16.80 20.28 19.62 20.12 19.51 | **19.27** | **+4.02** | 1.29-1.61 | tower -0.7 -0.4 -0.9 0.0 -4.0; blade never worse |
+| random reward structure | -9.74 -12.31 +6.27 | 1/3 | 19.16 19.11 17.96 | 18.74 | +3.50 | 1.23-1.64 | tower -3.9 -2.9 0.0; blade 0 0 -2.0 |
+| fixed reward, J-tuned weights | -35.66 +0.78 -4.54 | 1/3 | 16.17 18.94 16.35 | 17.15 | +1.91 | 1.21-1.32 | tower -5.3 -2.3 -4.1; blade -2.7 -1.2 -4.8 |
+| fixed reward, tower weight 10 | -27.87 -7.94 -3.67 -17.16 -37.29 | 0/5 | 16.12 16.86 16.41 15.22 17.29 | 16.38 | +1.14 | 1.19-1.29 | tower -4.6 -3.0 -4.2 -3.8 -4.3; blade -1.9 -4.2 -4.8 -4.7 -2.0 |
+
+Every 600 s difference to the tuned ROSCO has a paired 95 % interval that excludes zero except the fourth
+tower-weight-10 seed (-0.03 [-0.15, +0.08]); the agent seeds are +1.55 [1.41, 1.69], +5.04 [4.47, 5.57], +4.37 [4.12, 4.61],
++4.88 [4.55, 5.24], +4.26 [3.88, 4.68]. Held-out Cw positive: agent 4/5 against 2/11 for the pooled controls, one-sided
+Fisher exact p = 0.036. Both fatigue loads within -1 % of the tuned ROSCO at EVERY wind speed at 600 s (the
+objective's own rule, applied to episodes four times longer than the training ones): agent 4/5, random structure 0/3,
+fixed rewards 0/8 (p = 0.003 by the same test).
+
+Reading.
+1. **Level.** What lifts J by 3.5-4 points over the tuned ROSCO is a reward whose STRUCTURE was searched with fork
+   verification: the random grammar reaches 18.74 against the agent's 19.27, the two fixed rewards 16.4-17.2. This
+   repeats v2 s9 on a new base, objective and wind set: the proposer does not matter much for the level.
+2. **Constraint.** What the agent adds is that the gain respects the per-wind load rule on winds it never saw: 4 of 5
+   seeds hold tower and blade fatigue within 1 % at every wind speed at 600 s (the fifth loses 4.0 % of tower fatigue
+   at one wind speed), no control run does. The random structures find the regulation (+5 to +9 % power / speed MSE at
+   150 s) and lose 3-5 % of tower fatigue at 16-18 m/s; the fixed rewards lose tower fatigue at 12-16 m/s and, at
+   600 s, blade fatigue as well.
+   The agent reads the per-wind terms of the objective and writes load terms that penalise growth above the baseline
+   level in the regions where it appears (s34); a grammar sampled blindly cannot do that.
+3. **Size and cost.** +4 J on 15.2 (regulation +1 to +8 points, tower +2 to +8, blade +1 to +3) for 12-40 % more
+   pitch travel than the tuned ROSCO (1.29-1.61x vs 1.15x GSPI). The scheduled MPC of s33 is at 28.95 with 2.14x.
+4. **Claim this supports.** An LLM-supervised residual is an improvement layer for a tuned industrial PI loop in
+   the operating range where that loop leaves regulation on the table (class B, from 18 m/s up): better regulation
+   and both fatigue loads, per wind speed, at 600 s, in 4 of 5 seeds - and nothing on the low-turbulence set where
+   the tuned loop already matches the MPC (s35). n = 5 / 3 / 3 / 5; the level comparison agent-vs-random is not
+   significant at this n, the load-holding comparison is.
+
+Artefacts: `~/wtrl/exp/{trwCwR3t,tgCwR3L10}_s{0..4}/`, `~/wtrl/exp/{trrCwR3t,tgCwR3t}_s{0,1,2}/`
+(`eval_heldout_s3456_ckpt_best.json` at 150 s vs the tuned ROSCO, `eval_range_TIB_s3456.json` at 600 s vs the GSPI).
+Machine idle after 10:38 on 2026-09-21.
