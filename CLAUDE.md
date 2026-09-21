@@ -66,6 +66,12 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   -6.3 % unscheduled), -0.56 J for the schedule, +13.7 J [13.0, 14.4] over the tuned ROSCO. Model error on the same
   episodes (s36): scheduled 28.81 / 29.00 / 28.95 / 28.44 at Cp/Ct x0.85 / 0.95 / 1 / 1.15 (worst per-wind term -2.1 % at
   x0.85), nominal MPC 21.38 / 28.17 / 28.49 / 23.07 (-7.1 and -5.4 J at +-15 %).
+- **Agent layer STACKED ON the scheduled MPC (roadmap s39; `campaign_probe_mpc.sh`, GO / NO-GO rule committed before the
+  results):** paired baselines = the MPC's own rollouts (`~/wtrl_mpc_range`), per-wind Cw. Agent-written reward: held-out Cw
+  positive 3/3, 600 s J 29.72 / 29.25 / 30.62 against the MPC alone 28.95 (+0.76 / +0.30 / +1.67, every paired interval above
+  zero; tower +0.9 to +2.1 points, power MSE worse at 12-14 m/s); fixed reward learns nothing (+0.09 / +0.06). Follow-ups
+  running: more seeds + random-structure control (`campaign_probe_mpc_seeds.sh`), then the wind-gated residual
+  (`--residual_gate 15 17`, `campaign_gate.sh`, report on fresh wind seeds 7-10).
 - **Verified design loop for the MPC (roadmap s38; `scripts/mpc_design_search.py`, `docs/tables/design_search.csv`):** from the
   hand-set UNSCHEDULED reference, llm and es proposers both discover the wind schedule in 24 simulations and repair the
   per-wind violation on held-out winds (S = J - 4 V: 25.66 -> 26.8-28.2); random search 0/48. They do NOT beat the hand design

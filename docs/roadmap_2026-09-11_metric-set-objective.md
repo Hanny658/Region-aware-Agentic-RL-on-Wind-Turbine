@@ -1600,3 +1600,59 @@ Reading.
 
 Artefacts: `~/wtrl/exp/mpcdesign/{llm,es,random}_r{0,1}/{history.jsonl,best.json}`, `~/wtrl/exp/mpcdesign/heldout/`,
 `~/wtrl/exp/mpcdesign/cache/` (the s33 controller on the selection episodes included). Machine idle after 21:50.
+
+## 39. Probe: the agent-supervised residual stacked on the scheduled MPC adds to it (2026-09-21 22:12 - 09-22 04:52; `campaign_probe_mpc.sh`, `scripts/dev/probe_decision.py`)
+
+Why. Every earlier residual-on-MPC arm (s17-s24, s30) was run on the low-turbulence 150 s bank, under J, before the
+defects of s32 were fixed, and found nothing. s34-s35 showed the layer pays where the base leaves room. The probe
+repeats the s34 setup with the main-claim controller of s33 as the base.
+
+Setup. Base = offset-free LPV-MPC with the wind-scheduled tower weight (`configs/mpc_sched_s33.json`, new
+`--base_mpc_json` in `train.py` / `evaluate.py` / `make_baselines.py`). Paired baselines = THE MPC'S OWN zero-residual
+rollouts on the range winds at 150 s (`~/wtrl_mpc_range`; identity J = Cw = 0.00 at all seven wind speeds), so Cw > 0
+reads "regulation gained on top of the MPC with both loads held per wind speed". Training winds, budget, objective and
+selection as in s34. Arms: agent-written reward (3 seeds), fixed reward with the J-tuned weights (2 seeds).
+
+Decision rule, committed (2676b80) before any result existed (user instruction: more seeds if the effect is good,
+otherwise examine the agent design): GO iff the held-out Cw is positive in >= 2 of 3 agent seeds AND the mean 600 s
+difference in J to the MPC alone exceeds +0.5 with >= 2 of 3 paired 95 % intervals above zero.
+
+Result (150 s held-out = range seeds 3-6 against the MPC; 600 s = the same seeds against the original GSPI, the MPC
+alone is 28.95 with 45.7 / 50.7 / 16.5 / 2.9 at 2.14x pitch travel):
+
+| run | selected episode | held-out Cw (violation) | 600 s J | J - MPC alone [95 %] | power / speed / tower / blade - MPC alone | travel x GSPI |
+|---|---|---|---|---|---|---|
+| agent reward, seed 0 | 280 | +0.56 (0.10 %) | 29.72 | +0.76 [+0.56, +0.97] | +0.2 / +1.4 / +0.9 / +0.5 | 2.22 |
+| agent reward, seed 1 | 280 | +1.13 (0) | 29.25 | +0.30 [+0.01, +0.58] | -1.7 / +0.7 / +1.3 / +0.8 | 2.29 |
+| agent reward, seed 2 | 256 | +4.96 (0.12 %) | **30.62** | **+1.67 [+1.30, +2.02]** | +0.7 / +3.4 / +2.1 / +0.4 | 2.62 |
+| fixed reward, seed 0 | 0 | +0.62 (0) | 29.04 | +0.09 [-0.01, +0.19] | -0.2 / +0.7 / 0.0 / -0.2 | 2.14 |
+| fixed reward, seed 1 | 0 | +0.59 (0) | 29.02 | +0.06 [-0.06, +0.19] | -0.2 / +0.7 / 0.0 / -0.3 | 2.13 |
+
+Held-out Cw positive 3 / 3, mean 600 s difference +0.91, intervals above zero 3 / 3: **GO**; the seeds-and-controls
+campaign (`campaign_probe_mpc_seeds.sh`) started at 04:55. (The fixed-reward rows are the untrained policy: the fixed
+reward never produces a checkpoint that beats episode 0; their +0.6 Cw is the size of the initial network's noise.)
+
+Reading. (1) My stated prior (+0 to +1.5 J, probably nothing) was too pessimistic about significance and right about
+size: the agent-reward residual adds **+0.3 to +1.7 J on top of the strongest controller of this repository, in 3 of 3
+seeds, on held-out 600 s episodes**, and the tower-fatigue term carries it (+0.9 / +1.3 / +2.1 points, every interval
+above zero), with speed MSE +0.7 to +3.4 and blade +0.4 to +0.8. (2) It is agentic in the sense of s34 / s37: the fixed
+reward learns nothing on this base. (3) The cost: power MSE at 12-14 m/s gets worse in all three seeds (-2 to -8 points
+at those winds; set mean -1.7 to +0.7) and the pitch travel rises 4-22 %. Tower fatigue is never worse than -0.8
+points at any wind speed, blade fatigue never worse than -1.1.
+
+Diagnostic (NOT a clean result - checkpoint and gate were chosen after looking at held-out seeds 3-6). The FINAL
+checkpoint of seed 0, held-out at 150 s against the MPC, per wind (power / speed / tower / blade): 12: -4/8/-5/1,
+14: -2/0/-5/-2, 16: 3/7/-1/0, 18: 12/14/1/2, 20: 15/15/0/2, 22: 16/16/3/3, 24: 16/16/3/1 - the damage is near rated, the
+gain (+12 to +16 % regulation on top of the MPC, loads held) from 18 m/s up; the same split is visible on the
+supervisor winds in every late evaluation of both seeds. With the residual gated off below 15 m/s (1 above 17 m/s,
+10 s low-pass of the wind estimate; `EnvConfig.residual_gate`, `--residual_gate`) the same checkpoint reads Cw
+**+8.65 with zero violation** (+8.4 / +8.9 / +1.2 / +1.4); seed 1's final checkpoint stays negative with the gate
+(-39: its high-wind policy is poor), so the gate has to be in the training loop. Clean test: `campaign_gate.sh`
+(gate from scratch, selection on supervisor winds, report on fresh TurbSim seeds 7-10), queued after the seeds campaign.
+
+Zero-simulation headroom (design-search cache, 137 stable candidates, selection episodes): per-wind-optimal MPC
+parameters would give at most ~+1.5 J over the best single setting (28.0 -> 29.6 with the per-wind rule), with the
+pitch-increment weight rising with wind (0.26-0.29 at 12-16 m/s, 0.5-0.6 at 20-24 m/s) - the alternative "agent through
+the MPC" has about the same ceiling as what the parallel residual already delivers.
+
+Artefacts: `~/wtrl/exp/{mrwCwR3t,mgCwR3t}_s*/`, `~/wtrl/exp/probe_decision.{txt,json}`, `~/wtrl_mpc_range/baselines/`.
