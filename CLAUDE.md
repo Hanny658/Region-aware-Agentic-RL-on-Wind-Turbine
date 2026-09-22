@@ -69,9 +69,12 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
 - **Agent layer STACKED ON the scheduled MPC (roadmap s39; `campaign_probe_mpc.sh`, GO / NO-GO rule committed before the
   results):** paired baselines = the MPC's own rollouts (`~/wtrl_mpc_range`), per-wind Cw. Agent-written reward: held-out Cw
   positive 3/3, 600 s J 29.72 / 29.25 / 30.62 against the MPC alone 28.95 (+0.76 / +0.30 / +1.67, every paired interval above
-  zero; tower +0.9 to +2.1 points, power MSE worse at 12-14 m/s); fixed reward learns nothing (+0.09 / +0.06). Follow-ups
-  running: more seeds + random-structure control (`campaign_probe_mpc_seeds.sh`), then the wind-gated residual
-  (`--residual_gate 15 17`, `campaign_gate.sh`, report on fresh wind seeds 7-10).
+  zero; tower +0.9 to +2.1 points, power MSE worse at 12-14 m/s); fixed reward learns nothing. With n = 5 and controls
+  (s40, `docs/tables/mpc_residual.csv`): agent +0.81 mean (5/5 intervals > 0), random reward structure +1.10 (3/3), fixed
+  +0.1 - the searched-structure loop adds ~+1 J on the strongest controller, the LLM proposer is NOT distinguishable from
+  a random structure on this base (it is on the PI base, s37). Headline stack on the same 28 held-out episodes: tuned
+  ROSCO 15.24 -> scheduled MPC 28.95 -> MPC + residual 29.6-30.7. Next: the wind-gated residual (`--residual_gate 15 17`,
+  `campaign_gate.sh`, report on fresh wind seeds 7-10).
 - **Verified design loop for the MPC (roadmap s38; `scripts/mpc_design_search.py`, `docs/tables/design_search.csv`):** from the
   hand-set UNSCHEDULED reference, llm and es proposers both discover the wind schedule in 24 simulations and repair the
   per-wind violation on held-out winds (S = J - 4 V: 25.66 -> 26.8-28.2); random search 0/48. They do NOT beat the hand design

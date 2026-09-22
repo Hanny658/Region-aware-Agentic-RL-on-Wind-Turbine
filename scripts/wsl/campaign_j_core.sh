@@ -98,6 +98,10 @@ arm_args() {  # prefix -> train.py arguments
     # that MPC's own zero-residual rollouts (WTRL_HOME=~/wtrl_mpc_range), so Cw reads "on top of the MPC, loads held per wind"
     mrwCwR3t)  echo "--supervisor llm_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --base mpc --base_mpc_json @configs/mpc_sched_s33.json" ;;
     mgCwR3t)   echo "--supervisor guard      --reward v3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --base mpc --base_mpc_json @configs/mpc_sched_s33.json" ;;
+    # wind-gated residual (campaign_gate.sh): the layer acts only above 15-17 m/s, where the base leaves room (probe of 2026-09-22)
+    mrwCwG3t)  echo "--supervisor llm_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --residual_gate 15 17 --base mpc --base_mpc_json @configs/mpc_sched_s33.json" ;;
+    mgCwG3t)   echo "--supervisor guard      --reward v3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --residual_gate 15 17 --base mpc --base_mpc_json @configs/mpc_sched_s33.json" ;;
+    trwCwG3t)  echo "--supervisor llm_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --residual_gate 15 17" ;;
     mrrCwR3t)  echo "--supervisor random_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --base mpc --base_mpc_json @configs/mpc_sched_s33.json" ;;
     # clean re-run (campaign_next2.sh): identical to trwCw3t / tgCw3L10 / trwTw3t, but trained after the label fix (a969ce9), so
     # selection, rollback and the supervisor see power / speed MSE on the wind-labelled above-rated subset (12.5 m/s included)

@@ -1656,3 +1656,40 @@ pitch-increment weight rising with wind (0.26-0.29 at 12-16 m/s, 0.5-0.6 at 20-2
 the MPC" has about the same ceiling as what the parallel residual already delivers.
 
 Artefacts: `~/wtrl/exp/{mrwCwR3t,mgCwR3t}_s*/`, `~/wtrl/exp/probe_decision.{txt,json}`, `~/wtrl_mpc_range/baselines/`.
+
+## 40. The layer on the scheduled MPC with five seeds and two controls: a verified structural reward search adds ~+1 J to the strongest controller; the proposer is not what makes the difference here (2026-09-22 04:55 - 16:45; `campaign_probe_mpc_seeds.sh`, `scripts/dev/range_residual_table.py --base mpc`, `docs/tables/mpc_residual.csv`)
+
+Setup as in s39 (scheduled MPC base, its own paired baselines, range winds at 150 s, per-wind Cw). Added: seeds 3-4 of
+the agent arm, three seeds of the random reward structure with the same fork verification, seeds 2-4 of the fixed
+reward. Every run on the 600 s range set (seeds 3-6, 28 episodes) against the original GSPI; the MPC alone is 28.95
+(45.7 / 50.7 / 16.5 / 2.9) at 2.14x pitch travel.
+
+| arm | 150 s held-out Cw vs the MPC, per seed | 600 s J - MPC alone, per seed [interval above zero] | mean | worst per-wind tower / blade difference to the MPC (600 s) | travel x GSPI |
+|---|---|---|---|---|---|
+| agent-written reward | +0.56 +1.13 +4.96 +0.93 +1.24 (5/5) | +0.76 +0.30 +1.67 +0.68 +0.64 [5/5] | **+0.81** | -0.8/-0.3, 0/-0.1, 0/-1.1, -1.7/0, 0/-0.7 | 2.15-2.62 |
+| random reward structure | -0.30 +3.85 +5.28 (2/3) | +0.63 +0.95 +1.72 [3/3] | **+1.10** | -0.9/-0.8, -1.0/-1.1, -1.3/-1.1 | 2.34-2.47 |
+| fixed reward, J-tuned weights | untrained policy in 5/5 (episode 0) | +0.09 +0.06 +0.12 +0.13 +0.10 [2/5] | +0.10 | within 0.2 / 1.8 | 2.13-2.14 |
+
+Per-seed intervals of the agent arm: +0.76 [0.55, 0.97], +0.30 [0.00, 0.58], +1.67 [1.30, 2.02], +0.68 [0.33, 1.02],
++0.64 [0.43, 0.84]; of the random structure: +0.63 [0.43, 0.83], +0.95 [0.79, 1.11], +1.72 [1.53, 1.92]. The fixed
+reward's +0.1 is the untrained network's noise (its selected checkpoint is episode 0 in every seed).
+
+Reading.
+1. **Additive on the strongest controller.** Eight of eight runs with a searched reward structure improve the scheduled
+   MPC on held-out 600 s episodes, by +0.3 to +1.7 J (mean +0.8 to +1.1), with tower and blade fatigue never worse than
+   1.7 points at any wind speed. The gain is mostly tower fatigue (+0.8 to +2.1 points) and speed MSE (+0.7 to +3.5);
+   the cost is 0 to 22 % more pitch travel and 2-8 points of power MSE at 12-14 m/s.
+2. **The proposer is not what makes the difference on this base.** The random grammar matches or beats the LLM on
+   level (+1.10 vs +0.81) and holds the loads equally well (worst tower -1.3 vs -1.7). This differs from the tuned-PI
+   base (s37), where the random structures found the level but lost 3-5 % of tower fatigue at 16-18 m/s: there the
+   base left the loads to the residual, here the MPC already holds them and the residual's job is easier. A sign test
+   is meaningless here (the untrained network reads +0.6 Cw on this base); the paired 600 s intervals are the evidence.
+3. **What the paper can say.** The agent, understood as the supervised loop (structural reward search + simulation
+   verification), improves even the model-based main controller: 28.95 -> 29.6-30.7 at 600 s, loads held per wind. The
+   LLM's specific contribution is established on the PI base (s37: loads held 4/5 vs 0/11), not on the MPC base (n = 5
+   vs 3, no difference). Headline stack on the same 28 held-out episodes: tuned ROSCO 15.24 -> scheduled MPC 28.95 ->
+   MPC + searched residual 29.6-30.7, i.e. up to +15.4 J over the tuned industrial baseline.
+4. The wind gate of s39 is the next design step (near-rated power MSE is the only term the layer costs); `campaign_gate.sh`
+   started at 16:47 and reports on fresh wind seeds.
+
+Artefacts: `~/wtrl/exp/{mrwCwR3t_s0..4,mrrCwR3t_s0..2,mgCwR3t_s0..4}/`, `docs/tables/mpc_residual.csv`.
