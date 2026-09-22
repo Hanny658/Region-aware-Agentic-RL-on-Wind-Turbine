@@ -23,9 +23,16 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--exp", default=os.path.expanduser("~/wtrl/exp"))
 ap.add_argument("--csv", default=None)
 ap.add_argument("--n_boot", type=int, default=10000)
+ap.add_argument("--base", default="tuned", choices=["tuned", "mpc"],
+                help="tuned: residual on the tuned ROSCO (s34, s37); mpc: residual on the scheduled MPC (s39, s40)")
 a = ap.parse_args()
-ARMS = {"trwCwR3t": "agent-written reward", "tgCwR3L10": "fixed reward, tower weight 10",
-        "tgCwR3t": "fixed reward, J-tuned weights", "trrCwR3t": "random reward structure"}
+if a.base == "mpc":
+    ARMS = {"mrwCwR3t": "agent-written reward on the scheduled MPC", "mrrCwR3t": "random reward structure on the scheduled MPC",
+            "mgCwR3t": "fixed reward (J-tuned) on the scheduled MPC", "mrwCwG3t": "agent-written reward, wind-gated, on the scheduled MPC",
+            "mgCwG3t": "fixed reward, wind-gated, on the scheduled MPC"}
+else:
+    ARMS = {"trwCwR3t": "agent-written reward", "tgCwR3L10": "fixed reward, tower weight 10",
+            "tgCwR3t": "fixed reward, J-tuned weights", "trrCwR3t": "random reward structure", "trwCwG3t": "agent-written reward, wind-gated"}
 T = ("power_mse_red_pct", "gen_speed_mse_red_pct", "TwrBsMyt_DEL_red_pct", "RootMyc1_DEL_red_pct")
 
 
@@ -39,7 +46,11 @@ def J(recs):
     return float(np.mean(t) - 20 * max(0.0, 100 * (1 - e / eb) - 1.0)), t
 
 
-ref = json.load(open(f"{a.exp}/mpcsearch600/range/eval_rosco_tuned.json"))["per_episode"][14:42]   # seeds 3-6
+if a.base == "mpc":
+    ref = json.load(open(f"{a.exp}/mpcsearch600/qtsched/eval_off_q6_18_22_s3456.json"))["per_episode"]        # scheduled MPC, seeds 3-6
+else:
+    ref = json.load(open(f"{a.exp}/mpcsearch600/range/eval_rosco_tuned.json"))["per_episode"][14:42]   # tuned ROSCO, seeds 3-6
+REF = "scheduled MPC alone" if a.base == "mpc" else "tuned ROSCO alone"
 jref, tref = J(ref)
 rng = np.random.default_rng(0)
 strata = {}
@@ -55,9 +66,9 @@ def paired(A):
     return np.percentile(d, [2.5, 97.5])
 
 
-rows, by_arm = [], {}
-print(f"tuned ROSCO alone, 600 s range set seeds 3-6: J {jref:.2f} (" + " / ".join(f"{x:.1f}" for x in tref) + ")")
-print(f"{'run':>13} {'ep':>4} | 150 s held-out vs tuned ROSCO: {'Cw':>7} {'viol':>5} | P / w / T / B | travel | 600 s vs GSPI: J, diff to tuned ROSCO [95 %], P / w / T / B, travel xGSPI, worst tower / blade diff per wind")
+rows, by_arm, ci_arm = [], {}, {}
+print(f"{REF}, 600 s range set seeds 3-6: J {jref:.2f} (" + " / ".join(f"{x:.1f}" for x in tref) + ")")
+print(f"{'run':>13} {'ep':>4} | 150 s held-out vs the base: {'Cw':>7} {'viol':>5} | P / w / T / B | travel | 600 s vs GSPI: J, diff to {REF} [95 %], P / w / T / B, travel xGSPI, worst tower / blade diff per wind")
 for arm, desc in ARMS.items():
     for d in sorted(glob.glob(f"{a.exp}/{arm}_s?")):
         run = os.path.basename(d)
@@ -87,6 +98,7 @@ for arm, desc in ARMS.items():
                 da = np.array(J([A[k] for k in ks])[1]) - np.array(J([ref[k] for k in ks])[1])
                 wt, wb = min(wt, da[2]), min(wb, da[3])
             line += (f"{ja:6.2f} {ja - jref:+5.2f} [{lo:+.2f}, {hi:+.2f}] | " + " / ".join(f"{x:5.1f}" for x in ta) + f" | {tr6:4.2f} | {wt:+.1f} / {wb:+.1f}")
+            ci_arm.setdefault(arm, []).append((float(lo) > 0, ja - jref))
             rec.update({"range600_J": round(ja, 2), "range600_diff_tuned": round(ja - jref, 2), "range600_ci_lo": round(float(lo), 2), "range600_ci_hi": round(float(hi), 2),
                         **{f"range600_{t}": round(x, 2) for t, x in zip(T, ta)}, "range600_travel_x_gspi": round(float(tr6), 3),
                         "range600_worst_tower_diff": round(float(wt), 2), "range600_worst_blade_diff": round(float(wb), 2)})
@@ -94,9 +106,12 @@ for arm, desc in ARMS.items():
         rows.append(rec)
 print()
 for arm, v in by_arm.items():
-    print(f"{ARMS[arm]:>32}: held-out Cw positive in {sum(x > 0 for x in v)}/{len(v)} seeds, mean {np.mean(v):+.2f}, median {np.median(v):+.2f}")
-ag = by_arm.get("trwCwR3t", [])
-ct = [x for k, v in by_arm.items() if k != "trwCwR3t" for x in v]
+    c = ci_arm.get(arm, [])
+    extra = f"; 600 s: interval above zero in {sum(x for x, _ in c)}/{len(c)}, mean diff {np.mean([d for _, d in c]):+.2f}" if c else ""
+    print(f"{ARMS[arm]:>52}: held-out Cw positive in {sum(x > 0 for x in v)}/{len(v)} seeds, mean {np.mean(v):+.2f}, median {np.median(v):+.2f}{extra}")
+AG = "mrwCwR3t" if a.base == "mpc" else "trwCwR3t"
+ag = by_arm.get(AG, [])
+ct = [x for k, v in by_arm.items() if k != AG and not k.endswith("G3t") for x in v]
 if ag and ct:
     k, n, K, N = sum(x > 0 for x in ag), len(ag), sum(x > 0 for x in ag + ct), len(ag) + len(ct)
     p = sum(comb(K, i) * comb(N - K, n - i) for i in range(k, min(n, K) + 1)) / comb(N, n)
