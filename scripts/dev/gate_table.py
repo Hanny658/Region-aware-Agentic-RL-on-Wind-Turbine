@@ -23,8 +23,10 @@ ap.add_argument("--csv", default=None)
 ap.add_argument("--n_boot", type=int, default=10000)
 a = ap.parse_args()
 T = ("power_mse_red_pct", "gen_speed_mse_red_pct", "TwrBsMyt_DEL_red_pct", "RootMyc1_DEL_red_pct")
-ARMS = {"mrwCwG3t": ("agent reward, gated", "mpc"), "mgCwG3t": ("fixed reward, gated", "mpc"),
-        "trwCwG3t": ("agent reward, gated", "rosco")}
+ARMS = {"mrwCwG3t": ("agent reward, gate 15-17", "mpc"), "mgCwG3t": ("fixed reward, gate 15-17", "mpc"),
+        "trwCwG3t": ("agent reward, gate 15-17", "rosco"),
+        # low gate (campaign_gate13.sh): the threshold sweep asked for by the review of 2026-09-23
+        "mrwCwGLt": ("agent reward, gate 13-15", "mpc"), "trwCwGLt": ("agent reward, gate 13-15", "rosco")}
 R6 = f"{a.exp}/mpcsearch600"
 BASES = {
     ("mpc", "s3456"): (f"{R6}/qtsched/eval_off_q6_18_22_s3456.json", None, "scheduled MPC"),
