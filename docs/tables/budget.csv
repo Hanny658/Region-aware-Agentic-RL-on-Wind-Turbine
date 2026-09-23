@@ -1,0 +1,12 @@
+run,supervisor,episode_s,main_episodes,fork_episodes,decisions,supervisor_evaluations,evaluation_episodes,total_simulated_h
+trwCwG3t_s0,llm_reward,150.0,180,120,6,12,168,19.5
+trwCwG3t_s1,llm_reward,150.0,180,120,6,12,168,19.5
+trwCwG3t_s2,llm_reward,150.0,180,120,6,12,168,19.5
+mrwCwG3t_s0,llm_reward,150.0,180,120,6,12,168,19.5
+mrwCwG3t_s1,llm_reward,150.0,180,120,6,12,168,19.5
+mrwCwG3t_s2,llm_reward,150.0,180,120,6,12,168,19.5
+mgCwG3t_s0,guard,150.0,300,0,10,11,154,18.92
+mgCwG3t_s1,guard,150.0,300,0,10,11,154,18.92
+mrrCwR3t_s0,random_reward,150.0,180,120,6,12,168,19.5
+mrrCwR3t_s1,random_reward,150.0,180,120,6,12,168,19.5
+mrrCwR3t_s2,random_reward,150.0,180,120,6,12,168,19.5
