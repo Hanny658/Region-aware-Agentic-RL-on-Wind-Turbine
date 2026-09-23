@@ -1909,3 +1909,60 @@ Manuscript v5 §2 now carries the Espinoza comparison in full (with the explicit
 percentages as beating theirs), the precise content of the Liu and Abbas claims, and the Espinoza SAC ablation next to
 Nilsen as support for residual-on-a-strong-base. Bibliography entries for all three are now from the PDFs rather than
 from metadata records. Remaining open item from s43: the author list of the Wohler-sensitivity paper (WES 9:799).
+
+## 45. A referee reading of manuscript v5, and what the artefacts say (2026-09-23; `scripts/dev/review_checks.py`)
+
+A detailed critical reading of v5 raised eight points. Six are correct, one is correct as a scoring criticism but
+wrong in its physical premise, and one is a scope statement. Everything below is measured on the existing evaluation
+artefacts; no simulations were run.
+
+1. **The two regulation terms of J are correlated (CORRECT as a scoring criticism, wrong as stated).** Above rated the
+   torque is constant, so the referee expected power MSE and speed MSE to be the same quantity counted twice. The raw
+   levels are NOT proportional: their per-episode ratio is 9.1 +- 15.1 (min 1.0, max 63), because each is normalised by
+   its own rated value and the wind-labelled window contains near-rated steps at which power is still below rated; the
+   correlation of the levels runs from -0.03 (tuned ROSCO) to 0.85 (MPC). But the two REDUCTIONS do move together
+   (Pearson 0.94-0.95 on the MPC rows, 0.19-0.83 on the PI rows), so as a score the set does give regulation about half
+   the weight. **Decisive check: dropping the power term and scoring on the remaining three changes no ranking**
+   (tuned ROSCO 15.93 -> 13.07, MPC 30.46 -> 24.26, MPC + gated layer 32.54 -> 26.23); the only movement is two seeds
+   of one arm 0.05 points apart. The metric set is kept because it is the published set this work is measured against,
+   and both facts are now stated in the objective section.
+2. **J does not price pitch activity (CORRECT).** Now stated explicitly where the objective is defined. The actuator
+   argument was rewritten: "an order of magnitude below saturation" is the wrong yardstick, because pitch-bearing and
+   drive fatigue accumulate with travel whether or not the actuator is near its rate limit. The duty-knee result (the
+   same J at 38-41 % of the actuation) is flagged as the engineering-relevant one.
+3. **Statistics (CORRECT on three of four counts).** "16 of 16" is eight runs evaluated on two wind sets, not sixteen
+   independent observations, and the text now says so. Merging the two held-out sets (56 episodes, EIGHT seeds per wind
+   speed) gives +4.16 / +4.27 / +4.77 on the tuned ROSCO and +1.58 / +2.17 / +2.05 on the MPC at interval widths of
+   0.30-0.63, so the four-seed strata were not in fact producing suspiciously narrow intervals. What the intervals do
+   NOT contain is the training-seed spread, which is of the same size: s.d. 0.33 with a 0.62-point range on the tuned
+   ROSCO, 0.31 and 0.59 on the MPC. The fixed-reward arm has two seeds. All of this is now in the results section.
+4. **Two internal inconsistencies and one mixed convention (CORRECT, all three were errors).**
+   a. The "4 of 5 seeds hold every term" sentence belongs to s37: the UNGATED layer on the tuned PI base, held-out
+      seeds, against that base. Table 2 is the GATED campaign on fresh seeds, whose agent seeds lose 1.0 / 2.7 / 1.4
+      points of tower fatigue at 18 m/s and therefore miss the same 1 % rule. The paper now reports the gated runs as a
+      difference of degree (two to six times smaller than the fixed reward's 5.9) and keeps the strong form only for
+      the experiment it came from.
+   b. Table 3 aggregates LEVELS (a ratio of means, which is what a power-mean DEL requires) while J and every figure
+      average per-episode reductions. The two disagree substantially: MPC tower 22.1 % against 17.4 %, MPC power
+      15.3 % against 49.1 %. The convention is now defined in the text and in the caption, both columns of the table
+      are in the same convention, and the abstract says which convention the 22.1 -> 40.4 claim is in.
+   c. The "+7-8 speed MSE" sentence mixed a difference in points (5.7) with a relative reduction of the remaining
+      error (7-8 %). Both are now given, each with its name.
+5. **The gate threshold was never swept (CORRECT).** Contribution (b) is narrowed to "restricting the layer helps",
+   and the limitations state that where the boundary belongs is not established here. `campaign_gate13.sh` (gate
+   13-15 m/s, two seeds per base) is that sweep and is paused mid-run.
+6. **Double standard on the tower damper (CORRECT).** We insisted that the speed filter be tuned, then used ROSCO's
+   damper at its shipped gain to conclude that it is worth -0.05. The row is now labelled shipped-gain only, with the
+   explicit note that a damper gain is as turbine-specific as a filter corner.
+7. **The "published verdict that MPC trades tower fatigue for regulation" was a straw man (CORRECT).** That -17.6 %
+   tower row was OUR OWN F-era result and an artefact of the cost scaling; no citation was given because none exists.
+   The sentence now attributes the impression to our earlier implementation and states that the MPC literature
+   generally reports load reductions.
+8. **Scope (CORRECT).** Onshore 5 MW, class B, above rated, collective pitch. Added to the limitations: the shipped
+   filter corner is conservative partly because it must serve turbines we do not simulate, floating ones in
+   particular, where raising the regulation bandwidth can drive negative damping of the platform pitch mode, so the
+   15.4-point tuning margin does not transfer; and the flat blade-root result is what collective pitch can be expected
+   to give, since the 1P blade load needs individual pitch.
+
+Open after this pass: the gate-threshold sweep (paused campaign), a tuned tower damper if the -0.05 row is to carry
+any weight, and more training seeds if the seed spread is to be separated from the wind spread.
