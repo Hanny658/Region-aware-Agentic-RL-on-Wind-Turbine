@@ -1797,3 +1797,65 @@ Reading.
 4. Consequence for the narrative: the fatigue headline belongs to the model-based scheduling and should be reported
    Rayleigh-weighted, the regulation headline belongs to the gated agent layer and should be reported per wind speed
    over the range; neither is a substitute for the other, and the set mean J stays the single-number objective.
+
+
+## 43. Novelty audit and protocol audit before the rewrite (2026-09-23; `docs/literature_2026-09-23*.md`, `scripts/dev/transient_check.py`)
+
+Four literature scans and two checks against our own artefacts, run before the manuscript was rewritten. The scans
+are in four files, every entry carrying a URL and one of VERIFIED / VERIFIED (bib only) / UNVERIFIED; no number from
+an UNVERIFIED source may be quoted anywhere. Publisher blocks (ScienceDirect, Wiley, IEEE Xplore, MDPI, PubMed all
+403) skew the verified set towards Copernicus, IOPscience, arXiv and Zenodo, so absence from it reflects access, not
+relevance.
+
+### What the audit takes away
+| claim we could have made | verdict | what the paper says instead |
+|---|---|---|
+| wind-scheduled MPC cost weights | prior art: Wintermeyer-Kallen et al., Forsch. Ingenieurwes. 85:385 (2021) schedule Q and R on wind and rotor speed | cite it; our variant is the tower weight *inside* full load, motivated per wind speed |
+| gated / regime-switched residual | prior art in two forms: Abbas et al. (IET CTA 2026) activate a specialised residual in critical states via an HMM; Kim et al. (arXiv:2609.21307) gate a residual on an NMPC + disturbance-observer base with a deadband bound and an ISS certificate | claim the gating *variable* and the evidence for where it must close, never the mechanism |
+| offset-free MPC in wind | prior art: Liu et al., IEEE TII 20(7):9487 (2024) | claim the *measurement* estimator-vs-residual, not the formulation |
+| first LLM-written reward for control | gone; nearest analogue Wu et al., Building Simulation 2026 (LLM adapts reward *weights* over TD3) | the shape-vs-weights discriminator is the claim, and it is exactly what our weight-search plateau evidence defends |
+| CPC-only beating a *tuned* ROSCO on regulation and both DELs | **survives**, no counterexample found | keep as the main result |
+
+### What the audit adds
+- **No verified residual RL in wind energy at all.** The framing is unoccupied. (The one residual-RL-on-a-classical-
+  controller paper opened, arXiv:2310.14788, is the Tennessee Eastman chemical process.)
+- **Anand & Bottasso, WES 11:1989 (2026)** is the closest competitor: same turbine, same simulator, adaptive economic
+  NMPC whose model mismatch is repaired by an *offline* network, +9 % profit. Engage directly; our distinctions are
+  online-vs-offline and the four-term objective under a per-wind load rule.
+- **Corredera et al. (2026)**: ROSCO ported to a virtualised Siemens PLC at VAF > 90 % against the native
+  implementation. This is the answer to "the ROSCO baseline is an academic straw man" and it is now in §2 of the paper.
+- **Nilsen et al. (2026)**: a from-scratch RL wind controller starts ~12 % *below* its baseline and warm-starting from
+  a model-based expert removes that phase — independent support for residual-on-a-strong-base.
+- **Chen et al., Processes 14(18):2954 (2026)**: open-weight LLMs score 98-100 % on declarative control theory but
+  31.8-53.2 % at ranking PI gain sets, every prespecified interval includes zero, and the paper concludes that
+  simulator-based validation remains necessary. This is the citation for the fork-verification loop.
+- **Reporting conventions**, all verified in print: short-term DEL as `(sum n_i S_i^m / n_ref)^(1/m)`; lifetime
+  aggregation `DEL^m = sum_V sum_T DEL_bin^m P(T|V) P(V)` under a Rayleigh mean-wind distribution, IEC class 1A,
+  V_ave = 0.2 V_ref, 20-year life (this is the form s42 implements, truncated to the evaluated bins); ADC =
+  (1/T) int |dbeta|/dbeta_max dt with the rate limit printed because the normalisation is turbine-specific; tower
+  m = 4 and blade m = 10 conventional, with 3/4/5 and 8/10/12 sweeps in print; six seeds per wind speed the de-facto
+  floor, twelve in the closest-matching study. **No fetched paper does a paired bootstrap or any significance test.**
+
+### Two checks against our own artefacts
+1. **Turbulence class.** `data/wind/templates/turbsim_5mw.inp` uses `IECstandard = "1-ed3"`, `IECturbc = B`,
+   `TurbModel = IECKAI`, power-law profile, `AnalysisTime` 650 s for 600 s episodes. The paper must therefore say
+   **IEC 61400-1 edition 3**, and must not quote an I_ref value, which TurbSim sets from the standard.
+2. **Is the 20 s discard long enough?** (`scripts/dev/transient_check.py`, no simulations — the baseline `.npz` keep
+   the raw OpenFAST channels.) On eight baseline episodes the tower-base moment's RMS in the 0-20 s window is
+   **+6.9 %** above the settled level and in the 20-40 s window **+0.9 %**; lengthening the discard from 20 s to 100 s
+   moves the baseline's tower DEL by **-0.5 %**, its above-rated speed variance by **-2.5 %** and its power MSE by
+   **-4.2 %**. The transient is over by 20 s; the residual effect is a shift of the level that both controllers of a
+   comparison share, so it cancels in the ratios. Stated with these numbers in §3.1 rather than assumed.
+
+### Consequences already applied
+Manuscript v5 cites the prior art at each of the three mechanisms, carries the PLC and warm-start citations, states the
+edition, the discard evidence, the DEL form and the seed count, and reports ADC with the 10 deg/s rate limit alongside
+the travel ratio. `agents/rollout.py` now records the tower DEL at m = 3, 4, 5 and the blade DEL at m = 8, 10, 12 in the
+same rainflow pass (`campaign_mexp.sh` re-evaluates the four headline controllers on the fresh seeds).
+
+### Open items, to be closed before submission
+- IEEE Xplore 403 blocked the full text of Liu et al. (2024); open it before any sentence about offset-free MPC.
+- The IET full text of Abbas et al. (2026) should be read before the gating sentence is finalised.
+- PubMed 41539907, an early-2026 DDQN pitch controller reportedly compared against ROSCO, is UNVERIFIED and is a
+  potential competitor baseline; retrieve via the publisher DOI.
+- Author list of the Wöhler-sensitivity paper (WES 9:799) is unverified in the bib entry.
