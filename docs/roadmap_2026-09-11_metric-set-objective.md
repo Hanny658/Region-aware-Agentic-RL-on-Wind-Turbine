@@ -2028,3 +2028,46 @@ The machine ran out of free memory while these were running (7.5 GB total, 1.1 G
 no OOM kill appeared in dmesg, but `scripts/dev/integrity_check.py --since "2026-09-23 13:00"` runs before any of
 these tables is read, because a killed worker leaves truncated artefacts that the pipelines would otherwise treat as
 data.
+
+## 47. The gate-threshold sweep: the setting we had is the best of the three, and the low gate fails exactly where the gate was invented (2026-09-23 13:27 - 23:14; `campaign_gate13.sh`, `scripts/dev/gate_sweep.py`, `docs/tables/gated_residual.csv`)
+
+Outcome of experiment A of the pre-registration (s46): **branch three, "13-15 worse, it reintroduces the near-rated
+damage the gate was built to remove".** The manuscript keeps the 15-17 gate and now reports the sweep as the evidence
+for it, rather than reporting one setting and asserting the rest.
+
+Arms: agent-written reward with the gate opening at 13 m/s and full at 15 (`--residual_gate 13 15`), two seeds on each
+base, everything else identical to s41. Evaluated on the held-out seeds 3-6 and the fresh seeds 7-10 against each
+run's own base.
+
+| base | threshold | n | held-out mean diff | fresh mean diff | per seed (fresh) |
+|---|---|---|---|---|---|
+| tuned ROSCO | ungated (s37) | 5 | +4.02 | - | |
+| | **13-15** | 2 | +3.81 | +3.86 | +3.80 +3.92 |
+| | **15-17** | 3 | **+4.39** | **+4.41** | +4.21 +4.26 +4.75 |
+| scheduled MPC | ungated (s40) | 5 | +0.81 | - | |
+| | **13-15** | 2 | +1.61 | +1.37 | +2.20 +0.53 |
+| | **15-17** | 3 | **+2.02** | **+1.85** | +1.52 +2.08 +1.96 |
+
+Reading.
+1. **15-17 is the best of the three settings on both bases and on both wind sets.** On the MPC base the ordering is
+   monotone in the threshold (ungated +0.81, 13-15 +1.61, 15-17 +2.02 held-out); on the tuned PI base the low gate is
+   worse than no gate at all, though that comparison crosses campaigns and should be read with care.
+2. **The damage moves to where the gate was supposed to protect.** Over all rows of each arm, the worst per-wind term
+   sits at or below 16 m/s in **6 of 8** low-gate rows against **3 of 16** high-gate rows (Fisher exact, two-sided
+   p = 0.022), and the largest single per-wind shortfall in the whole study is now the low gate's **-10.3 points of
+   power MSE at 16 m/s** (held out; -4.7 fresh), against -5.9 for the worst high-gate row. Opening the gate two
+   metres per second earlier puts the layer back into the near-rated band where the base is already strong and where
+   the s39 diagnostic first found it doing harm.
+3. **Variance, not just level.** The two low-gate seeds on the MPC base are the best and the worst of all seven
+   MPC-base runs (fresh +2.20 and +0.53). Widening the region the layer may act in widens the outcome distribution,
+   which is its own argument for the narrower gate.
+4. **What the paper may now claim.** Contribution (b) moves from "restricting the layer helps" to a measured
+   trade-off over three settings, with the caveat that it is a coarse sweep: two seeds per low-gate cell, and the
+   J differences (0.5 points) are the size of the seed spread measured in s45 (0.31-0.33 s.d.). The part that does
+   not rest on the small J difference is the location and size of the worst per-wind term, which is what item 2
+   reports.
+
+Artefacts: `~/wtrl/exp/{mrwCwGLt_s0,mrwCwGLt_s1,trwCwGLt_s0,trwCwGLt_s1}/eval_range_TIB_s{3456,78910}.json`,
+`docs/tables/gated_residual.csv` (now carries all three thresholds), `scripts/dev/gate_sweep.py`.
+`integrity_check.py --since "2026-09-23 13:00"` reports no broken artefacts, which matters because the machine ran
+out of free memory during this campaign.
