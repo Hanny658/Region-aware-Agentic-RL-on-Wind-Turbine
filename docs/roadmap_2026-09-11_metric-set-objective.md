@@ -1980,3 +1980,51 @@ published practice rather than a contrivance of ours), and it bounds our claim, 
 parameters while theirs optimises the architecture: **15.4 points is a lower bound on what the classical controller
 can be brought to, and against a fully tuned baseline every margin in the paper would be smaller.** Both directions are
 now in the manuscript (baselines section, related work, limitations).
+
+## 46. Pre-registration of the three referee-driven experiments (written 2026-09-23 22:30, BEFORE any of the three tables exists)
+
+The three campaigns of this round were requested by two referee readings (s45) and are running. What each outcome
+will do to the manuscript is fixed here, before the results, so that the write-up cannot be chosen after the fact.
+The rule from the earlier probe applies again: a negative result is reported in the same place and with the same
+prominence as a positive one would have been.
+
+### A. Gate-threshold sweep (`campaign_gate13.sh`: gate 13-15 m/s, two seeds on each base)
+Existing points: ungated (s39, s40) and gate 15-17 (s41). The sweep makes contribution (b) a measured trade-off
+instead of one setting.
+
+| outcome on the held-out and fresh sets, against each run's own base | what the paper says |
+|---|---|
+| 13-15 beats 15-17 on J in both seeds on both bases | the gate is a real design axis and our first setting was not its optimum; §4.2 becomes "where the gate closes is itself a measurable trade-off, and the better point is nearer rated", the headline rows move to 13-15, and contribution (b) claims a measured boundary |
+| 13-15 and 15-17 within the seed spread (~0.3 J) | the threshold is a plateau over 13-17; contribution (b) stays "restricting the layer helps", and the limitation becomes "flat over the range tested" rather than "not established" |
+| 13-15 worse, i.e. it reintroduces the near-rated damage the gate was built to remove | the s39 diagnostic is confirmed by construction rather than by selection; the paper keeps 15-17, and the sweep is reported as the evidence for it |
+In every case the per-wind worst term against each run's own base is reported, because a J gain bought by damaging
+12-14 m/s is exactly what this layer was gated to avoid.
+
+### B. Wohler-exponent sensitivity (`campaign_mexp.sh`, `scripts/dev/wohler_sensitivity.py`)
+Tower at m = 3, 4, 5 and blade at m = 8, 10, 12, controller side re-evaluated, baseline recomputed from the stored
+raw channels.
+- **If the ordering of the controllers is the same in all six columns**: one appendix table, one sentence in §4 that
+  the fatigue conclusion does not depend on the exponent, and the matter is closed.
+- **If the ordering changes anywhere**: the exponent joins the aggregation convention and the wind weighting as a
+  third reporting choice that decides the answer, which strengthens the paper's own argument and must be given a
+  paragraph in §4.4, not an appendix line.
+
+### C. Random-structure control to n = 8 (`campaign_rand_seeds.sh`)
+The open question is whether the LLM proposer beats a random draw from its own vocabulary on the per-wind load rule.
+Current: agent 4/5, random structure 0/3, Fisher two-sided p = 0.14.
+- **0 or 1 of the five new seeds holds the loads** (random 0-1 of 8): p = 0.007 or 0.02, the claim "the agent's
+  proposals, not merely a structural search, are what hold the loads" is established on this base and is stated as
+  the agent's measurable contribution.
+- **2 or more of the eight hold the loads**: p > 0.1, and the claim is **withdrawn**. The paper then says that a
+  verified structural search holds the loads and that the proposer is not distinguishable on either base, which
+  removes the last place where the language model is credited with anything specific. The LLM would stay in the paper
+  as one instance of a verified structural search, and the abstract's sentence about reward shape would be rewritten
+  to credit the search rather than the model.
+- Either way the level comparison is unchanged: a searched structure buys 3.5-4 points over the tuned PI and fixed
+  rewards buy 1-2.
+
+### Integrity
+The machine ran out of free memory while these were running (7.5 GB total, 1.1 GB available, 17 OpenFAST processes);
+no OOM kill appeared in dmesg, but `scripts/dev/integrity_check.py --since "2026-09-23 13:00"` runs before any of
+these tables is read, because a killed worker leaves truncated artefacts that the pipelines would otherwise treat as
+data.
