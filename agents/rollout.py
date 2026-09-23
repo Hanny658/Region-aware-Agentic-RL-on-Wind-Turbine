@@ -76,6 +76,13 @@ def episode_metrics(L: dict, dt: float, wg_rated: float, warmup_s: float, outb: 
         dto = float(outb["Time"][1] - outb["Time"][0])
         out["TwrBsMyt_DEL_MNm"] = float(del_rainflow(outb["TwrBsMyt"][k], dto, 4) / 1e3)
         out["RootMyc1_DEL_MNm"] = float(del_rainflow(outb["RootMyc1"][k], dto, 10) / 1e3)
+        # Wöhler-exponent sensitivity: the conventional exponents are 4 (welded steel) and 10 (composite),
+        # but reviewers ask whether a fatigue conclusion survives the neighbouring values. Recorded here
+        # because it costs one rainflow pass and cannot be recovered from a stored DEL afterwards.
+        for m in (3, 5):
+            out[f"TwrBsMyt_DEL_m{m}_MNm"] = float(del_rainflow(outb["TwrBsMyt"][k], dto, m) / 1e3)
+        for m in (8, 12):
+            out[f"RootMyc1_DEL_m{m}_MNm"] = float(del_rainflow(outb["RootMyc1"][k], dto, m) / 1e3)
     return out
 
 
