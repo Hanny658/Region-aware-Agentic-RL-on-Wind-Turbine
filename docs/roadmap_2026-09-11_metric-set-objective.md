@@ -2071,3 +2071,33 @@ Artefacts: `~/wtrl/exp/{mrwCwGLt_s0,mrwCwGLt_s1,trwCwGLt_s0,trwCwGLt_s1}/eval_ra
 `docs/tables/gated_residual.csv` (now carries all three thresholds), `scripts/dev/gate_sweep.py`.
 `integrity_check.py --since "2026-09-23 13:00"` reports no broken artefacts, which matters because the machine ran
 out of free memory during this campaign.
+
+## 48. The fatigue conclusion does not depend on the Wohler exponent (2026-09-23 23:15 - 09-24 00:10; `campaign_mexp.sh`, `scripts/dev/wohler_sensitivity.py`, `docs/tables/wohler.csv`)
+
+Outcome of experiment B of the pre-registration (s46): **branch one, the ordering is the same in every column**, so
+this is an appendix table and one sentence in the results, not a section.
+
+The conventional exponents are 4 for the welded steel tower and 10 for the composite blade, and the field sweeps the
+neighbours (WES 9:799 uses exactly 3/4/5 and 8/10/12). `agents/rollout.py` now records all six in the same rainflow
+pass; the four headline controllers were re-evaluated on the fresh seeds and the paired GSPI side was recomputed from
+the raw channels kept in the baseline `.npz`, so no baseline was simulated again. 70 baseline episodes, 28 per
+controller.
+
+| controller | tower m=3 | m=4 | m=5 | blade m=8 | m=10 | m=12 |
+|---|---|---|---|---|---|---|
+| tuned ROSCO | 6.1 | 7.1 | 7.6 | 1.5 | 1.4 | 1.3 |
+| scheduled MPC | 14.5 | 17.4 | 19.2 | -0.2 | -0.0 | 0.0 |
+| tuned ROSCO + gated layer (s2) | 6.1 | 7.4 | 8.0 | 2.3 | 2.3 | 2.2 |
+| scheduled MPC + gated layer (s1) | **16.2** | **18.9** | **20.3** | 1.6 | 1.8 | 1.9 |
+
+Reading.
+1. **The ordering of the four controllers is identical in all six columns**, on both channels, so nothing in the
+   paper's fatigue argument turns on the choice of exponent. The one tie is at tower m = 3, where the tuned ROSCO and
+   the tuned ROSCO with the gated layer are both 6.1 %.
+2. **The reported exponent is the conservative one, not the flattering one.** Every controller's tower reduction
+   grows with m (6.1 -> 7.6, 14.5 -> 19.2, 16.2 -> 20.3), because a higher exponent weights the large cycles that the
+   controllers damp most. Reporting m = 4 rather than m = 5 costs the MPC rows 1.5-1.8 points of apparent benefit.
+   The blade side is flat in m, as expected for a channel the collective command barely touches.
+3. Practical note for reuse: this cost one re-evaluation campaign only because the extra exponents were not recorded
+   originally. They are now computed in the same rainflow pass at negligible cost, so any future evaluation carries
+   them.
