@@ -1,0 +1,14 @@
+% Copy to authors.tex (which is git-ignored) to build a named version of the manuscript.
+% Without authors.tex, main.tex builds an anonymous version automatically -- no edit needed.
+\author{%
+  First Author \\
+  Affiliation \\
+  City, Country \\
+  \texttt{first@example.org} \\
+  \And
+  Second Author \\
+  Affiliation \\
+  City, Country \\
+  \texttt{second@example.org} \\
+}
+\hypersetup{pdfauthor={First Author, Second Author}}

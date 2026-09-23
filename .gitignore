@@ -226,3 +226,7 @@ wtrl-data/
 
 # campaign logs kept as run provenance (the blanket *.log rule above would drop them)
 !docs/logs/*.log
+
+# Author block of the manuscript: names and e-mails stay out of version control.
+# main.tex falls back to an anonymous build when this file is absent (template: authors.tex.example).
+docs/manuscript/authors.tex

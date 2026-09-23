@@ -18,9 +18,13 @@
 
 \title{A wind-gated learned layer on wind-scheduled model predictive pitch control\\
 \large what a model-based controller and a learned one each contribute above rated, and how the two are reported over a site wind distribution}
-% authors: one block per author, \And between authors, \\ for affiliation and e-mail lines, e.g.
-% \author{First Author \\ Affiliation \\ \texttt{mail} \And Second Author \\ Affiliation \\ \texttt{mail}}
-\author{\pending{authors}}
+% Authors live in authors.tex, which is git-ignored (template: authors.tex.example). When it is absent --- a
+% fresh checkout, or a double-blind submission --- the build falls back to an anonymous block automatically,
+% including the PDF metadata, so no file has to be edited to anonymise the manuscript.
+\IfFileExists{authors.tex}{\input{authors.tex}}{%
+  \author{Anonymous submission}%
+  \hypersetup{pdfauthor={Anonymous submission}}%
+}
 \date{\today}
 \renewcommand{\shorttitle}{A wind-gated learned layer on model predictive pitch control}
 
