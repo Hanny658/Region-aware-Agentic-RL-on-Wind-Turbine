@@ -1751,3 +1751,49 @@ truncated artefacts that the pipelines would have silently skipped or read as da
 generator skips existing names) and 9 unreadable baseline `.npz` (the denominators of every percentage). They are
 found and removed by `scripts/dev/integrity_check.py --since <time> [--delete]`, which is now the first thing to run
 after any interruption.
+
+
+## 42. Reporting the same results over a site wind distribution: the model-based part doubles, the learned layer thins out (2026-09-23; `scripts/dev/lifetime_del.py`, `docs/tables/lifetime_del.csv`)
+
+Every table so far reports the mean of the per-wind reductions over an equally weighted set of mean wind speeds, which
+is the objective's definition and is what the set was designed for. Fatigue work in wind energy aggregates over the
+site wind distribution instead: IEC 61400-1 uses a Rayleigh distribution (Weibull shape 2, annual mean 0.2 x the class
+reference speed, i.e. 10 / 8.5 / 7.5 m/s for classes I / II / III). Damage adds linearly (Palmgren-Miner) and a
+damage-equivalent load of Wohler exponent m aggregates as `DEL_eq = (sum_i w_i DEL_i^m / sum_i w_i)^(1/m)`; the two
+regulation metrics are mean squares and aggregate with m = 1. No new simulations: the script re-weights the per-episode
+values of the fresh-seed evaluations (seeds 7-10, 12-24 m/s, 600 s) and reports the reduction against the same paired
+GSPI baseline. The weights are renormalised over the evaluated bins, so these are above-rated equivalent loads and the
+ratio, not the level, is the meaningful quantity.
+
+Reduction vs the original GSPI, fresh seeds 7-10, IEC class I (Vave = 10 m/s); `equal` repeats the set mean used everywhere else.
+
+| controller | power MSE w / eq | speed MSE w / eq | tower DEL w / eq | blade DEL w / eq |
+|---|---|---|---|---|
+| tuned ROSCO | 7.7 / 10.4 | 29.4 / 28.4 | 11.3 / 7.9 | 1.4 / 1.5 |
+| scheduled MPC | 7.4 / 15.3 | 42.3 / 60.9 | **40.4** / 22.1 | -1.8 / -0.5 |
+| tuned ROSCO + gated residual (s0/s1/s2) | 8.0-8.1 / 12.3-12.7 | 34.3-35.1 / 39.0-40.9 | 11.2-11.4 / 7.6-8.1 | 2.3-3.4 / 2.3-3.4 |
+| scheduled MPC + gated residual (s0/s1/s2) | 7.7-7.8 / 16.1-16.3 | 43.7-44.9 / 64.9-65.6 | 40.2-40.6 / 21.6-23.4 | -1.9 to +0.8 / -0.6 to +1.7 |
+
+Class sensitivity (Vave 10 -> 8.5 -> 7.5): the scheduled MPC's tower reduction rises 40.4 -> 43.8 -> 46.1 % while its
+speed-MSE reduction falls 42.3 -> 34.8 -> 29.5 %; the gated layer's speed-MSE contribution on the tuned ROSCO falls
+from +7-8 to +4-5 to +2.4-2.7 points. Full table in `docs/tables/lifetime_del.csv`.
+
+Reading.
+1. **The weighting nearly doubles the model-based controller's fatigue claim.** Tower-base DEL 22.1 % equally weighted
+   -> 40.4 % (class I) -> 46.1 % (class III). Tower fore-aft fatigue is dominated by the near-rated bins, which carry
+   both the largest loads and the largest probability, and that is exactly where the wind-scheduled tower weight acts.
+   Against the tuned ROSCO the scheduled MPC is +32.8 % (class I) to +39.0 % (class III) of equivalent tower load.
+2. **The same weighting thins out the learned layer**, because the gate switches it on only above 15 m/s, which is the
+   tail of the distribution. On the tuned ROSCO base its weighted tower contribution is 0.0 +- 0.1 points (it was +4.4 J
+   on the set mean, s41); what survives the weighting is +0.4 power MSE, +7-8 speed MSE and +0.8-2.0 blade DEL at class I,
+   and about a third of that at class III. On the MPC base the class-I contribution is +0.3 power, +2.4 speed, +0.3 tower
+   and +2.6 blade (seed 1, ratios of the weighted aggregates).
+3. **Both statements must appear in the manuscript.** The set-mean numbers answer "over the above-rated operating range,
+   what does each layer do", which is the question the objective was built for and the only fair way to compare
+   controllers per wind speed; the Rayleigh numbers answer "what would a class-I site see over a year", which is the
+   convention a wind-energy reviewer expects for a fatigue claim. Reporting only the first understates the MPC's tower
+   result by half; reporting only the second understates the layer, whose gains sit in the rare high winds - and those
+   are the winds in which the regulation error and the pitch duty are largest, not a niche.
+4. Consequence for the narrative: the fatigue headline belongs to the model-based scheduling and should be reported
+   Rayleigh-weighted, the regulation headline belongs to the gated agent layer and should be reported per wind speed
+   over the range; neither is a substitute for the other, and the set mean J stays the single-number objective.
