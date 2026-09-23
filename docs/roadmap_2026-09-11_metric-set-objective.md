@@ -1859,3 +1859,53 @@ same rainflow pass (`campaign_mexp.sh` re-evaluates the four headline controller
 - PubMed 41539907, an early-2026 DDQN pitch controller reportedly compared against ROSCO, is UNVERIFIED and is a
   potential competitor baseline; retrieve via the publisher DOI.
 - Author list of the Wöhler-sensitivity paper (WES 9:799) is unverified in the bib entry.
+
+
+## 44. The three blocked papers, read in full: the closest competitor, and what the two prior-art claims actually contain (2026-09-23)
+
+The three papers the scans of s43 could not open (IEEE, IET and ScienceDirect all 403) were obtained and read. All
+three open items are now closed, and one of them changes what we may say about our own numbers.
+
+### 44.1 Espinoza, Ormaza, Tutiven & Vidal, *ISA Transactions* 169:428-435 (2026) - the closest published competitor
+Double-deep-Q-network collective pitch in OpenFAST, warm-started by policy transfer from the PI, evaluated against
+the shipped ROSCO. This is the paper a reviewer will hold our percentages against, so the comparison must be made
+carefully - and it is **not** a comparison of the same quantity.
+
+| | Espinoza et al. | this work |
+|---|---|---|
+| regulation metric | standard deviation of a **min-max normalised** power signal, normalised w.r.t. ROSCO (their Eq. 11) | MSE of power and generator speed on wind-labelled above-rated steps |
+| reported gain | **15.7 %** on the test profile, **30.5 %** on a sawtooth profile (15.87 % in the rate-limiter table) | 51.5 % power MSE / 58.0 % speed MSE vs the shipped GSPI, 36 / 39 % vs the tuned one |
+| loads | mean and scaled std of blade-root, tower-base and thrust channels; "largely unaffected", tower side-to-side slightly worse | tower-base and blade-root **damage-equivalent loads** (m = 4 / 10), -18.9 % / -1.8 % |
+| evidence | one 400 s trace per wind profile (test + sawtooth), region 3 | 28 episodes x 600 s over seven mean wind speeds, paired bootstrap intervals, replicated on fresh seeds |
+| baseline | shipped ROSCO | shipped GSPI **and** a tuned one (s29) |
+| actuation | pitch **rate limiter** swept 0.1-1.0 deg/s as a design knob; 0.4 deg/s selected | rate limit at the controller's own 10 deg/s; duty reported as travel ratio and ADC |
+
+Two things to take from it. First, **do not claim to beat their number**: a std reduction of a normalised signal and an
+MSE reduction are different quantities, and the paper now says so explicitly. Second, their own ablation supports our
+architecture: a **SAC agent trained from scratch under the same conditions regulates power worse than the ROSCO
+baseline it was meant to improve** (scaled std 0.5288 against ROSCO's 0.1932 on the test wind), which is the same
+finding as Nilsen et al. (2026) from a second direction.
+
+### 44.2 Liu, Guo, Kong, Ma & Lee, *IEEE TII* 20(7):9487-9496 (2024) - offset-free MPC in wind
+A Luenberger observer estimates the model-plant mismatch **introduced by linearisation**, inside a tube-based
+stochastic MPC that enforces probabilistic rated-power constraints; validated in FAST. It is prior art for the
+formulation and is cited as such. What it does not contain is the measurement we make: the comparison is between
+three MPC variants (offset-free SMPC, mixed tube MPC, offset-free RMPC) over **180 s at 18 / 19 / 20 m/s**, scored by
+average output power, rate of violating the rated-power constraint and average performance cost - **no fatigue metric
+and no classical baseline**. Our estimator corrects an aerodynamic coefficient error rather than a linearisation
+residual, and the point of s30 is that it beats a learned residual at doing so.
+
+### 44.3 Abbas, Chasparis & Kelleher, *IET CTA* 20:e70099 (2026) - the gated residual
+Residual policy on a PID expert, applied **only under critical conditions**; criticality is an **input-output hidden
+Markov model trained offline on expert trajectories**, whose most probable hidden state is scored by the critic's
+value function. Validated on the **Tennessee Eastman process**. Three differences are now in the manuscript, none of
+them the mechanism: our gating variable is **exogenous** (the wind-speed estimate the base already computes) rather
+than a hidden state inferred from the plant's response, so the gate is a fixed inspectable function with no learned
+component; our base is tuned, where they write that their PID "serves as a safety net and baseline rather than the
+ultimate optimized design"; and the evidence is per wind speed on held-out and fresh winds.
+
+### Consequences applied
+Manuscript v5 §2 now carries the Espinoza comparison in full (with the explicit statement that we do not present our
+percentages as beating theirs), the precise content of the Liu and Abbas claims, and the Espinoza SAC ablation next to
+Nilsen as support for residual-on-a-strong-base. Bibliography entries for all three are now from the PDFs rather than
+from metadata records. Remaining open item from s43: the author list of the Wohler-sensitivity paper (WES 9:799).
