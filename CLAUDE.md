@@ -119,12 +119,19 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   (saturated speed term, centred bounded load terms — a change of reward shape the weight search
   cannot reach). Final n = 5: fixed 4.86 / 5.50, llm_reward 5.30 / 6.04 (+0.4 / +0.5, 3/5 balanced),
   told-F 7.00 / 8.33, combo 6.37 / 8.65 (0/5 balanced), random reward structure (n = 3) 6.13 / 7.06.
-  **Manuscript (docs/manuscript/main.tex, v4, user instruction 2026-09-15)**: main line = the agent-supervised
-  residual improves the MPC (+1.0 / +1.6, all terms positive) and repairs its x0.95 model (8.5 / 3.6 ->
-  12.7 / 18.3); the agent's reward shapes (saturated speed + power terms, bounded/centred fatigue terms).
-  Negative results only in the Ablations section (fixed reward on the MPC base ~ same level; GSPI base:
-  single-shot, random vocabulary) or in appendices never cited from the main text (hyper-parameter /
-  combined / told-F arms, gating defect). arXiv style `docs/manuscript/arxiv.sty`. No development shorthand.
+  **Manuscript (docs/manuscript/main.tex, v5, rewritten 2026-09-23; v4's "residual improves and repairs the MPC"
+  main line is DISCARDED, not archived)**: the paper is now about the MEASUREMENT, not a mechanism. Ladder =
+  shipped GSPI -> tuned GSPI (+15.4) -> scheduled offset-free LPV-MPC (30.5 fresh) -> wind-gated learned layer
+  (+1.5-2.1 on the MPC, +4.2-4.8 on the tuned baseline at 1.40x travel), 16/16 paired intervals above zero on
+  held-out AND fresh seeds; then the site-weighted reading (s42) and ablations (shape vs level, proposer vs
+  random structure, gate vs no gate, estimator vs residual). Figures `figures/f5_{stack,perwind,weighting,duty}.png`
+  from `scripts/dev/figures_v5.py`. Novelty audit `docs/literature_2026-09-23.md`: the GATE (Kim arXiv:2609.21307,
+  Abbas IET CTA 2026), the WEIGHT SCHEDULE (Wintermeyer-Kallen 2021) and OFFSET-FREE MPC in wind (Liu IEEE TII 2024)
+  are prior art and must be attributed, never claimed; what survives is CPC-only beating a TUNED ROSCO on regulation
+  and both DELs, and the shape-vs-weights discriminator (cite Wu Building Simulation 2026, Chen Processes 2026).
+  Engage Anand & Bottasso WES 2026 (same turbine/simulator, offline model repair) directly. Report 600 s simulated /
+  20 s discarded / 580 s scored, and ADC against the 10 deg/s rate limit alongside the travel ratio.
+  arXiv style `docs/manuscript/arxiv.sty`. No development shorthand.
 - **Objective decides the lever** (roadmap v2 §9 vs 08-30 §21): on F the reward-weight *proposer*
   mattered (llm_fork > random_fork 7/7); on J the untuned default collapsed into a rollback loop
   (12.5 m/s speed-MSE), hyper-parameter search repaired it (+6…+8, proposer-agnostic), and once the
