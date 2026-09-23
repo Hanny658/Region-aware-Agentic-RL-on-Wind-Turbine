@@ -1966,3 +1966,17 @@ artefacts; no simulations were run.
 
 Open after this pass: the gate-threshold sweep (paused campaign), a tuned tower damper if the -0.05 row is to carry
 any weight, and more training seeds if the seed spread is to be separated from the wind spread.
+
+### 45a. Zalkind, Dall'Anese & Pao (WES 5:1579-1600, 2020), added 2026-09-23
+
+Automatic controller tuning by zeroth-order optimisation over aeroelastic simulations, on the NREL 5 MW and the SUMR
+rotors in FAST. One of its three applications is the pitch controller's natural frequency and damping ratio, i.e. the
+same layer of the controller our s29 search touches, and it reports **20-26 % cost-function reduction over the default
+parameters** in that case (their cost, not our J - do not equate the numbers). Verified by fetching the article page.
+
+Why it matters to us: it is the wind-energy literature's own answer to the question manuscript v5 is built around, and
+it cuts both ways. It supports the tuned-baseline argument (defaults leave a lot on the table, and tuning them is
+published practice rather than a contrivance of ours), and it bounds our claim, because our search covers two
+parameters while theirs optimises the architecture: **15.4 points is a lower bound on what the classical controller
+can be brought to, and against a fully tuned baseline every margin in the paper would be smaller.** Both directions are
+now in the manuscript (baselines section, related work, limitations).
