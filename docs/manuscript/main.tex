@@ -24,6 +24,7 @@
 \IfFileExists{authors.tex}{\input{authors.tex}}{%
   \author{Anonymous submission}%
   \hypersetup{pdfauthor={Anonymous submission}}%
+  \newcommand{\repourl}{the URL is withheld for anonymous review}%
 }
 \date{\today}
 \renewcommand{\shorttitle}{A wind-gated learned layer on model predictive pitch control}
@@ -292,7 +293,8 @@ Three features recur and none of them is a coefficient of \eqref{eq:reward}: the
 \section{Compute and reproducibility}
 \label{app:compute}
 All simulations run OpenFAST~4.2.1 with ROSCO~2.10.5 through a patched ZeroMQ interface at a 10\,ms control step, on one 16-thread AMD Ryzen~7~6800H under WSL2, eight OpenFAST workers per training run. A 300-episode training run with five supervised decisions and their forks takes 2--3\,h; the campaign reported in Table~\ref{tab:gate} is eight training runs and 16 evaluations of 28 episodes of 600\,s, about 20\,h wall-clock in total. Evaluations of deterministic controllers are exactly reproducible given the wind fields; training runs are reproducible given the seed, and we report every seed rather than a mean over few.
-\pending{artefact and data-availability statement: repository URL, the wind-field generation script and the evaluation artefacts}
+
+\paragraph{Code and data availability.} The controllers, the training and evaluation pipeline, the wind-field generation script and the per-episode evaluation artefacts behind every table are public (\repourl). The wind fields themselves are regenerated from TurbSim by the included script and the stated seeds; OpenFAST~4.2.1 and ROSCO~2.10.5 are third-party open-source software, and the ROSCO patch that exposes the controller state over ZeroMQ is included.
 
 \bibliographystyle{unsrtnat}
 \bibliography{references}
