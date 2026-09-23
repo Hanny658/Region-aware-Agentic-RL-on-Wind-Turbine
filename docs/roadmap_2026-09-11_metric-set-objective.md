@@ -1693,3 +1693,61 @@ Reading.
    started at 16:47 and reports on fresh wind seeds.
 
 Artefacts: `~/wtrl/exp/{mrwCwR3t_s0..4,mrrCwR3t_s0..2,mgCwR3t_s0..4}/`, `docs/tables/mpc_residual.csv`.
+
+## 41. The wind-gated residual: the layer improves both bases on winds nothing has seen (2026-09-22 16:47 - 09-23 12:20; `campaign_gate.sh`, `scripts/dev/gate_table.py`, `docs/tables/gated_residual.csv`)
+
+Design change (from the diagnostic of s39). The residual's pitch increment is multiplied by a gate g(v): 0 below
+15 m/s, 1 above 17 m/s, linear between, on a 10 s low-pass of the controller's wind-speed estimate
+(`EnvConfig.residual_gate`, `--residual_gate`). The layer then acts only where the base leaves room: s39 showed the
+ungated residual gains 12-16 points of regulation on top of the MPC from 18 m/s up and damages 12-14 m/s. The gate is
+in the training loop, so selection sees it; everything else is as in s34 / s39.
+
+Arms: agent-written reward on the scheduled MPC (3 seeds), fixed reward on the same (2), agent-written reward on the
+tuned ROSCO (3). Report: 600 s range set against the ORIGINAL GSPI on the held-out seeds 3-6 AND on fresh TurbSim
+seeds 7-10, generated for this section and seen by no training, no selection and no earlier report. Paired 95 %
+intervals against the run's own base on the same 28 episodes.
+
+| controller | seeds 3-6: J, difference to its base | seeds 7-10 (fresh): J, difference | travel x GSPI | worst per-wind difference to the base (fresh) |
+|---|---|---|---|---|
+| tuned ROSCO alone | 15.24 | 15.93 | 1.12-1.15 | |
+| + agent reward, gated, seed 0 | 19.35 **+4.10** [3.96, 4.26] | 20.14 **+4.21** [3.95, 4.45] | 1.45 | tower -1.0 at 18 m/s |
+| + agent reward, gated, seed 1 | 19.52 +4.27 [4.07, 4.49] | 20.19 +4.26 [3.98, 4.55] | 1.42 | tower -2.7 at 18 m/s |
+| + agent reward, gated, seed 2 | 20.04 +4.79 [4.58, 5.02] | **20.68** +4.76 [4.45, 5.06] | 1.40 | tower -1.4 at 18 m/s |
+| scheduled MPC alone (s33) | 28.95 | 30.46 | 2.08-2.14 | |
+| + agent reward, gated, seed 0 | 30.60 +1.65 [1.41, 1.90] | 31.98 +1.52 [1.30, 1.75] | 2.69 | tower -1.7 at 24 m/s |
+| + agent reward, gated, seed 1 | 31.22 +2.27 [1.99, 2.55] | **32.54** +2.08 [1.53, 2.63] | 2.90 | tower -1.6 at 18 m/s |
+| + agent reward, gated, seed 2 | 31.10 +2.15 [1.92, 2.38] | 32.42 +1.96 [1.65, 2.26] | 3.10 | tower -2.0 at 24 m/s |
+| + fixed reward, gated, seed 0 | 31.20 +2.24 [1.96, 2.53] | 32.24 +1.78 [1.54, 2.03] | 3.06 | **tower -5.9 at 20 m/s** |
+| + fixed reward, gated, seed 1 | 30.05 +1.10 [0.84, 1.35] | 31.62 +1.16 [0.69, 1.65] | 2.38 | power -1.9 at 16 m/s |
+
+All sixteen rows have a paired interval above zero, on the held-out and on the fresh seeds alike.
+
+Reading.
+1. **The gate roughly doubles the stacking gain and it replicates on unseen winds.** On the scheduled MPC the ungated
+   layer was +0.81 mean (s40); gated it is +2.02 (seeds 3-6) and +1.85 (fresh). On the tuned ROSCO the ungated layer
+   was +4.02 at 1.29-1.61x travel (s37); gated it is +4.39 and +4.41 at **1.40-1.45x**, i.e. the same gain for a third
+   less actuation, and now consistent across seeds instead of 4 of 5.
+2. **Why it works.** Below 15 m/s the layer is switched off and the four terms are exactly the base's; the whole
+   learning budget goes to 18-24 m/s, where the base leaves 12-22 points of regulation on the table. What remains is
+   1-3 points of tower fatigue at one wind speed - the per-wind rule (-1 %) is met at every wind speed by 1 of 3
+   agent seeds on the MPC and missed by 1-3 points by the others.
+3. **The agent still holds the loads better than the fixed reward.** With the gate, the fixed reward finally learns
+   on the MPC base (it was stuck at episode 0 without it, s39-s40) and reaches a similar J, but its best seed loses
+   **5.9 points of tower fatigue at 20 m/s** on the fresh winds, where the agent seeds stay within 2.0. This is the
+   same distinction as s37: a structural reward search buys the level, the agent's reward shape keeps the loads.
+4. **Headline, on winds nothing in the pipeline has seen** (fresh seeds 7-10, 28 episodes of 600 s, IEC class B,
+   12-24 m/s), against the ORIGINAL GSPI: the full stack reaches power MSE **-51.5 %**, generator-speed MSE **-58.0 %**,
+   tower-base DEL **-18.9 %**, blade-root DEL -1.8 %, at 2.9x the baseline pitch travel. Against the TUNED ROSCO
+   (the honest industrial reference of s29) the same row is power MSE -36 %, speed MSE -39 %, tower DEL -13 %. The
+   cheap configuration - tuned ROSCO plus the gated agent layer, no model - reaches 20.68 at **1.40x** travel.
+
+Artefacts: `~/wtrl/exp/{mrwCwG3t_s0..2,mgCwG3t_s0..1,trwCwG3t_s0..2}/eval_range_TIB_s{3456,78910}.json`,
+references `~/wtrl/exp/mpcsearch600/fresh/eval_{sched_mpc,rosco_tuned}_s78910.json`, `docs/tables/gated_residual.csv`.
+The fresh wind fields `U{12..24}_TIB_S{7..10}` and their GSPI baselines were added to the separate 600 s bank
+(`~/wtrl/wind600`, `~/wtrl600`); the canonical bank was not touched.
+
+Infrastructure note. The campaign survived two interruptions: a WSL VM restart and a full C: drive. Both left
+truncated artefacts that the pipelines would have silently skipped or read as data - 7 zero-byte TurbSim fields (the
+generator skips existing names) and 9 unreadable baseline `.npz` (the denominators of every percentage). They are
+found and removed by `scripts/dev/integrity_check.py --since <time> [--delete]`, which is now the first thing to run
+after any interruption.

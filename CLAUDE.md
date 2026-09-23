@@ -66,6 +66,16 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   -6.3 % unscheduled), -0.56 J for the schedule, +13.7 J [13.0, 14.4] over the tuned ROSCO. Model error on the same
   episodes (s36): scheduled 28.81 / 29.00 / 28.95 / 28.44 at Cp/Ct x0.85 / 0.95 / 1 / 1.15 (worst per-wind term -2.1 % at
   x0.85), nominal MPC 21.38 / 28.17 / 28.49 / 23.07 (-7.1 and -5.4 J at +-15 %).
+- **WIND-GATED residual (roadmap s41; `EnvConfig.residual_gate`, `--residual_gate 15 17`, `docs/tables/gated_residual.csv`):
+  the current best configuration.** The layer acts only above 15-17 m/s, where the base leaves room. All 16 rows (two
+  bases x seeds x two seed sets) improve their base with the paired interval above zero, ON FRESH TurbSim seeds 7-10 that
+  no training, selection or earlier report has seen. Scheduled MPC 30.46 -> 32.54 (+1.85 mean, was +0.81 ungated);
+  tuned ROSCO 15.93 -> 20.68 (+4.41 mean at 1.40-1.45x travel, vs +4.02 at 1.29-1.61x ungated). Headline vs the ORIGINAL
+  GSPI on those fresh winds: power MSE -51.5 %, speed MSE -58.0 %, tower DEL -18.9 % at 2.9x travel; vs the TUNED ROSCO
+  -36 % / -39 % / -13 %. The fixed reward also learns with the gate on the MPC base but loses 5.9 points of tower
+  fatigue at 20 m/s where the agent seeds stay within 2.0.
+- **After any interruption (VM restart, full disk) run `scripts/dev/integrity_check.py --since <time> [--delete]` FIRST:**
+  a full disk left 7 zero-byte TurbSim fields (the generator skips existing names) and 9 unreadable baseline .npz.
 - **Agent layer STACKED ON the scheduled MPC (roadmap s39; `campaign_probe_mpc.sh`, GO / NO-GO rule committed before the
   results):** paired baselines = the MPC's own rollouts (`~/wtrl_mpc_range`), per-wind Cw. Agent-written reward: held-out Cw
   positive 3/3, 600 s J 29.72 / 29.25 / 30.62 against the MPC alone 28.95 (+0.76 / +0.30 / +1.67, every paired interval above
