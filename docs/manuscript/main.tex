@@ -62,7 +62,7 @@ We therefore build the comparison as a ladder. Each rung is a controller that th
 \label{sec:objective}
 The plant is the NREL~5\,MW onshore turbine~\citep{Jonkman2009nrel5mw} in OpenFAST~4.2.1~\citep{OpenFAST}, driven at a 10\,ms control step by ROSCO~2.10.5~\citep{Abbas2022rosco} through a patched ZeroMQ interface that exposes the full controller state. The pairing reference throughout is the shipped ROSCO GSPI with peak shaving on, every other load-mitigation feature off and constant generator torque above rated.
 
-\paragraph{Wind protocol.} Seven mean hub wind speeds, 12 to 24\,m/s in steps of 2, IEC turbulence class~B, TurbSim fields of 600\,s of which the first 20\,s are discarded as the start-up transient and the remaining 580\,s are scored; no controller acts during the discarded window. Realisations with seeds 1--2 are the supervisor's evaluation winds and the only winds any selection sees; seeds 3--6 (28 episodes) are held out; seeds 7--10 (28 episodes) were generated after the controllers were frozen and are seen by no training, no selection and no earlier version of this paper. Every controller is evaluated on the identical wind fields, and every percentage is taken against the GSPI episode on that same field, so the comparison is paired episode by episode and the only source of uncertainty is the wind realisation.
+\paragraph{Wind protocol.} Seven mean hub wind speeds, 12 to 24\,m/s in steps of 2, IEC turbulence class~B, TurbSim fields of 600\,s of which the first 20\,s are discarded as the start-up transient and the remaining 580\,s are scored; no controller acts during the discarded window. Realisations with seeds 1--2 are the supervisor's evaluation winds and the only winds any selection sees; seeds 3--6 (28 episodes) are held out; seeds 7--10 (28 episodes) were generated after the controllers were frozen and are seen by no training, no selection and no earlier version of this paper. Training and in-training selection use 150\,s episodes of the same seven mean wind speeds at seeds 1--2, for cost; \emph{every} reported number is a 600\,s evaluation. Every controller is evaluated on the identical wind fields, and every percentage is taken against the GSPI episode on that same field, so the comparison is paired episode by episode and the only source of uncertainty is the wind realisation.
 
 \paragraph{Objective.} We adopt the metric set of a published RL pitch-control study~\citep{Baseline2026} and reduce it to one scalar,
 \begin{equation}
@@ -249,17 +249,46 @@ The ladder answers the question the introduction posed. Of the margin a learned 
 \paragraph{Limitations.} (i)~Collective pitch only; an individual-pitch version of the same layer was evaluated and is a negative result, which bounds the supervision claim rather than extending it. (ii)~One turbine, one turbulence class, one 600\,s episode length, seven mean wind speeds; the fresh-seed replication controls for wind realisation, not for plant or class. (iii)~The agent's contribution is established on the tuned-PI base and is not distinguishable from a random structural search on the model-based base. (iv)~Everything is simulation; the pitch duty we report as the cost of each layer is an actuator-life proxy, not an actuator model. (v)~The Rayleigh aggregation covers only the evaluated above-rated bins, so it is an above-rated equivalent load and its \emph{ratio}, not its level, is the meaningful quantity.
 
 \appendix
-\section{Objective, per-wind constraint and the tuned fixed reward}
-\pending{appendix: the $C_w$ definition, the fixed reward's coefficients and their one-time tuning}
+\section{The per-wind constraint and the tuned fixed reward}
+\label{app:objective}
+The training objective is the per-wind variant of \eqref{eq:J},
+\begin{equation}
+C_w \;=\; \J \;-\; 20\sum_{u\in\mathcal{U}}\sum_{m}\max\!\big(0,\;-1-\Delta m_u\,[\%]\big),
+\label{eq:Cw}
+\end{equation}
+over the seven mean wind speeds $\mathcal{U}$ and the four metrics $m$, each evaluated against the run's own base controller on the same episodes: a metric that falls more than 1\,\% below the base at any single wind speed is charged, so a controller cannot pay for a gain at one wind speed with a loss at another. The set-mean version of the same constraint is not sufficient---a residual trained under it improves tower fatigue by 13.5\,\% at 8\,m/s while losing 17.5\,\% at 15\,m/s and still scores well---which is why the per-wind form is used throughout.
 
-\section{Controller details and selection}
-\pending{appendix: MPC weights and schedule, the tuned baseline's search, checkpoint selection rules}
+The coefficients of the fixed reward \eqref{eq:reward} are $w_P=220$, $w_\omega=25.2$, $\lambda_T=1.0$, $\lambda_B=1.31$, $\lambda_A=0.1$ with $\kappa=0.1$\,rad, and the residual bounds are $0.0744$\,rad below rated and $0.05$\,rad above. They come from one fork search over the six knobs on the supervisor winds, summarised as the geometric median of the three best-checkpoint knob vectors, and are held fixed in every run that uses this reward, including every ablation.
+
+\section{Controller and training details}
+\label{app:controllers}
+\paragraph{Tuned baseline.} A grid over the speed-filter corner frequency and a multiplier on the proportional gain, scored by \eqref{eq:J} on the supervisor winds only: 3.42\,rad/s (shipped 1.57) and $\times1.13$.
+
+\paragraph{MPC.} Three states, horizon 2\,s, re-linearised every 0.1\,s, OSQP~\citep{Stellato2020osqp} at 3.6\,ms per solve; cost terms normalised to $O(1)$; output-disturbance estimate with a 5\,s time constant on the speed channel; tower weight 3 below 18\,m/s, ramping to 6 by 22\,m/s on the low-passed wind estimate. Weights and schedule selected on the supervisor winds by \eqref{eq:J}.
+
+\paragraph{Residual.} PPO with $\gamma=0.998$, GAE $\lambda=0.98$, $64\times64$ tanh actor and critic, running return-scale standardisation of the critic target, 300 episodes of 150\,s per run, eight parallel OpenFAST workers. The supervisor decides every 30 episodes (five decisions per run); each decision trains $K=3$ candidate rewards for a 30-episode fork from the current checkpoint, evaluates the forks on the supervisor winds, and keeps the best. The reported checkpoint is always the best by $C_w$ on the supervisor winds; the last checkpoint is frequently degraded and is never used.
 
 \section{Reward expressions written by the agent}
-\pending{appendix: the kept expressions with their held-out scores}
+\label{app:rewards}
+The expressions kept by the best run on each base, in the sandbox's variables (\texttt{region}: the router's region, 1 above rated; \texttt{region\_w}: the wind label; \texttt{d\_wg}: relative generator-speed error; \texttt{p\_ratio}: power over paired base power; \texttt{load\_t}, \texttt{load\_b}: the fatigue proxies; \texttt{act}: actuation). On the tuned baseline (fresh-seed \J\ 20.68):
+\begin{small}\begin{verbatim}
+45*tanh(p_ratio-1)*(1-region)
+  - region_w*(36*tanh(abs(d_wg)/.004) + 10*tanh(abs(p_ratio-1)))
+  - (1+2*region_w)*tanh(max(load_t-1,0)) - (1+region_w)*tanh(max(load_b-1,0))
+  - .06*tanh(act)
+\end{verbatim}\end{small}
+and on the scheduled MPC (fresh-seed \J\ 32.54):
+\begin{small}\begin{verbatim}
+40*tanh(8*(p_ratio-1))*(1-region) - 22*tanh(180*abs(d_wg))*region_w
+  - 10*tanh(8*abs(p_ratio-1))*region_w
+  - (1+region)*tanh(max(load_t-1,0)) - 1.2*tanh(max(load_b-1,0)) - .2*tanh(act)
+\end{verbatim}\end{small}
+Three features recur and none of them is a coefficient of \eqref{eq:reward}: the regulation terms are \emph{saturated}, so a single bad gust cannot dominate an episode's return; the fatigue terms are \emph{one-sided and bounded}, charging only the excess of the proxy over its baseline value and saturating it; and the tower term's weight is itself a function of the wind label. The second is what the load-holding column of Table~\ref{tab:gate} measures, and it is the reason a search over the weights of \eqref{eq:reward} cannot reach the same solution.
 
 \section{Compute and reproducibility}
-\pending{appendix: wall-clock, run counts, seeds, artefact list}
+\label{app:compute}
+All simulations run OpenFAST~4.2.1 with ROSCO~2.10.5 through a patched ZeroMQ interface at a 10\,ms control step, on one 16-thread AMD Ryzen~7~6800H under WSL2, eight OpenFAST workers per training run. A 300-episode training run with five supervised decisions and their forks takes 2--3\,h; the campaign reported in Table~\ref{tab:gate} is eight training runs and 16 evaluations of 28 episodes of 600\,s, about 20\,h wall-clock in total. Evaluations of deterministic controllers are exactly reproducible given the wind fields; training runs are reproducible given the seed, and we report every seed rather than a mean over few.
+\pending{artefact and data-availability statement: repository URL, the wind-field generation script and the evaluation artefacts}
 
 \bibliographystyle{unsrtnat}
 \bibliography{references}
