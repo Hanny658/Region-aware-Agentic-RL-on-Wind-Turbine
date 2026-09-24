@@ -156,6 +156,7 @@ Table~\ref{tab:ladder} reads from the bottom of the ladder up. Tuning one corner
 \centering\small
 \caption{The wind-gated learned layer, each row against its own base on the same episodes (paired stratified bootstrap over episodes, 95\,\% interval of the difference). Held out = wind seeds 3--6; fresh = seeds 7--10, generated after the controllers were frozen. All sixteen differences are above zero. ``worst per wind'' is the largest shortfall of any of the four terms against the base at any single mean wind speed, on the fresh set.}
 \label{tab:gate}
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llccccc}
 \toprule
 base & layer & \J\ held out ($\Delta$) & \J\ fresh ($\Delta$) & duty $\times$GSPI & worst per wind \\
@@ -172,7 +173,7 @@ scheduled MPC       & ---                & 28.95 & 30.46 & 2.08--2.14 & --- \\
                     & fixed reward, seed 0 & 31.20 ($+2.24$ [1.96, 2.53]) & 32.24 ($+1.78$ [1.54, 2.03]) & 3.06 & $\mathbf{-5.9}$ tower @ 20 \\
                     & fixed reward, seed 1 & 30.05 ($+1.10$ [0.84, 1.35]) & 31.62 ($+1.16$ [0.69, 1.65]) & 2.38 & $-1.9$ power @ 16 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \begin{figure}[t]
