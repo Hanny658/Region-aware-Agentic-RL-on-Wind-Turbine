@@ -114,13 +114,15 @@ for label, cp, jp, _ in CONTROLLERS:
             de_c, de_b = del_eq(ctrl[q], uu, m), del_eq(base[q], uu, m)
             rec[f"{q}_DEL_eq_MNm"] = float(f"{de_c:.6g}")   # 6 significant digits: the MSE aggregates are O(1e-4)
             rec[f"{q}_vs_GSPI_pct"] = round(100.0 * (1.0 - de_c / de_b), 2)
-            uw = [u for u in winds if u in ctrl[q] and u in base[q]]
-            rec[f"{q}_equal_mean_pct"] = round(100.0 * (1.0 - float(np.mean([ctrl[q][u] for u in uw])) / float(np.mean([base[q][u] for u in uw]))), 2)
+            # the equally weighted column must differ from the Rayleigh one ONLY in the weights, so it is the
+            # same power mean with uniform weights, not an arithmetic mean of the bin levels
+            uu_eq = {u: 1.0 / len(uu) for u in uu}
+            rec[f"{q}_equal_mean_pct"] = round(100.0 * (1.0 - del_eq(ctrl[q], uu_eq, m) / del_eq(base[q], uu_eq, m)), 2)
             ref.setdefault((q, vave), {})[label] = de_c
         rows_out.append(rec)
 
 print("Rayleigh-weighted equivalent fatigue loads over the evaluated above-rated bins (12-24 m/s), fresh seeds 7-10")
-print("reduction vs the paired GSPI baseline; 'equal' = the equally weighted mean of the per-wind reductions for comparison\n")
+print("reduction vs the paired GSPI baseline; 'equal' = the same aggregation with uniform weights, so the columns differ only in the weights\n")
 for vave in a.vave:
     print(f"--- IEC Rayleigh, annual mean {vave:g} m/s"
           + ("   (class I)" if vave == 10 else "   (class II)" if vave == 8.5 else "   (class III)" if vave == 7.5 else ""))
