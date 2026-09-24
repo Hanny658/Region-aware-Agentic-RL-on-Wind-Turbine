@@ -2101,3 +2101,37 @@ Reading.
 3. Practical note for reuse: this cost one re-evaluation campaign only because the extra exponents were not recorded
    originally. They are now computed in the same rainflow pass at negligible cost, so any future evaluation carries
    them.
+
+## 49. The proposer question, settled at n = 8: the search buys the level, the agent buys the constraint (2026-09-24 00:11 - 06:06; `campaign_rand_seeds.sh`, `scripts/dev/proposer_test.py`, `docs/tables/range_residual.csv`)
+
+Outcome of experiment C of the pre-registration (s46): **the branch in which the claim is established.** Five more
+random-structure seeds on the tuned PI base, ungated, identical base, winds, budget, objective and selection to the
+existing three, so all eight pool without qualification.
+
+| arm | n | loads held (per-wind rule, 600 s) | mean diff to the tuned ROSCO | s.d. |
+|---|---|---|---|---|
+| agent-written reward | 5 | **4/5** | **+4.02** | 1.42 |
+| random reward structure, same fork verification | 8 | **1/8** | **+4.01** | 1.70 |
+| fixed reward, J-tuned weights | 3 | 0/3 | +1.91 | 1.55 |
+| fixed reward, tower weight 10 | 5 | 0/5 | +1.14 | 0.79 |
+
+Fisher exact on the per-wind load rule: agent 4/5 against the random structures 1/8 **two-sided p = 0.032**, against
+the fixed rewards 0/8 p = 0.007, against the pooled controls 1/16 p = 0.004. Every one of the thirteen searched-arm
+600 s paired intervals is above zero.
+
+Reading.
+1. **The level is the search, not the proposer, and now exactly so.** +4.02 against +4.01. At n = 3 the random
+   structures averaged +3.50 and it was possible to believe the agent was worth half a point of level; at n = 8 that
+   reading is gone. Any statement in the paper that credits the language model with the \emph{level} would be wrong.
+2. **The constraint is the proposer.** 4 of 5 against 1 of 8, p = 0.032. This is the one place in the whole study
+   where the language model is distinguishable from a random draw out of its own vocabulary, and it is a constraint
+   satisfaction difference, not a performance difference.
+3. **The diagnostic detail worth keeping.** Going from three control seeds to eight raised the random structures'
+   mean from +3.50 to +4.01 but their load-rule count only from 0/3 to 1/8. More search found the level; it did not
+   find the constraint. That is the cleanest single sentence we have for what the agent is doing.
+4. **Where it does not hold**: on the scheduled MPC base (s40) the two arms are indistinguishable on both level and
+   the load rule, and the gated configuration was never run with a matched random-structure control, so the claim is
+   scoped to the ungated tuned-PI base. Both scopes are stated in the manuscript's limitations.
+
+Manuscript: the abstract, introduction result (iv), the ablation table and the ablation section now carry this; the
+"not resolved by three control runs" wording of the previous revision is gone.
