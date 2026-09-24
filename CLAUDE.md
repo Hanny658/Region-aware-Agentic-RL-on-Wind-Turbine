@@ -119,8 +119,18 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   (saturated speed term, centred bounded load terms — a change of reward shape the weight search
   cannot reach). Final n = 5: fixed 4.86 / 5.50, llm_reward 5.30 / 6.04 (+0.4 / +0.5, 3/5 balanced),
   told-F 7.00 / 8.33, combo 6.37 / 8.65 (0/5 balanced), random reward structure (n = 3) 6.13 / 7.06.
-  **Manuscript (docs/manuscript/main.tex, v5, rewritten 2026-09-23; v4's "residual improves and repairs the MPC"
-  main line is DISCARDED, not archived)**: the paper is now about the MEASUREMENT, not a mechanism. Ladder =
+  **Manuscript (docs/manuscript/main.tex, v6, restructured 2026-09-24; target venue Wind Energy Science).**
+  ONE claim: *baseline tuning, aggregation convention and wind weighting decide the apparent benefit of advanced pitch
+  control*. The controllers are INSTRUMENTS, not the claim. Structure: 1 intro, 2 related work, 3 setup, 4 the ladder,
+  5 what the reporting choices are worth (5.1 baseline, 5.2 aggregation + weighting, 5.3 the Wohler exponent as the
+  INERT control, 5.4 where the layer may act, 5.5 who proposes the reward, 5.6 actuation), 6 discussion, 7 conclusion,
+  references, appendices A-G. Headline numbers: of 32.54 points over the shipped controller (fresh seeds), tuning
+  15.93 (49 %), model-based +14.53 (45 %), learning +2.08 (6 %); the MPC's power-MSE advantage over the tuned baseline
+  is +24.6 [23.4, 25.7] per-episode and -0.3 [-1.7, +1.6] Rayleigh-weighted (an advantage that VANISHES, not a
+  reversal -- never write "flip"), while its tower advantage goes +10.3 -> +18.1 -> +29.0. `scripts/dev/convention_flip.py`.
+  ONE aggregation rule everywhere: bin mean, then weighted power mean (an earlier table mixed arithmetic and power
+  means; the equally weighted tower reduction is 27.8 %, not 22.1 %). v5's and v4's main lines are DISCARDED. The v5
+  ladder text is still the substrate:
   shipped GSPI -> tuned GSPI (+15.4) -> scheduled offset-free LPV-MPC (30.5 fresh) -> wind-gated learned layer
   (+1.5-2.1 on the MPC, +4.2-4.8 on the tuned baseline at 1.40x travel), 16/16 paired intervals above zero on
   held-out AND fresh seeds; then the site-weighted reading (s42) and ablations (shape vs level, proposer vs
