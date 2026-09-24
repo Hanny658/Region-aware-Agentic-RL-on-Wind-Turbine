@@ -32,7 +32,7 @@ def main():
     ap.add_argument("--means", nargs="+", type=float, default=[8, 12.5, 15])
     ap.add_argument("--seeds", nargs="+", type=int, default=[1])
     ap.add_argument("--ti", type=parse_ti, default=8.0,
-                    help="turbulence intensity [%] selecting the wind bank / baseline files "
+                    help="turbulence intensity [%%] selecting the wind bank / baseline files "
                          "(U<mean>_TI<ti>_S<seed>); the stress classes use 14 and 22")
     ap.add_argument("--episode_s", type=float, default=150.0)
     ap.add_argument("--workers", type=int, default=3)
@@ -45,6 +45,9 @@ def main():
     ap.add_argument("--base_mm_m", type=float, default=None, help="override the MPC base's modal-mass model scale")
     ap.add_argument("--residual_gate", nargs=2, type=float, default=None, metavar=("V_LO", "V_HI"),
                     help="wind gate of the residual [m/s]; default: the run's own setting")
+    ap.add_argument("--obs_wind_est", action="store_true",
+                    help="feed the controller's own wind-speed estimate to the policy instead of the "
+                         "simulator's true hub wind, without retraining (deployment-realism check)")
     ap.add_argument("--base_mpc_json", default=None,
                     help="JSON dict merged into the MPC base's LPVMPC keyword arguments (e.g. '{\"qt\": 0}')")
     ap.add_argument("--out", default=None, help="directory for eval_<tag>.{csv,json} and logs_<tag>/ (default: the run)")
@@ -76,6 +79,9 @@ def main():
                 "ipc_max_rad": float(cfg_run.get("ipc_max", 0.0) or 0.0),
                 "ipc_hold_s": float(cfg_run.get("ipc_hold", 0.0) or 0.0),
                 "region_label_by_wind": bool(args.relabel_wind)}
+    if args.obs_wind_est:
+        cfg_over["obs_wind_est"] = True
+        print("observation: the controller's wind-speed ESTIMATE replaces the true hub wind")
     gate = args.residual_gate if args.residual_gate else cfg_run.get("residual_gate")
     if gate:
         cfg_over["residual_gate"] = [float(gate[0]), float(gate[1])]

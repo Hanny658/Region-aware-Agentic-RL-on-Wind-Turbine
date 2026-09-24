@@ -50,6 +50,10 @@ class EnvConfig:
     damper_omega_mult: float = 6.0
     baseline_dir: str | None = None      # cache of paired GSPI trajectories (P_base)
     obs_fa_acc: bool = False             # append tower-top fore-aft acceleration to the observation
+    obs_wind_est: bool = False           # feed the controller's own wind-speed estimate to the policy
+                                         # instead of the simulator's true hub wind (deployment realism:
+                                         # on this plant the estimate has a -0.35 m/s bias, a 1.42 m/s
+                                         # error s.d. and correlation 0.73 with the truth)
     dtau_max_nm: float = 0.0             # R2 torque residual bound [Nm]; 0 disables (action stays 1-D)
     ipc_max_rad: float = 0.0             # R3 dq-frame cyclic-pitch bound [rad]; 0 disables (+2 act, +2 obs)
     ipc_hold_s: float = 0.0              # >0: rotation-held IPC (rollout samples the dq action every
@@ -185,8 +189,9 @@ class ResidualPitchEnv(gym.Env):
         d_wg = (m["gen_speed"] - self.wg_rated) / self.wg_rated
         d_wg_dot = (d_wg - self._prev_dwg) / self.dt if self._prev_dwg is not None else 0.0
         self._prev_dwg = d_wg
+        v_obs = m.get("v_est", m["v_hub"]) if self.cfg.obs_wind_est else m["v_hub"]
         o = [d_wg, d_wg_dot / self.cfg.obs_scales["dwg_dot"], m["beta_meas"],
-             m["v_hub"] / self.cfg.obs_scales["v"], m["M_oop"] / self.M_scale]
+             v_obs / self.cfg.obs_scales["v"], m["M_oop"] / self.M_scale]
         if self.cfg.obs_fa_acc:
             o.append(m.get("fa_acc", 0.0))
         if self.cfg.obs_base:
