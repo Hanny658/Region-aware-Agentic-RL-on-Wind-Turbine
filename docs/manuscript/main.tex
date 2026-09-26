@@ -16,8 +16,7 @@
 \newcommand{\J}{\ensuremath{J}}
 \newcommand{\pending}[1]{\textcolor{red!70!black}{[#1]}}
 
-\title{Baseline tuning, aggregation convention and wind weighting decide the apparent benefit of advanced pitch control\\
-\large a layered assessment on the NREL~5\,MW turbine}
+\title{Baseline tuning, aggregation convention and wind weighting decide the apparent benefit of advanced pitch control}
 % Authors live in authors.tex, which is git-ignored (template: authors.tex.example). When it is absent --- a
 % fresh checkout, or a double-blind submission --- the build falls back to an anonymous block automatically,
 % including the PDF metadata, so no file has to be edited to anonymise the manuscript.
@@ -80,7 +79,9 @@ the mean of the per-episode percentage reductions, against paired GSPI, of power
 
 Two properties of \eqref{eq:J} bear on what follows. Its two regulation terms are not independent: above rated the torque is constant, so power and speed carry much of the same information and their reductions move together, with Pearson correlation 0.94--0.95 on the MPC rows and 0.19--0.83 on the PI rows. We keep the set unchanged because it is the published set this work is measured against, and we report the consequence: scoring on the three remaining terms changes no controller's rank in this paper except two seeds of one arm 0.05 points apart. And \eqref{eq:J} does not price pitch activity at all, which §\ref{sec:duty} treats as a separate axis. Because a set mean can hide a redistribution across the envelope, training and selection use a per-wind variant $C_w$ that charges 20 points for every metric falling more than 1\,\% below the base at \emph{any} mean wind speed (App.~\ref{app:objective}).
 
-\paragraph{Statistics.} All controllers here are deterministic given the wind field, so the uncertainty is over wind realisations: differences are paired stratified bootstraps over episodes (strata = mean wind speed), quoted as 95\,\% intervals. Across training seeds we report every seed. Six turbulent seeds per wind speed is the de-facto floor in this literature, and \citet{Requate2020evaluation} show it can be too few: two disjoint sets of six gave them blade fatigue reductions of 17\,\% and 10\,\% for the same controller at the same wind speed. The held-out evidence here is eight seeds per wind speed, in two disjoint sets of four, and we report both sets separately throughout rather than pooling them. Interval widths of 0.30--0.63 points on the merged 56-episode set are of the same order as the seed-to-seed spread, 0.31--0.33 points of standard deviation, which the intervals do not contain.
+\paragraph{How numbers are reported.} Every metric in this paper is a percentage reduction against the paired shipped GSPI, and \J\ is the mean of four of them, so \J, each term and every difference between controllers are all in percentage points; after this paragraph we call them \emph{points}. A reduction is written positive: 24.5 means the quantity fell by 24.5\,\%. Values are given to one decimal, the precision the smallest uncertainty in this paper supports, the one exception being §\ref{sec:windobs}, where a policy is compared with itself on the same episodes and the comparison resolves a hundredth of a point. Two uncertainties appear and they are not interchangeable: square brackets are a 95\,\% interval over wind realisations for one fixed controller, and $\pm$ is a standard deviation across training seeds. Neither contains the other.
+
+\paragraph{Statistics.} All controllers here are deterministic given the wind field, so the uncertainty of a fixed controller is over wind realisations: differences are paired stratified bootstraps over episodes (strata = mean wind speed), quoted as 95\,\% intervals. Across training seeds we report every seed. Six turbulent seeds per wind speed is the de-facto floor in this literature, and \citet{Requate2020evaluation} show it can be too few: two disjoint sets of six gave them blade fatigue reductions of 17\,\% and 10\,\% for the same controller at the same wind speed. The held-out evidence here is eight seeds per wind speed, in two disjoint sets of four, and we report both sets separately throughout rather than pooling them. On the merged 56-episode set the intervals are 0.3 to 0.6 points wide, which is the same order as the spread across training seeds, about 0.3 points of standard deviation, and the intervals do not contain it.
 
 \subsection{The controllers}
 \label{sec:controllers}
@@ -114,13 +115,13 @@ present during training so that selection sees it. §\ref{sec:gate} prices the t
 \toprule
 controller & \J & power MSE & speed MSE & tower DEL & blade DEL & duty $\times$GSPI \\
 \midrule
-shipped GSPI (identity check)      & 0.00  & 0.0  & 0.0  & 0.0  & 0.0 & 1.00 \\
-\quad + ROSCO tower damper, shipped gain & $-0.05$ & $-0.3$ & $-0.6$ & 0.5 & 0.2 & 1.01 \\
-\textbf{tuned GSPI baseline}       & 15.39 & 23.2 & 29.2 & 5.4  & 3.8 & 1.14 \\
-nominal LPV-MPC                    & 28.48 & 42.0 & 46.9 & 20.9 & 4.1 & 2.01 \\
-\quad with $C_P$/$C_T$ $\times0.95$ in its model & 27.78 & 43.5 & 45.0 & 19.0 & 3.7 & 2.06 \\
-offset-free LPV-MPC                & 29.50 & 47.6 & 52.7 & 14.4 & 3.3 & 1.97 \\
-\quad with $C_P$/$C_T$ $\times0.95$ in its model & 29.50 & 48.1 & 53.5 & 13.3 & 3.1 & 2.01 \\
+shipped GSPI (identity check)      & 0.0  & 0.0  & 0.0  & 0.0  & 0.0 & 1.00 \\
+\quad + ROSCO tower damper, shipped gain & $-0.1$ & $-0.3$ & $-0.6$ & 0.5 & 0.2 & 1.01 \\
+\textbf{tuned GSPI baseline}       & 15.4 & 23.2 & 29.2 & 5.4  & 3.8 & 1.14 \\
+nominal LPV-MPC                    & 28.5 & 42.0 & 46.9 & 20.9 & 4.1 & 2.01 \\
+\quad with $C_P$/$C_T$ $\times0.95$ in its model & 27.8 & 43.5 & 45.0 & 19.0 & 3.7 & 2.06 \\
+offset-free LPV-MPC                & 29.5 & 47.6 & 52.7 & 14.4 & 3.3 & 1.97 \\
+\quad with $C_P$/$C_T$ $\times0.95$ in its model & 29.5 & 48.1 & 53.5 & 13.3 & 3.1 & 2.01 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -133,12 +134,12 @@ offset-free LPV-MPC                & 29.50 & 47.6 & 52.7 & 14.4 & 3.3 & 1.97 \\
 \toprule
 controller & \J & power MSE & speed MSE & tower DEL & blade DEL & duty $\times$GSPI \\
 \midrule
-tuned GSPI baseline           & 15.93 & 24.5 & 30.7 & 7.1 & 1.4 & 1.12 \\
-\quad + gated learned layer   & $20.34\pm0.30$ & 32.6 & 39.2 & 7.0 & 2.6 & 1.40--1.45 \\
-scheduled LPV-MPC             & 30.46 & 49.1 & 55.4 & 17.4 & $-0.0$ & 2.08 \\
-\quad + gated learned layer   & $\mathbf{32.31\pm0.30}$ & 52.3 & 58.8 & 17.6 & 0.6 & 2.69--3.10 \\
+tuned GSPI baseline           & 15.9 & 24.5 & 30.7 & 7.1 & 1.4 & 1.12 \\
+\quad + gated learned layer   & $20.3\pm0.3$ & 32.6 & 39.2 & 7.0 & 2.6 & 1.40--1.45 \\
+scheduled LPV-MPC             & 30.5 & 49.1 & 55.4 & 17.4 & 0.0 & 2.08 \\
+\quad + gated learned layer   & $\mathbf{32.3\pm0.3}$ & 52.3 & 58.8 & 17.6 & 0.6 & 2.69--3.10 \\
 \midrule
-\multicolumn{7}{l}{\emph{decomposition of the 32.31 points:} baseline tuning 15.93 (49\,\%), model-based control $+14.53$ (45\,\%), learning $+1.85$ (6\,\%)} \\
+\multicolumn{7}{l}{\emph{decomposition of the 32.3 points:} baseline tuning 15.9 (49\,\%), model-based control $+14.5$ (45\,\%), learning $+1.9$ (6\,\%)} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -149,9 +150,9 @@ scheduled LPV-MPC             & 30.46 & 49.1 & 55.4 & 17.4 & $-0.0$ & 2.08 \\
 \label{fig:stack}
 \end{figure}
 
-Table~\ref{tab:ladder} reads from the bottom up. Tuning one corner of the shipped baseline is worth 15.4 points at 1.14$\times$ its pitch travel, and the tower damper the toolbox provides is worth nothing at its shipped gain. The MPC adds another 13 points at twice the baseline's travel, buying them from regulation (23\,$\to$\,42\,\% power MSE) and from tower fatigue (5\,$\to$\,21\,\%). Offset-free correction adds a further point but is a trade, more regulation for less tower fatigue; its real value is that it makes the controller indifferent to a 5\,\% aerodynamic coefficient error, which costs the nominal controller 0.7 points.
+Table~\ref{tab:ladder} reads from the bottom up. Tuning one corner of the shipped baseline is worth 15.4 points at 1.14$\times$ its pitch travel, and the tower damper the toolbox provides is worth nothing at its shipped gain. The MPC adds another 13.1 points at twice the baseline's travel, buying them from regulation (power MSE 23.2 $\to$ 42.0) and from tower fatigue (5.4 $\to$ 20.9). Offset-free correction adds a further 1.0 point but is a trade, more regulation for less tower fatigue; its real value is that it makes the controller indifferent to a 5\,\% aerodynamic coefficient error, which costs the nominal controller 0.7 points.
 
-Table~\ref{tab:top} and Fig.~\ref{fig:stack} give the top of the ladder on winds nothing in the pipeline had seen. The gated learned layer improves both deployable bases in every evaluation we ran, eight training runs each scored on two disjoint wind sets, with every paired interval above zero. Averaged over training seeds it is worth $+4.41\pm0.30$ points on the tuned baseline and $+1.85\pm0.30$ on the scheduled MPC, the per-seed values spanning $+4.21$ to $+4.76$ and $+1.52$ to $+2.08$, and the held-out and fresh sets agreeing to within 0.3 points on every run. Two sources of variation are in play and we keep them apart: a paired interval quantifies the wind realisation conditional on one trained policy, and the $\pm0.30$ is the spread across policies. Against the shipped GSPI the full stack reaches, on the seed mean, power MSE $-52.3$\,\%, generator-speed MSE $-58.8$\,\%, tower-base DEL $-17.6$\,\% and blade-root DEL $-0.6$\,\%. The configuration that needs no aerodynamic model at all, the tuned baseline with the gated layer, reaches $20.34\pm0.30$ at 1.40--1.45$\times$ the shipped controller's pitch travel.
+Table~\ref{tab:top} and Fig.~\ref{fig:stack} give the top of the ladder on winds nothing in the pipeline had seen. The gated learned layer improves both deployable bases in every evaluation we ran, eight training runs each scored on two disjoint wind sets, with every paired interval above zero. Averaged over training seeds it is worth $+4.4\pm0.3$ points on the tuned baseline and $+1.9\pm0.3$ on the scheduled MPC, the per-seed values spanning $+4.2$ to $+4.8$ and $+1.5$ to $+2.1$, and the held-out and fresh sets agreeing to within 0.3 points on every run. Against the shipped GSPI the full stack reduces, on the seed mean, power MSE by 52.3 points, generator-speed MSE by 58.8, tower-base fatigue by 17.6 and blade-root fatigue by 0.6. The configuration that needs no aerodynamic model at all, the tuned baseline with the gated layer, reaches $20.3\pm0.3$ at 1.40--1.45$\times$ the shipped controller's pitch travel.
 
 \begin{figure}[t]
 \centering\includegraphics[width=\linewidth]{f5_perwind.png}
@@ -165,7 +166,7 @@ Fig.~\ref{fig:perwind} resolves the same episodes by wind speed, and it is the r
 
 \subsection{The baseline}
 \label{sec:baselever}
-The largest single lever is applied before any advanced controller is built. Of the 32.54 points the full stack reaches over the shipped controller on the fresh seeds, 15.93 are the re-tuned baseline: 49\,\% of the total, against 45\,\% for the model-based controller and 6\,\% for learning. A study that compares a learned controller with the shipped default and reports 32 points has attributed half of them to learning.
+The largest single lever is applied before any advanced controller is built. Of the 32.3 points the full stack reaches over the shipped controller on the fresh seeds, 15.9 are the re-tuned baseline: 49\,\% of the total, against 45\,\% for the model-based controller and 6\,\% for learning. A study that compares a learned controller with the shipped default and reports 32 points has attributed half of them to learning.
 
 None of this makes the shipped controller a straw man. It is the industrial reference and has been ported to a production programmable logic controller and verified against its native implementation~\citep{Corredera2026plc}. The point is narrower: its speed-filter corner is a generic rule of thumb, tuning it is published practice~\citep{Zalkind2020tuning}, and on this protocol that one number is worth more than most learned controllers report.
 
@@ -178,23 +179,23 @@ None of this makes the shipped controller a straw man. It is the industrial refe
 \label{tab:conventions}
 \begin{tabular}{llccc}
 \toprule
-quantity & convention & tuned baseline & scheduled MPC & difference [95\,\%] \\
+quantity & convention & tuned baseline & scheduled MPC & difference [95\,\% interval] \\
 \midrule
-power MSE & per-episode  & 24.5\,\% & 49.1\,\% & $+24.6$ $[+23.4,+25.7]$ \\
-          & level ratio  & 10.4\,\% & 15.3\,\% & $+4.8$ $[+3.0,+7.1]$ \\
-          & Rayleigh     & 7.7\,\%  & 7.4\,\%  & $\mathbf{-0.3}$ $[-1.7,+1.6]$ \\
+power MSE & per-episode  & 24.5 & 49.1 & $+24.6$ $[+23.4,+25.7]$ \\
+          & level ratio  & 10.4 & 15.3 & $+4.8$ $[+3.0,+7.1]$ \\
+          & Rayleigh     & 7.7  & 7.4  & $\mathbf{-0.3}$ $[-1.7,+1.6]$ \\
 \midrule
-speed MSE & per-episode  & 30.7\,\% & 55.4\,\% & $+24.7$ $[+24.0,+25.6]$ \\
-          & level ratio  & 28.4\,\% & 60.9\,\% & $+32.5$ $[+30.6,+34.5]$ \\
-          & Rayleigh     & 29.4\,\% & 42.3\,\% & $+12.9$ $[+10.1,+16.8]$ \\
+speed MSE & per-episode  & 30.7 & 55.4 & $+24.7$ $[+24.0,+25.6]$ \\
+          & level ratio  & 28.4 & 60.9 & $+32.5$ $[+30.6,+34.5]$ \\
+          & Rayleigh     & 29.4 & 42.3 & $+12.9$ $[+10.1,+16.8]$ \\
 \midrule
-tower DEL & per-episode  & 7.1\,\%  & 17.4\,\% & $+10.3$ $[+8.7,+12.1]$ \\
-          & level ratio  & 9.7\,\%  & 27.8\,\% & $+18.1$ $[+15.0,+22.4]$ \\
-          & Rayleigh     & 11.3\,\% & 40.4\,\% & $\mathbf{+29.0}$ $[+26.3,+32.2]$ \\
+tower DEL & per-episode  & 7.1  & 17.4 & $+10.3$ $[+8.7,+12.1]$ \\
+          & level ratio  & 9.7  & 27.8 & $+18.1$ $[+15.0,+22.4]$ \\
+          & Rayleigh     & 11.3 & 40.4 & $\mathbf{+29.0}$ $[+26.3,+32.2]$ \\
 \midrule
-blade DEL & per-episode  & 1.4\,\%  & $-0.0$\,\% & $-1.5$ $[-2.9,+0.1]$ \\
-          & level ratio  & 1.7\,\%  & $-3.3$\,\% & $-5.0$ $[-7.2,-3.1]$ \\
-          & Rayleigh     & 1.4\,\%  & $-1.8$\,\% & $-3.2$ $[-5.0,-1.6]$ \\
+blade DEL & per-episode  & 1.4  & 0.0  & $-1.5$ $[-2.9,+0.1]$ \\
+          & level ratio  & 1.7  & $-3.3$ & $-5.0$ $[-7.2,-3.1]$ \\
+          & Rayleigh     & 1.4  & $-1.8$ & $-3.2$ $[-5.0,-1.6]$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -250,13 +251,13 @@ The sensitivity above is specific, not universal, and the clearest way to show i
 \toprule
 base & gate & $n$ & $\Delta\J$ held out & $\Delta\J$ fresh \\
 \midrule
-tuned GSPI    & none                 & 5 & $+4.02$ & --- \\
-baseline      & 13--15\,m/s          & 2 & $+3.81$ & $+3.86$ \\
-              & \textbf{15--17\,m/s} & 3 & $\mathbf{+4.39}$ & $\mathbf{+4.41}$ \\
+tuned GSPI    & none                 & 5 & $+4.0$ & --- \\
+baseline      & 13--15\,m/s          & 2 & $+3.8$ & $+3.9$ \\
+              & \textbf{15--17\,m/s} & 3 & $\mathbf{+4.4}$ & $\mathbf{+4.4}$ \\
 \midrule
-scheduled MPC & none                 & 5 & $+0.81$ & --- \\
-              & 13--15\,m/s          & 2 & $+1.61$ & $+1.37$ \\
-              & \textbf{15--17\,m/s} & 3 & $\mathbf{+2.02}$ & $\mathbf{+1.85}$ \\
+scheduled MPC & none                 & 5 & $+0.8$ & --- \\
+              & 13--15\,m/s          & 2 & $+1.6$ & $+1.4$ \\
+              & \textbf{15--17\,m/s} & 3 & $\mathbf{+2.0}$ & $\mathbf{+1.9}$ \\
 \midrule
 \multicolumn{5}{l}{\emph{where each arm does its damage}, over all its rows on both wind sets:} \\
 \multicolumn{2}{l}{\quad gate 13--15\,m/s} & \multicolumn{3}{l}{worst per-wind term $\le16$\,m/s in 6 of 8 rows; largest shortfall $-10.3$} \\
@@ -269,7 +270,7 @@ A learned layer on a strong base has a design choice with no counterpart in the 
 
 The permissive direction is the wrong one on the objective: the setting used elsewhere in this paper is the best of the three on both bases and on both wind sets, and on the MPC base the ordering is monotone in the threshold. That ordering is consistent but the differences, 0.4--0.6 points, are of the size of the seed spread measured in §\ref{sec:objective}, so it is the pattern across four cells rather than any one of them that carries it.
 
-Where each arm does its damage is the second reading, and it has to be counted carefully. A trained policy contributes two rows to Table~\ref{tab:sweep}, one per wind set, and those rows are not independent: the weights are the same and where a policy degrades is a property of the policy. Counting rows would therefore be pseudo-replication, so we count policies. Taking a policy as near-rated if its worst per-wind term falls at or below 16\,m/s on either wind set, that is 4 of 4 low-gate policies against 2 of 8 high-gate ones (Fisher exact, two-sided $p=0.061$); requiring it on both sets gives 2 of 4 against 1 of 8 ($p=0.236$). At four low-gate policies the test is not conclusive and we do not present it as one. What is not in doubt is the magnitude: the largest per-wind shortfalls of the low-gate policies are $-10.3$, $-3.5$, $-1.8$ and $-1.7$ points, against $-5.9$, $-2.7$, $-2.0$, $-1.9$, $-1.7$, $-1.6$, $-1.4$ and $-1.2$ for the eight high-gate ones, and the $-10.3$ is a power-MSE loss at 16\,m/s, inside the band the gate exists to protect. The low gate also widens the outcome: its two MPC-base seeds are the best and the worst of the seven MPC-base runs here, $+2.20$ and $+0.53$ on the fresh set. Two seeds per low-gate cell is a coarse sweep and we do not claim 15--17 is optimal.
+Where each arm does its damage is the second reading, and it has to be counted carefully. A trained policy contributes two rows to Table~\ref{tab:sweep}, one per wind set, and those rows are not independent: the weights are the same and where a policy degrades is a property of the policy. Counting rows would therefore be pseudo-replication, so we count policies. Taking a policy as near-rated if its worst per-wind term falls at or below 16\,m/s on either wind set, that is 4 of 4 low-gate policies against 2 of 8 high-gate ones (Fisher exact, two-sided $p=0.061$); requiring it on both sets gives 2 of 4 against 1 of 8 ($p=0.236$). At four low-gate policies the test is not conclusive and we do not present it as one. What is not in doubt is the magnitude: the largest per-wind shortfalls of the low-gate policies are $-10.3$, $-3.5$, $-1.8$ and $-1.7$ points, against $-5.9$, $-2.7$, $-2.0$, $-1.9$, $-1.7$, $-1.6$, $-1.4$ and $-1.2$ for the eight high-gate ones, and the $-10.3$ is a power-MSE loss at 16\,m/s, inside the band the gate exists to protect. The low gate also widens the outcome: its two MPC-base seeds are the best and the worst of the seven MPC-base runs here, $+2.2$ and $+0.5$ on the fresh set. Two seeds per low-gate cell is a coarse sweep and we do not claim 15--17 is optimal.
 
 \subsection{Who proposes the reward}
 \label{sec:proposer}
@@ -282,19 +283,19 @@ Where each arm does its damage is the second reading, and it has to be counted c
 \toprule
 reward & $n$ & \J\ (mean) & $\Delta\J$ vs.\ base & loads held \\
 \midrule
-agent-written                       & 5 & 19.27 & $+4.02$ & \textbf{4/5} \\
-random structure, same verification & 8 & 19.26 & $+4.01$ & 1/8 \\
-fixed, \J-tuned weights             & 3 & 17.15 & $+1.91$ & 0/3 \\
-fixed, tower weight 10              & 5 & 16.38 & $+1.14$ & 0/5 \\
+agent-written                       & 5 & 19.3 & $+4.0\pm1.4$ & \textbf{4/5} \\
+random structure, same verification & 8 & 19.3 & $+4.0\pm1.7$ & 1/8 \\
+fixed, \J-tuned weights             & 3 & 17.2 & $+1.9\pm1.6$ & 0/3 \\
+fixed, tower weight 10              & 5 & 16.4 & $+1.1\pm0.8$ & 0/5 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 The last lever is inside the learned layer: who designs its reward. This is a secondary finding, on one base and at small sample sizes, and we report it at that weight. Table~\ref{tab:proposer} separates the question in two, and the halves have different answers.
 
-On \emph{level} the proposer is worth nothing. A random search over the agent's own vocabulary of term shapes, verified by the same loop and on the same budget, averages $+4.01$ points over the base across eight seeds against the agent's $+4.02$ across five, with all thirteen paired intervals above zero. What lifts both by four points over the fixed rewards is that the reward's \emph{structure} was searched at all.
+On \emph{level} the proposer is worth nothing. A random search over the agent's own vocabulary of term shapes, verified by the same loop and on the same budget, averages $+4.0$ points over the base across eight seeds and the agent $+4.0$ across five, with all thirteen paired intervals above zero. The two arm means differ by 0.01 points against seed standard deviations of 1.4 and 1.7, so they are indistinguishable by any reading. What lifts both by four points over the fixed rewards is that the reward's \emph{structure} was searched at all.
 
-On the objective's \emph{per-wind load rule} the proposer is worth something. The agent's rewards hold both fatigue loads within 1\,\% at every wind speed in 4 of 5 seeds, the random structures in 1 of 8 and the fixed rewards in 0 of 8; reported separately, as they must be, that is Fisher exact two-sided $p=0.032$ against the random structures and $p=0.007$ against the fixed rewards. The diagnostic worth keeping is what happened when the control went from three seeds to eight: the random structures' mean rose from $+3.50$ to $+4.01$, matching the agent exactly, while their load-rule count rose only from 0 of 3 to 1 of 8. More search found the level; it did not find the constraint.
+On the objective's \emph{per-wind load rule} the proposer is worth something. The agent's rewards hold both fatigue loads within 1\,\% at every wind speed in 4 of 5 seeds, the random structures in 1 of 8 and the fixed rewards in 0 of 8; reported separately, as they must be, that is Fisher exact two-sided $p=0.032$ against the random structures and $p=0.007$ against the fixed rewards. The diagnostic worth keeping is what happened when the control went from three seeds to eight: the random structures' mean rose from $+3.5$ to $+4.0$, closing the gap to the agent entirely, while their load-rule count rose only from 0 of 3 to 1 of 8. More search found the level; it did not find the constraint.
 
 Two things bound this. The random control samples a grammar \emph{distilled from term shapes the agent itself had produced}, which is the right matched control for isolating the proposal from the search but changes what the sentence may say: not that a language model finds better reward structures than random search in general, but that, conditioned on a vocabulary taken from its own output and on this budget, its proposals satisfy the per-wind constraint more often than random recombination of that vocabulary. And the scope is one base: on the scheduled MPC, where the controller already holds the loads, we could not separate the two arms at the seeds available, and the gated configuration was never run with a matched random-structure control. The kept expressions and what distinguishes them are in App.~\ref{app:rewards}.
 
@@ -311,10 +312,10 @@ retraining nothing. This answers the narrower of the two questions one might ask
 at run time, and not the broader one, what a policy trained on the estimate from the start would reach; the latter
 needs a retraining campaign we did not run.
 
-The oracle turns out not to be load-bearing. Across the six gated policies the substitution costs $-0.09$ points of
-\J\ on average, at worst $-0.19$, and one policy on the tuned baseline improves slightly ($+0.05$); the paired
-intervals are tight, because the comparison is the same policy on the same episodes, so these are real effects and
-they are small ones. Against margins of $+1.85$ and $+4.41$ points for the layer itself, and against a seed-to-seed
+The oracle turns out not to be load-bearing. This is the one comparison in the paper reported to a hundredth of a
+point, because it puts one policy against itself on the same episodes and the intervals are a few hundredths wide.
+Across the six gated policies the substitution costs $-0.09$ points of \J\ on average and $-0.19$ at worst, and one
+policy on the tuned baseline improves slightly, by $+0.05$; these are real effects and they are small ones. Against margins of $+1.85$ and $+4.41$ points for the layer itself, and against a seed-to-seed
 spread of $0.30$, a signal with 1.42\,m/s of error is worth two to ten per cent of what the layer earns. Pitch travel
 is unchanged to two decimals in every policy.
 
@@ -351,13 +352,13 @@ Every margin in this paper is bought with pitch activity, and \eqref{eq:J} charg
 
 \paragraph{What this implies for reporting.} Four recommendations follow, in decreasing order of what they are worth on this plant. Report against a baseline that has been tuned, and say how; here that alone is half the apparent benefit. State the aggregation convention and, where a fatigue claim is made, give both a per-episode and a level-based reading, since they differ by a factor of three here. If a site-weighted number is given, say over which bins it is normalised, because a weighting restricted to above-rated winds is a conditional statement and not an annual one. And report actuator duty next to every objective value, because none of the conventions examined here prices it. Two things we checked and found inert are the W\"ohler exponent and, within half a point, the length of the discarded start-up transient; we report them because a sensitivity study is only informative if it also contains choices that turn out not to matter.
 
-\paragraph{What the layers are worth, stated plainly.} On a tuned PI base and with no aerodynamic model, a gated learned layer is worth $4.41\pm0.30$ points at 1.40--1.45$\times$ the shipped controller's travel, in every seed and on fresh winds. A correctly scaled MPC is worth about three times that at twice the travel, and absorbs a 5\,\% aerodynamic coefficient error through its own estimator better than any residual we trained (App.~\ref{app:mpc}). On top of that MPC, learning is worth 1.5--2.1 points for 40\,\% more actuation. Which of these is the right controller is a question about the site and the actuator, not about the objective.
+\paragraph{What the layers are worth, stated plainly.} On a tuned PI base and with no aerodynamic model, a gated learned layer is worth $+4.4\pm0.3$ points at 1.40--1.45$\times$ the shipped controller's travel, in every seed and on fresh winds. A correctly scaled MPC is worth about three times that at twice the travel, and absorbs a 5\,\% aerodynamic coefficient error through its own estimator better than any residual we trained (App.~\ref{app:mpc}). On top of that MPC, learning is worth $+1.9\pm0.3$ points for 40\,\% more actuation. Which of these is the right controller is a question about the site and the actuator, not about the objective.
 
 \paragraph{Limitations.} (i)~One onshore turbine, collective pitch, above rated, one turbulence class. The blade-root result is what collective pitch can be expected to give, since the once-per-revolution blade load needs individual pitch; an individual-pitch version of this layer was evaluated and is a negative result. (ii)~The tuning margin is specific to this machine and envelope: a shipped filter corner is conservative partly because it must serve turbines we do not simulate, floating ones in particular, where raising regulation bandwidth can drive negative damping of the platform pitch mode. (iii)~Our tuned baseline is tuned in two parameters, not optimised; against a fully tuned classical controller~\citep{Zalkind2020tuning} every margin here would be smaller. (iv)~Three training seeds per learned arm and two for the fixed-reward control; the paired intervals cover the wind realisation, and the seed-to-seed spread is of the same size. (v)~The gate threshold is swept at three settings with two or three seeds each. (vi)~The proposer result is established on the ungated tuned-PI base only. (vii)~The policies were trained with the simulator's true hub wind in their observation, not the controller's estimate; substituting the estimate at evaluation costs at most 0.19 points (§\ref{sec:windobs}), but a policy trained on the estimate from the start was not run. (viii)~Everything is simulation, and pitch duty is a proxy for bearing and drive life rather than an actuator model.
 
 \section{Conclusion}
 
-We built a ladder of pitch controllers on one turbine, evaluated every rung on the same held-out simulations, and then held the controllers fixed and varied the conventions under which they are reported. Of the 32.5 points the full stack reaches over the shipped controller, re-tuning one corner frequency of the baseline accounts for 15.9, the model-based controller for 14.5 and learning for 2.1. Changing only the aggregation and the wind weighting takes the model-based controller's power-regulation advantage over the tuned baseline from $+24.6$ points to an interval containing zero, and at the same time triples its tower-fatigue advantage from $+10.3$ to $+29.0$. The W\"ohler exponent changes nothing, which is how we know the sensitivity is specific.
+We built a ladder of pitch controllers on one turbine, evaluated every rung on the same held-out simulations, and then held the controllers fixed and varied the conventions under which they are reported. Of the 32.3 points the full stack reaches over the shipped controller, a two-parameter re-tuning of the baseline accounts for 15.9, the model-based controller for 14.5 and learning for 1.9. Changing only the aggregation and the wind weighting takes the model-based controller's power-regulation advantage over the tuned baseline from $+24.6$ points to an interval containing zero, and at the same time triples its tower-fatigue advantage from $+10.3$ to $+29.0$. The W\"ohler exponent changes nothing, which is how we know the sensitivity is specific.
 
 The consequence is not that these comparisons are meaningless, but that a single number is not a result until the baseline, the aggregation, the weighting and the actuation are stated with it. The same accounting applies to the design choices inside a learned layer: where the layer is allowed to act is worth more than how its reward is tuned, and the language model supervising that reward is worth nothing on performance and something on constraint satisfaction. Among the configurations examined, and under the present simulation metrics, the most defensible performance--complexity trade-off is the one that needs no aerodynamic model: a tuned PI with a gated learned layer, 15.9 to $20.3\pm0.3$ points at 1.40--1.45 times the shipped controller's pitch travel. Calling that a deployment recommendation would require an actuator model and a bearing-life measure, neither of which is in this study.
 
@@ -412,17 +413,17 @@ Each row against its own base on the same episodes, paired stratified bootstrap 
 \toprule
 base & layer & \J\ held out ($\Delta$) & \J\ fresh ($\Delta$) & duty $\times$GSPI & worst per wind \\
 \midrule
-tuned GSPI baseline & ---                & 15.24 & 15.93 & 1.12--1.15 & --- \\
-                    & agent reward, seed 0 & 19.35 ($+4.10$ [3.96, 4.26]) & 20.14 ($+4.21$ [3.95, 4.45]) & 1.45 & $-1.0$ tower @ 18 \\
-                    & agent reward, seed 1 & 19.52 ($+4.27$ [4.07, 4.49]) & 20.19 ($+4.26$ [3.98, 4.55]) & 1.42 & $-2.7$ tower @ 18 \\
-                    & agent reward, seed 2 & 20.04 ($+4.79$ [4.58, 5.02]) & \textbf{20.68} ($+4.76$ [4.45, 5.06]) & 1.40 & $-1.4$ tower @ 18 \\
+tuned GSPI baseline & ---                & 15.2 & 15.9 & 1.12--1.15 & --- \\
+                    & agent reward, seed 0 & 19.4 ($+4.1$ $[+4.0,+4.3]$) & 20.1 ($+4.2$ $[+4.0,+4.5]$) & 1.45 & $-1.0$ tower @ 18 \\
+                    & agent reward, seed 1 & 19.5 ($+4.3$ $[+4.1,+4.5]$) & 20.2 ($+4.3$ $[+4.0,+4.6]$) & 1.42 & $-2.7$ tower @ 18 \\
+                    & agent reward, seed 2 & 20.0 ($+4.8$ $[+4.6,+5.0]$) & \textbf{20.7} ($+4.8$ $[+4.4,+5.1]$) & 1.40 & $-1.4$ tower @ 18 \\
 \midrule
-scheduled MPC       & ---                & 28.95 & 30.46 & 2.08--2.14 & --- \\
-                    & agent reward, seed 0 & 30.60 ($+1.65$ [1.41, 1.90]) & 31.98 ($+1.52$ [1.30, 1.75]) & 2.69 & $-1.7$ tower @ 24 \\
-                    & agent reward, seed 1 & 31.22 ($+2.27$ [1.99, 2.55]) & \textbf{32.54} ($+2.08$ [1.53, 2.63]) & 2.90 & $-1.6$ tower @ 18 \\
-                    & agent reward, seed 2 & 31.10 ($+2.15$ [1.92, 2.38]) & 32.42 ($+1.96$ [1.65, 2.26]) & 3.10 & $-2.0$ tower @ 24 \\
-                    & fixed reward, seed 0 & 31.20 ($+2.24$ [1.96, 2.53]) & 32.24 ($+1.78$ [1.54, 2.03]) & 3.06 & $\mathbf{-5.9}$ tower @ 20 \\
-                    & fixed reward, seed 1 & 30.05 ($+1.10$ [0.84, 1.35]) & 31.62 ($+1.16$ [0.69, 1.65]) & 2.38 & $-1.9$ power @ 16 \\
+scheduled MPC       & ---                & 29.0 & 30.5 & 2.08--2.14 & --- \\
+                    & agent reward, seed 0 & 30.6 ($+1.7$ $[+1.4,+1.9]$) & 32.0 ($+1.5$ $[+1.3,+1.8]$) & 2.69 & $-1.7$ tower @ 24 \\
+                    & agent reward, seed 1 & 31.2 ($+2.3$ $[+2.0,+2.6]$) & \textbf{32.5} ($+2.1$ $[+1.5,+2.6]$) & 2.90 & $-1.6$ tower @ 18 \\
+                    & agent reward, seed 2 & 31.1 ($+2.2$ $[+1.9,+2.4]$) & 32.4 ($+2.0$ $[+1.7,+2.3]$) & 3.10 & $-2.0$ tower @ 24 \\
+                    & fixed reward, seed 0 & 31.2 ($+2.2$ $[+2.0,+2.5]$) & 32.2 ($+1.8$ $[+1.5,+2.0]$) & 3.06 & $\mathbf{-5.9}$ tower @ 20 \\
+                    & fixed reward, seed 1 & 30.1 ($+1.1$ $[+0.8,+1.4]$) & 31.6 ($+1.2$ $[+0.7,+1.7]$) & 2.38 & $-1.9$ power @ 16 \\
 \bottomrule
 \end{tabular}}
 \end{center}
@@ -431,14 +432,14 @@ None of the gated runs meets the 1\,\% per-wind rule of \eqref{eq:Cw}: the agent
 
 \section{Reward expressions written by the agent}
 \label{app:rewards}
-The expressions kept by the best run on each base, in the sandbox's variables (\texttt{region}: the router's region, 1 above rated; \texttt{region\_w}: the wind label; \texttt{d\_wg}: relative generator-speed error; \texttt{p\_ratio}: power over paired base power; \texttt{load\_t}, \texttt{load\_b}: the fatigue proxies; \texttt{act}: actuation). On the tuned baseline (fresh-seed \J\ 20.68):
+The expressions kept by the best run on each base, in the sandbox's variables (\texttt{region}: the router's region, 1 above rated; \texttt{region\_w}: the wind label; \texttt{d\_wg}: relative generator-speed error; \texttt{p\_ratio}: power over paired base power; \texttt{load\_t}, \texttt{load\_b}: the fatigue proxies; \texttt{act}: actuation). On the tuned baseline (fresh-seed \J\ 20.7):
 \begin{small}\begin{verbatim}
 45*tanh(p_ratio-1)*(1-region)
   - region_w*(36*tanh(abs(d_wg)/.004) + 10*tanh(abs(p_ratio-1)))
   - (1+2*region_w)*tanh(max(load_t-1,0)) - (1+region_w)*tanh(max(load_b-1,0))
   - .06*tanh(act)
 \end{verbatim}\end{small}
-and on the scheduled MPC (fresh-seed \J\ 32.54):
+and on the scheduled MPC (fresh-seed \J\ 32.5):
 \begin{small}\begin{verbatim}
 40*tanh(8*(p_ratio-1))*(1-region) - 22*tanh(180*abs(d_wg))*region_w
   - 10*tanh(8*abs(p_ratio-1))*region_w
