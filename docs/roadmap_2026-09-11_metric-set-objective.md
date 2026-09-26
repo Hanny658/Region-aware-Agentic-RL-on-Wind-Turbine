@@ -2135,3 +2135,72 @@ Reading.
 
 Manuscript: the abstract, introduction result (iv), the ablation table and the ablation section now carry this; the
 "not resolved by three control runs" wording of the previous revision is gone.
+
+## 50. A WES-style referee reading of v6, and the four things it changed (2026-09-24; `scripts/dev/{gate_policy_test,windobs_table}.py`, `campaign_windobs.sh`)
+
+A detailed review against the WES criteria returned Major Revision with support for publication. Four of its points
+were substantive; three of those were right, and one of the three found a defect we had not noticed.
+
+### 50.1 The wind signal the policy reads (the defect)
+`envs/base_env.py` line 189 put **the simulator's true hub wind** in the PPO observation, while the MPC (line 180) and
+the gate (line 266) both use the controller's own estimate. On this plant that is not a harmless substitution: over
+the baseline episodes the estimate has a **-0.35 m/s bias, a 1.42 m/s error s.d. and correlation 0.73** with the
+truth. The layer was trained with information a turbine does not have.
+
+Added `EnvConfig.obs_wind_est` and `evaluate.py --obs_wind_est`, and re-evaluated the six frozen gated policies with
+the estimate substituted, nothing else changed and nothing retrained (`campaign_windobs.sh`, 6 x 28 episodes):
+
+| base | policy | J (true wind) | J (estimate) | difference [95 %] |
+|---|---|---|---|---|
+| tuned ROSCO | s0 / s1 / s2 | 20.14 / 20.19 / 20.68 | 20.11 / 20.24 / 20.51 | -0.03 / **+0.05** / -0.17 |
+| scheduled MPC | s0 / s1 / s2 | 31.98 / 32.54 / 32.42 | 31.91 / 32.43 / 32.23 | -0.07 / -0.11 / -0.19 |
+
+**The oracle is not load-bearing**: mean -0.09, worst -0.19, one seed improves, pitch travel unchanged to two
+decimals. Against margins of +1.85 and +4.41 and a seed spread of 0.30, the true wind is worth 2-10 % of what the
+layer earns. Disclosed in the setup, measured in a new section, and listed as a limitation (a policy *trained* on the
+estimate was not run).
+
+### 50.2 Best-of-three seeds as the headline (right)
+Table 2 and the decomposition used the best of three training seeds. Changed to the seed mean with the seed spread:
+**32.31 = 15.93 (49 %) + 14.53 (45 %) + 1.85 (6 %)**, learned rows now `20.34 +- 0.30` and `32.31 +- 0.30`. The text
+now separates the two uncertainties explicitly: a paired interval is the wind realisation conditional on one policy,
+the +-0.30 is the spread across policies. The message is unchanged because all three seeds were positive.
+
+### 50.3 Pseudo-replication in the gate test (right, and the effect does not survive)
+The p = 0.022 of s47 counted rows of `gated_residual.csv`, which are policy x wind-set pairs, not independent units.
+Recounted with the trained policy as the unit (`gate_policy_test.py`): worst per-wind term at or below 16 m/s on
+either set, **4/4 low-gate vs 2/8 high-gate, Fisher two-sided p = 0.061**; on both sets 2/4 vs 1/8, p = 0.236. The
+paper no longer claims significance here. What it relies on instead is the J ordering (15-17 best on both bases and
+both wind sets) and the magnitudes: low-gate worst shortfalls -10.3, -3.5, -1.8, -1.7 against high-gate -5.9 ... -1.2,
+the -10.3 being a power-MSE loss at 16 m/s, inside the band the gate exists to protect.
+
+### 50.4 Presentation and scope (right)
+- The three aggregations are now **equations** (per-episode mean of ratios; power mean of levels within and across
+  bins; Rayleigh weights), with the note that m enters twice, inside the episode's DEL and across bins.
+- "site-weighted" is everywhere **conditional above-rated weighting**; the abstract says so.
+- The baseline claim is narrowed to "a **minimal two-parameter** re-tuning already accounts for 49 %".
+- "the Wohler exponent changes nothing" -> "changes the magnitudes but not the ranking".
+- The proposer result is demoted to a secondary finding and restated conditionally: not that a language model finds
+  better reward structures than random search, but that, **conditioned on a vocabulary distilled from its own
+  output** and on this budget, its proposals satisfy the per-wind constraint more often than random recombination.
+- The deployment sentence became "among the configurations examined, under the present simulation metrics, the most
+  defensible performance-complexity trade-off", with what would be needed to call it a deployment recommendation.
+- Bibliography placeholders cleared: IEC 61400-1 **ed. 3** (matching our TurbSim `1-ed3`), and the baseline paper
+  resolved via Crossref to **IEEE TSTE 17(4):4378-4390, 2026, DOI 10.1109/TSTE.2026.3712960**.
+- Fixed a pre-existing crash in `evaluate.py --help` (a literal `[%]` in a help string).
+
+### 50.5 Requate, Wiens & Meyer, JPCS 1618:022045 (2020) - the closest precedent
+Read in full (`RelatedWorks/`). They align controller evaluation with the V-model across three requirement domains
+and demonstrate that evaluation parameters change the apparent quality, chiefly through the **seed count**: two
+disjoint sets of six seeds give blade-root DEL reductions of 17 % and 10 % at one wind speed, 4 % and 10 % at another,
+so "6 seeds ... are not necessarily a sound basis for a fatigue life evaluation". They also report their IPC costing
+**+188 % pitch operating time**. Cited in three places: as the precedent for the question (with our difference stated:
+they structure the evaluation, we price specific choices against each other on one plant, including two they do not
+vary, the baseline's tuning state and the aggregation convention), in the statistics paragraph on seed counts, and in
+the actuation section.
+
+### Still open
+A stronger classical baseline (4-6 parameters, or Zalkind-style automatic tuning) would test how far the 49 % depends
+on tuning depth; a turbulence-class sensitivity (A or C) would test whether the aggregation finding holds; a matched
+random-structure control for the gated configuration; and an archival release with a DOI for the code, the prompts
+and the generated rewards.

@@ -1,0 +1,7 @@
+run,base,J_true_wind,J_wind_estimate,diff,ci_lo,ci_hi,power_mse_red_pct_est,gen_speed_mse_red_pct_est,TwrBsMyt_DEL_red_pct_est,RootMyc1_DEL_red_pct_est,travel_true,travel_est
+trwCwG3t_s0,tuned ROSCO,20.14,20.11,-0.029,-0.043,-0.014,31.98,38.48,6.76,3.22,1.45,1.45
+trwCwG3t_s1,tuned ROSCO,20.19,20.24,0.047,0.036,0.057,32.57,39.33,6.88,2.17,1.417,1.416
+trwCwG3t_s2,tuned ROSCO,20.68,20.51,-0.169,-0.2,-0.141,33.05,39.74,7.02,2.24,1.402,1.4
+mrwCwG3t_s0,scheduled MPC,31.98,31.91,-0.07,-0.102,-0.038,52.34,58.83,16.67,-0.21,2.688,2.683
+mrwCwG3t_s1,scheduled MPC,32.54,32.43,-0.111,-0.143,-0.076,51.4,57.92,18.57,1.83,2.899,2.897
+mrwCwG3t_s2,scheduled MPC,32.42,32.23,-0.189,-0.246,-0.128,52.91,59.39,16.55,0.08,3.101,3.077

@@ -99,7 +99,7 @@ The rungs of the ladder. Construction details are in App.~\ref{app:controllers};
 \end{equation}
 present during training so that selection sees it. §\ref{sec:gate} prices the threshold.
 
-\emph{Which wind signal each part reads} matters for how these results should be read, so we state it exactly. The MPC and the gate \eqref{eq:gate} both use the controller's own low-passed wind-speed estimate, which is available on a machine. The policy's observation vector, however, carries the simulator's true hub wind speed, and on this plant that is not a harmless substitution: over the baseline episodes the estimate has a $-0.35$\,m/s bias, a 1.42\,m/s error standard deviation and a correlation of 0.73 with the truth. The learned layer therefore had information a turbine does not have. §\ref{sec:windobs} measures how much of its margin depends on it.
+\emph{Which wind signal each part reads} matters for how these results should be read, so we state it exactly. The MPC and the gate \eqref{eq:gate} both use the controller's own low-passed wind-speed estimate, which is available on a machine. The policy's observation vector, however, carries the simulator's true hub wind speed, and on this plant that is not a harmless substitution: over the baseline episodes the estimate has a $-0.35$\,m/s bias, a 1.42\,m/s error standard deviation and a correlation of 0.73 with the truth. The learned layer therefore had information a turbine does not have. §\ref{sec:windobs} measures how much of its margin depends on it, and the answer is at most 0.19 points of \J.
 
 \emph{Reward supervision.} Every 32 main-trajectory episodes a reasoning language model receives the training diagnostics, an evaluation, the decision history and the objective, and returns $K=3$ candidate reward expressions; each is trained for one eight-episode fork, and the best continues. Fork episodes are charged to the same 300-episode budget, so a supervised run spends 180 episodes on its main trajectory and 120 in verification, and its total simulated time matches the unsupervised control to within 3\,\% (App.~\ref{app:compute}). The controls are a fixed, once-tuned reward and a random search over a fixed grammar of the agent's own term shapes under the identical loop. §\ref{sec:proposer} prices the proposer.
 
@@ -311,8 +311,32 @@ retraining nothing. This answers the narrower of the two questions one might ask
 at run time, and not the broader one, what a policy trained on the estimate from the start would reach; the latter
 needs a retraining campaign we did not run.
 
-\pending{result of the substitution: J of each gated policy with the estimated wind in place of the true hub wind,
-against the same paired baselines on the fresh seeds}
+The oracle turns out not to be load-bearing. Across the six gated policies the substitution costs $-0.09$ points of
+\J\ on average, at worst $-0.19$, and one policy on the tuned baseline improves slightly ($+0.05$); the paired
+intervals are tight, because the comparison is the same policy on the same episodes, so these are real effects and
+they are small ones. Against margins of $+1.85$ and $+4.41$ points for the layer itself, and against a seed-to-seed
+spread of $0.30$, a signal with 1.42\,m/s of error is worth two to ten per cent of what the layer earns. Pitch travel
+is unchanged to two decimals in every policy.
+
+\begin{center}\small
+\begin{tabular}{llccc}
+\toprule
+policy & base & \J\ (true hub wind) & \J\ (wind estimate) & difference [95\,\%] \\
+\midrule
+seed 0 & tuned GSPI baseline & 20.14 & 20.11 & $-0.03$ $[-0.04,-0.01]$ \\
+seed 1 & & 20.19 & 20.24 & $+0.05$ $[+0.04,+0.06]$ \\
+seed 2 & & 20.68 & 20.51 & $-0.17$ $[-0.20,-0.14]$ \\
+\midrule
+seed 0 & scheduled MPC & 31.98 & 31.91 & $-0.07$ $[-0.10,-0.04]$ \\
+seed 1 & & 32.54 & 32.43 & $-0.11$ $[-0.14,-0.08]$ \\
+seed 2 & & 32.42 & 32.23 & $-0.19$ $[-0.25,-0.13]$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+We would still not build it this way. The observation should carry the estimate from the start, and a reader should
+be told which signals a learned controller was given; the measurement above is what lets us say that, on this plant,
+the answer does not depend on it.
 
 \subsection{What no convention prices: actuation}
 \label{sec:duty}
@@ -329,7 +353,7 @@ Every margin in this paper is bought with pitch activity, and \eqref{eq:J} charg
 
 \paragraph{What the layers are worth, stated plainly.} On a tuned PI base and with no aerodynamic model, a gated learned layer is worth $4.41\pm0.30$ points at 1.40--1.45$\times$ the shipped controller's travel, in every seed and on fresh winds. A correctly scaled MPC is worth about three times that at twice the travel, and absorbs a 5\,\% aerodynamic coefficient error through its own estimator better than any residual we trained (App.~\ref{app:mpc}). On top of that MPC, learning is worth 1.5--2.1 points for 40\,\% more actuation. Which of these is the right controller is a question about the site and the actuator, not about the objective.
 
-\paragraph{Limitations.} (i)~One onshore turbine, collective pitch, above rated, one turbulence class. The blade-root result is what collective pitch can be expected to give, since the once-per-revolution blade load needs individual pitch; an individual-pitch version of this layer was evaluated and is a negative result. (ii)~The tuning margin is specific to this machine and envelope: a shipped filter corner is conservative partly because it must serve turbines we do not simulate, floating ones in particular, where raising regulation bandwidth can drive negative damping of the platform pitch mode. (iii)~Our tuned baseline is tuned in two parameters, not optimised; against a fully tuned classical controller~\citep{Zalkind2020tuning} every margin here would be smaller. (iv)~Three training seeds per learned arm and two for the fixed-reward control; the paired intervals cover the wind realisation, and the seed-to-seed spread is of the same size. (v)~The gate threshold is swept at three settings with two or three seeds each. (vi)~The proposer result is established on the ungated tuned-PI base only. (vii)~Everything is simulation, and pitch duty is a proxy for bearing and drive life rather than an actuator model.
+\paragraph{Limitations.} (i)~One onshore turbine, collective pitch, above rated, one turbulence class. The blade-root result is what collective pitch can be expected to give, since the once-per-revolution blade load needs individual pitch; an individual-pitch version of this layer was evaluated and is a negative result. (ii)~The tuning margin is specific to this machine and envelope: a shipped filter corner is conservative partly because it must serve turbines we do not simulate, floating ones in particular, where raising regulation bandwidth can drive negative damping of the platform pitch mode. (iii)~Our tuned baseline is tuned in two parameters, not optimised; against a fully tuned classical controller~\citep{Zalkind2020tuning} every margin here would be smaller. (iv)~Three training seeds per learned arm and two for the fixed-reward control; the paired intervals cover the wind realisation, and the seed-to-seed spread is of the same size. (v)~The gate threshold is swept at three settings with two or three seeds each. (vi)~The proposer result is established on the ungated tuned-PI base only. (vii)~The policies were trained with the simulator's true hub wind in their observation, not the controller's estimate; substituting the estimate at evaluation costs at most 0.19 points (§\ref{sec:windobs}), but a policy trained on the estimate from the start was not run. (viii)~Everything is simulation, and pitch duty is a proxy for bearing and drive life rather than an actuator model.
 
 \section{Conclusion}
 
