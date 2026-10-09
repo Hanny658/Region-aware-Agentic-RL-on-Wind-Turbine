@@ -94,11 +94,18 @@ class Evaluator:
         self.root = Path(os.path.expanduser(a.root))
         (self.root / "cache").mkdir(parents=True, exist_ok=True)
         self.src = Path(os.path.expanduser(a.template))
+        # extra arguments for evaluate.py, e.g. a wind protocol the config_run does not carry. They change what a
+        # candidate's score means, so they also go into the cache key: otherwise a run on one protocol would read
+        # back a cached score from another.
+        self.extra_args: list[str] = []
 
     def run(self, p, slot, seeds=None, tag_extra=""):
         seeds = seeds or self.a.seeds
         p = clip(p)
-        out = self.root / "cache" / f"eval_{key_of(p)}_s{''.join(map(str, seeds))}{tag_extra}.json"
+        prot = ""
+        if self.extra_args:
+            prot = "_" + hashlib.sha1(" ".join(self.extra_args).encode()).hexdigest()[:6]
+        out = self.root / "cache" / f"eval_{key_of(p)}_s{''.join(map(str, seeds))}{prot}{tag_extra}.json"
         if out.exists():
             return json.load(open(out))
         tpl = self.root / "templates" / key_of(p)
@@ -108,6 +115,7 @@ class Evaluator:
         cmd = [sys.executable, str(PROJ / "scripts" / "evaluate.py"), "--run", os.path.expanduser(self.a.config_run), "--gspi",
                "--backend", "openfast", "--seeds", *map(str, seeds), "--episode_s", str(self.a.episode_s), "--workers", str(self.a.workers),
                "--port0", str(self.a.port0 + 300 * slot), "--tag", out.stem[len("eval_"):], "--out", str(self.root / "cache")]
+        cmd += self.extra_args
         r = subprocess.run(cmd, capture_output=True, text=True, env=env)
         shutil.rmtree(tpl, ignore_errors=True)
         if not out.exists():
