@@ -50,7 +50,7 @@ for rep in $REPEATS; do
     if [ -f "$d/best.json" ]; then echo "skip $arm r$rep (finished)"; continue; fi
     echo "--- $arm r$rep $(date +%H:%M)"
     $RUN python scripts/rosco_search.py --proposer "$arm" --repeat "$rep" --budget "$BUDGET" \
-        --batch 2 --parallel 2 --workers 6 --means $MEANS --ti B --seeds 1 2 --episode_s 600 \
+        --batch 2 --parallel 2 --workers 7 --means $MEANS --ti B --seeds 1 2 --episode_s 600 \
         --root "$ROOT" --config_run "$EXP/jg3t_s0" --port0 "$port" 2>&1 | grep -vE "^\[eval|^ *$"
     port=$((port + 40))
     [ "$port" -gt 8600 ] && port=7800

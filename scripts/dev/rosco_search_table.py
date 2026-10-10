@@ -50,10 +50,10 @@ if not runs:
 ORDER = [k for k in ("random", "local", "bayes", "llm") if k in runs] + \
         [k for k in runs if k not in ("random", "local", "bayes", "llm")]
 
-print("Each run evaluates the shipped controller first, free of budget; J is measured against the shipped")
-print(f"baselines, so J > 0 is better than shipped. 'first >{a.thresh:g}' counts simulations, not wall clock.\n")
-print(f"{'proposer':>9} {'rep':>4} {'budget':>7} {'best J':>8} {'at sim':>7} {f'first >{a.thresh:g}':>10} "
-      f"{'positive':>9} {'median J':>9}   best parameters")
+print("Each run evaluates the shipped controller first, free of budget; the selection score is measured against the shipped")
+print(f"baselines, so a positive score is better than shipped. 'first >{a.thresh:g}' counts simulations, not wall clock.\n")
+print(f"{'proposer':>9} {'rep':>4} {'budget':>7} {'best score':>11} {'at sim':>7} {f'first >{a.thresh:g}':>10} "
+      f"{'positive':>9} {'median score':>13}   best parameters")
 rows = []
 for arm in ORDER:
     for rep in sorted(runs[arm]):
@@ -68,28 +68,37 @@ for arm in ORDER:
                      f"first_above_{a.thresh:g}": first if first else "",
                      "n_positive": int((js > 0).sum()), "median_J": round(float(np.median(js)), 2),
                      **{f"best_{k}": v for k, v in p.items()},
-                     **{t: round(cand[best_i]["result"].get(f"J_{t}", float("nan")), 2)
-                        for t in ("power_mse_red_pct", "gen_speed_mse_red_pct",
-                                  "TwrBsMyt_DEL_red_pct", "RootMyc1_DEL_red_pct")}})
-        print(f"{arm:>9} {rep:>4} {len(cand):>7} {js[best_i]:>8.2f} {best_i + 1:>7} {str(first or '-'):>10} "
-              f"{int((js > 0).sum()):>4}/{len(cand):<4} {np.median(js):>9.2f}   "
+                     **{t: round(float(cand[best_i]["result"].get(t, float("nan"))), 2)
+                        for t in ("power", "speed", "tower", "blade")},
+                     "energy_loss_pct": round(float(cand[best_i]["result"].get("energy_loss_pct", 0.0)), 3),
+                     "worst_term": round(min(float(cand[best_i]["result"].get(t, 0.0))
+                                             for t in ("power", "speed", "tower", "blade")), 2)})
+        print(f"{arm:>9} {rep:>4} {len(cand):>7} {js[best_i]:>11.2f} {best_i + 1:>7} {str(first or '-'):>10} "
+              f"{int((js > 0).sum()):>4}/{len(cand):<4} {np.median(js):>13.2f}   "
               f"kp {p['kp_scale']:.3g} ki {p['ki_scale']:.3g} corner {p['lpf_corner']:.3g} damper {p['fa_ki']:.4g}")
 
-print(f"\n{'proposer':>9} {'runs':>5} {'best J: mean':>13} {'sd':>6} {'min':>7} {'max':>7} "
+print(f"\n{'proposer':>9} {'runs':>5} {'best score: mean':>17} {'sd':>6} {'min':>7} {'max':>7} "
       f"{'runs that found >' + f'{a.thresh:g}':>22} {'median sims to it':>18}")
 for arm in ORDER:
     b = np.array([r["best_J"] for r in rows if r["proposer"] == arm], float)
     f = [r[f"first_above_{a.thresh:g}"] for r in rows if r["proposer"] == arm]
     hit = [x for x in f if x != ""]
-    print(f"{arm:>9} {len(b):>5} {b.mean():>13.2f} {b.std(ddof=1) if len(b) > 1 else 0:>6.2f} "
+    print(f"{arm:>9} {len(b):>5} {b.mean():>17.2f} {b.std(ddof=1) if len(b) > 1 else 0:>6.2f} "
           f"{b.min():>7.2f} {b.max():>7.2f} {len(hit):>13d} of {len(b):<6} "
           f"{(np.median(hit) if hit else float('nan')):>18.1f}")
 
-print("\nThe four terms of each arm's best candidate (percentage reductions against the shipped controller):")
-print(f"{'proposer':>9} {'rep':>4} {'power MSE':>10} {'speed MSE':>10} {'tower DEL':>10} {'blade DEL':>10}")
+print("\nWhat each arm's best candidate actually delivers: reductions against the shipped controller, in points")
+print("(negative = worse than shipped; the selection score only averages the four, it does not forbid a loss):")
+print(f"{'proposer':>9} {'rep':>4} {'power MSE':>10} {'speed MSE':>10} {'tower DEL':>10} {'blade DEL':>10} "
+      f"{'energy':>7} {'worst':>7}")
 for r in rows:
-    print(f"{r['proposer']:>9} {r['repeat']:>4} {r['power_mse_red_pct']:>10.1f} {r['gen_speed_mse_red_pct']:>10.1f} "
-          f"{r['TwrBsMyt_DEL_red_pct']:>10.1f} {r['RootMyc1_DEL_red_pct']:>10.1f}")
+    print(f"{r['proposer']:>9} {r['repeat']:>4} {r['power']:>10.1f} {r['speed']:>10.1f} "
+          f"{r['tower']:>10.1f} {r['blade']:>10.1f} {r['energy_loss_pct']:>7.2f} {r['worst_term']:>7.1f}")
+
+print("\nBest candidates whose every term stays within 1 point of the shipped controller:")
+for arm in ORDER:
+    rs = [r for r in rows if r["proposer"] == arm]
+    print(f"{arm:>9} {sum(1 for r in rs if r['worst_term'] >= -1.0):>2} of {len(rs)}")
 
 # ------------------------------------------------------------------ held-out verification of the winners
 if a.verify:
@@ -107,19 +116,19 @@ if a.verify:
 
     ev = Evaluator(Args())
     ev.extra_args = ["--means", "12", "14", "16", "18", "20", "22", "24", "--ti", "B"]
-    print("\nheld-out (seeds 3-6) and fresh (seeds 7-10) J of each arm's winner, same box, same protocol")
-    print(f"{'proposer':>9} {'rep':>4} {'design J':>9} {'held-out':>9} {'fresh':>8}   (design minus held-out)")
+    print("\nheld-out (seeds 3-6) and fresh (seeds 7-10) score of each arm's winner, same box, same protocol")
+    print(f"{'proposer':>9} {'rep':>4} {'design score':>13} {'held-out':>9} {'fresh':>8}   (design minus held-out)")
     for r in rows:
         p = clip({k[len('best_'):]: v for k, v in r.items() if k.startswith("best_") and k != "best_J" and k != "best_at"})
         ho = summarise(ev.run(p, 0, seeds=[3, 4, 5, 6]))["J"]
         fr = summarise(ev.run(p, 1, seeds=[7, 8, 9, 10]))["J"]
         r["heldout_J"], r["fresh_J"] = round(ho, 2), round(fr, 2)
-        print(f"{r['proposer']:>9} {r['repeat']:>4} {r['best_J']:>9.2f} {ho:>9.2f} {fr:>8.2f}   {r['best_J'] - ho:>+8.2f}")
+        print(f"{r['proposer']:>9} {r['repeat']:>4} {r['best_J']:>13.2f} {ho:>9.2f} {fr:>8.2f}   {r['best_J'] - ho:>+8.2f}")
     d = np.array([r["best_J"] - r["heldout_J"] for r in rows], float)
     print(f"\noptimism of the design score: mean {d.mean():+.2f} points, worst {d.max():+.2f}")
     if len(rows) > 2:
         c = np.corrcoef([r["best_J"] for r in rows], [r["heldout_J"] for r in rows])[0, 1]
-        print(f"correlation of design J with held-out J over the {len(rows)} winners: {c:+.2f}")
+        print(f"correlation of the design score with the held-out score over the {len(rows)} winners: {c:+.2f}")
 
 if a.csv and rows:
     keys = list(dict.fromkeys(k for r in rows for k in r))
