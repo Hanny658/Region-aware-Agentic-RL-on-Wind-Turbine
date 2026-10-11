@@ -81,6 +81,16 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   MPC spends 2.14x, so duty no longer separates them. The damper asks ~2.0 deg of pitch (limiter 10, not reached):
   **the s23 "tower damper worth ~0" claim is replaced by its opposite.** A search that finds nothing selects the
   shipped tuning itself and reports 0.00 (s52.1); the first random run did exactly that in 24 candidates.
+- **The legitimate tuning space is a FRONT, not a point, and which end is "the tuned baseline" is an OPEN
+  DECISION (roadmap s52.2; stage 2 paused 2026-10-12 after 8 of 12 runs).** Same box, same protocol, every row a
+  tuning file the controller can take: llm r0 regulation **+47.79** with tower DEL -0.61 (set mean inside the
+  measurement resolution, but **-5.9 at 18 m/s**) at 1.76x travel; bayes r1 +46.76 / +4.24 at 1.53x; stage 1
+  +28.30 / +22.77 at 2.01x; local r0 +14.30 / +17.78 at 2.72x. The regulation objective walks up the front and
+  switches the damper off. Rule recommended BEFORE stage 3 is read, following s32 (set-mean load constraints are
+  gamed across wind speeds): **the tuned baseline is the largest regulation reduction whose PER-WIND load terms
+  hold off the design winds**, which keeps the stage-1 tuning. Re-ranking all ~200 evaluated candidates per wind
+  costs no simulations (every history record carries its per-wind terms). Proposers so far: a shippable gain in
+  0/3 random, 1/2 local, 1/2 bayes, 2/2 llm runs, median 8 simulations.
 - **Residual line closed from the learning side (s30):** the residual trained over Cp/Ct in [0.85, 1.15] repairs
   only the underestimate side, nothing at +15 %, and costs 3-6 J at the exact model; the estimator is 10-40 J above
   every residual at every error. The tower weight is not the lever for the compensated MPC's negative high-wind

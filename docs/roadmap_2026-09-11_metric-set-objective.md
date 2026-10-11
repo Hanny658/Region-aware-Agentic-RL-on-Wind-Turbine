@@ -2315,3 +2315,59 @@ around an incumbent the fix removes (kept at `roscosearch_native/_superseded/loc
 random arm is not affected, it never reads the incumbent, and its first run stands: 24 candidates, 6 of them
 feasible, none better than shipped. Stage 1 was derived before the fix; the fix can only add the shipped point to
 pools that lacked it, so the baseline above is a lower bound on what the recipe finds.
+
+### 52.2 Stage 2 paused after 8 of 12 runs (2026-10-12 08:30, session 392 held with SIGSTOP)
+
+Budget 24 candidates per run, same box, same start, same 14 design episodes, selection by constraint domination
+with the shipped tuning in the pool. random r2 is mid-run at 14 candidates; local r2, bayes r2 and llm r2 have
+not started. 23 of the roughly 200 candidates evaluated so far could not be run by the plant (divergence, which
+is a result: the search reached the stability boundary), and no evaluation failed for any other reason.
+
+| proposer | rep | feasible | sims to the first feasible gain | regulation | power MSE | tower DEL | blade DEL | energy | travel | ADC |
+|---|---|---|---|---|---|---|---|---|---|---|
+| random | 0 | 6/24 | none | 0.00 (shipped) | | | | | 1.00x | |
+| random | 1 | 6/24 | none | 0.00 (shipped) | | | | | 1.00x | |
+| random | 2 | 4/14 | none so far | 0.00 (shipped) | | | | | 1.00x | |
+| local | 0 | 10/24 | 18 | +14.30 | +20.08 | +17.78 | +4.03 | +0.156 | 2.72x | 0.1281 |
+| local | 1 | 9/24 | none | 0.00 (shipped) | | | | | 1.00x | |
+| bayes | 0 | 10/24 | none | 0.00 (shipped) | | | | | 1.00x | |
+| bayes | 1 | 12/24 | 7 | +46.76 | +37.77 | +4.24 | +3.84 | +0.106 | 1.53x | 0.0722 |
+| llm | 0 | 10/24 | 8 | +47.79 | +38.97 | -0.61 | +3.06 | +0.111 | 1.76x | 0.0830 |
+| llm | 1 | 14/24 | 8 | +41.27 | +33.55 | -0.94 | +3.33 | +0.127 | 1.74x | 0.0821 |
+
+Runs that bought a shippable gain: random 0 of 3, local 1 of 2, bayes 1 of 2, llm 2 of 2 at a median of 8
+simulations. Random search at this budget finds feasible tunings (4 to 6 of 24) but never one that also improves
+regulation, so it selects the shipped tuning and buys nothing. That is the same shape as s37 on this base.
+
+**What the selected tunings are is more interesting than who proposed them.** Sorted by regulation, with the
+tower-base term beside it:
+
+| tuning | omega_pc | zeta_pc | corner | damper | regulation | tower DEL | travel | worst per-wind tower |
+|---|---|---|---|---|---|---|---|---|
+| llm r0 | 0.700 | 0.750 | 5.500 | off | +47.79 | -0.61 [-1.30, +0.06] | 1.76x | -5.9 at 18 m/s |
+| bayes r1 | 0.727 | 0.642 | 5.712 | 0.0014 | +46.76 | +4.24 [+3.70, +4.75] | 1.53x | -2.3 at 20 m/s |
+| llm r1 | 0.610 | 0.920 | 5.100 | off | +41.27 | -0.94 [-1.88, +0.01] | 1.74x | -6.6 at 18 m/s |
+| stage 1 (tune r0) | 0.605 | 0.738 | 6.529 | 0.0331 | +28.30 | +22.77 [+22.08, +23.45] | 2.01x | +13.2 at 20 m/s |
+| local r0 | 0.613 | 0.607 | 8.747 | off | +14.30 | +17.78 [+17.00, +18.53] | 2.72x | +4.1 at 22 m/s |
+
+The legitimate tuning space is not a point, it is a front, and the two ends of it differ by 33 points of
+regulation and 23 points of tower-base fatigue. Every one of these is a tuning file the controller can take;
+every one holds the constraints as written. The regulation objective alone walks up the front and turns the
+damper off, because the damper is what buys tower fatigue and it costs regulation.
+
+**Open decision, to be taken when stage 3 has run (it changes what the paper claims):** which of these is *the*
+tuned baseline. The rule has to be stated and then applied, not chosen after seeing the comparison. The repo
+already has the ingredient: s32 found that a set-mean load constraint is gamed across wind speeds and that the
+per-wind constraint is the honest one, and the per-wind column above shows exactly that happening - llm r0 holds
+the set mean at -0.61, inside the resolution of the measurement, while losing 5.9 points of tower fatigue at
+18 m/s. Under a per-wind load constraint the two llm tunings are infeasible and the stage-1 tuning stands.
+Recommended rule, stated before stage 3 is read: **the tuned baseline is the tuning with the largest regulation
+reduction whose per-wind load terms hold off the design winds.** Two further notes:
+
+- The per-wind re-selection needs no new simulations. Every history record already carries the per-wind terms of
+  its candidate, so all roughly 200 evaluated candidates can be re-ranked under a per-wind constraint from the
+  files on disk; only the verification of whatever that selects costs simulations.
+- The front itself belongs in the manuscript. It is the cleanest statement of the single claim the paper makes:
+  within the space of controllers the shipped tuning file can express, the baseline is a design choice worth
+  33 points of regulation or 23 points of tower fatigue, and where the author puts it decides what the advanced
+  controller appears to be worth.

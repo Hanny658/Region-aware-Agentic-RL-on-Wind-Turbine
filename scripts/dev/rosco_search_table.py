@@ -137,7 +137,8 @@ for arm in ORDER:
           f"{b.min():>7.2f} {b.max():>7.2f} {len(ok):>17d} of {len(rs):<6} "
           f"{(np.median(f) if f else float('nan')):>18.1f}")
 
-print("\nBest feasible regulation so far, against simulations spent (the whole trace, so no threshold is needed):")
+print("\nBest feasible regulation against simulations spent, the shipped tuning counted as the candidate "
+      "it is, so a cell reads what was bought over it and 0.00 means nothing better had been found yet:")
 marks = [2, 4, 6, 8, 12, 16, 20, 24]
 print(f"{'proposer':>9} {'rep':>4} " + " ".join(f"{m:>7}" for m in marks))
 for arm in ORDER:
