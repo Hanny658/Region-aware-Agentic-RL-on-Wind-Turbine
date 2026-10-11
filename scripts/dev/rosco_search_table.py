@@ -74,7 +74,7 @@ for arm in ORDER:
     for rep in sorted(runs[arm]):
         hist = runs[arm][rep]
         start, cand = hist[0], hist[1:]
-        best = max(cand, key=rank_key)
+        best = max(hist, key=rank_key)            # the shipped tuning is always one of the options
         asm = best["assess"]
         c = asm.get("constraints", {})
         n_feas = sum(1 for h in cand if h["assess"].get("feasible"))
@@ -88,6 +88,7 @@ for arm in ORDER:
              "n_feasible": n_feas, "n_diverged": n_div, "n_infrastructure_failures": n_infra,
              "sims_to_first_feasible_gain": first if first else "",
              "selected_feasible": bool(asm.get("feasible")),
+             "selected_shipped": best["i"] == 0,
              "regulation": round(asm.get("objective", float("nan")), 2),
              "power": round(asm.get("power", float("nan")), 2),
              "tower": round(c.get("tower", {}).get("value", float("nan")), 2),
@@ -104,7 +105,9 @@ for arm in ORDER:
         print(f"{arm:>9} {rep:>4} {len(cand):>7} {r['identity_objective']:>9.3f} {n_feas:>4}/{len(cand):<4} "
               f"{str(first or '-'):>14} {r['regulation']:>11.2f} {r['power']:>10.2f} {r['tower']:>10.2f} "
               f"{r['blade']:>10.2f} {r['energy']:>7.3f} {r['travel_ratio']:>7.3f} {r['adc']:>6.4f}"
-              + ("" if asm.get("feasible") else "   <- no feasible tuning found; least-violating shown"))
+              + ("   <- nothing beat the shipped tuning; the selection IS the shipped tuning"
+                 if best["i"] == 0 else
+                 "" if asm.get("feasible") else "   <- no feasible tuning found; least-violating shown"))
 
 n_infra = sum(r["n_infrastructure_failures"] for r in rows)
 n_div = sum(r["n_diverged"] for r in rows)
@@ -127,7 +130,7 @@ print(f"\n{'proposer':>9} {'runs':>5} {'regulation: mean':>17} {'sd':>6} {'min':
       f"{'runs with a feasible gain':>26} {'median sims to it':>18}")
 for arm in ORDER:
     rs = [r for r in rows if r["proposer"] == arm]
-    ok = [r for r in rs if r["selected_feasible"]]
+    ok = [r for r in rs if r["selected_feasible"] and not r["selected_shipped"]]
     b = np.array([r["regulation"] for r in ok], float) if ok else np.array([np.nan])
     f = [r["sims_to_first_feasible_gain"] for r in rs if r["sims_to_first_feasible_gain"] != ""]
     print(f"{arm:>9} {len(rs):>5} {b.mean():>17.2f} {(b.std(ddof=1) if len(b) > 1 else 0.0):>6.2f} "
@@ -139,11 +142,11 @@ marks = [2, 4, 6, 8, 12, 16, 20, 24]
 print(f"{'proposer':>9} {'rep':>4} " + " ".join(f"{m:>7}" for m in marks))
 for arm in ORDER:
     for rep in sorted(runs[arm]):
-        cand = runs[arm][rep][1:]
+        hist = runs[arm][rep]
         cells = []
         for m in marks:
-            seen = [h["assess"]["objective"] for h in cand
-                    if h["i"] <= m and h["assess"].get("feasible")]
+            seen = [h["assess"]["objective"] for h in hist           # the shipped point is in, at exactly 0,
+                    if h["i"] <= m and h["assess"].get("feasible")]  # so a cell reads what was bought over it
             cells.append(f"{max(seen):>7.2f}" if seen else f"{'-':>7}")
         print(f"{arm:>9} {rep:>4} " + " ".join(cells))
 

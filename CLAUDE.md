@@ -54,7 +54,9 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   the shipped speed-filter corner (1.57 rad/s) is the untuned part of the GSPI; 3.42 rad/s with kp x1.13 scores
   16.2 / 17.1 on the low-turbulence held-out sets and 15.4 on the range set at 1.1x pitch travel. Against it the
   MPC rows keep 4.5-5.4 J at low turbulence (tower fatigue near rated only) and ~14 J at class B over the range
-  (23-24 points of regulation plus 9 of tower). **Every comparison table must carry this row.**
+  (23-24 points of regulation plus 9 of tower). **SUPERSEDED on 2026-10-11** by the re-derived baseline below: this
+  row is a hand-scaled gain table no tuning file can produce, selected and reported under the composite that is now
+  gone, so its number is not comparable and every table carrying it must be re-measured.
 - **Parameter-search audit and redesign (2026-10-11, `docs/design_2026-10-11_rosco-native-search.md`,
   `scripts/rosco_native.py`, `eval/selection.py`, `campaign_rosco_native.sh`):** the s29/s31 tuned baseline was
   **not a ROSCO tuning**. It scaled `PC_GS_KP` / `PC_GS_KI` by two scalars, and because ROSCO builds the schedule as
@@ -69,6 +71,16 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   as violated only where the loss exceeds its own 95 % paired-bootstrap interval (measured median half-widths 1.30 /
   1.00 / 0.031 points), ranked by constraint domination. Searched quantities: omega_pc, zeta_pc, F_LPFCornerFreq,
   FA_KI, FA_HPFCornerFreq, every limit read off the plant (`scripts/dev/search_box_bounds.py`).
+- **The tuned baseline, re-derived as a real ROSCO tuning (roadmap s52, 2026-10-11; template
+  `~/wtrl/runs/template_5mw_rosco_tuned_native`, `docs/tables/rosco_tuned_baseline.csv`). This is the baseline row
+  from here on.** omega_pc 0.6048, zeta_pc 0.7378, F_LPFCornerFreq 6.529 rad/s, FA_KI 0.0331, FA_HPFCornerFreq 0.692,
+  TD_Mode 1. Against the shipped controller on the same wind fields: gen-speed MSE **+28.30** [25.35, 31.23], power MSE
+  +24.50, tower DEL **+22.77** [22.08, 23.45], blade DEL +3.46, energy +0.145 on the 14 design episodes; +28.32 /
+  +23.93 held out (seeds 3-6) and +29.75 / +25.32 on fresh seeds 7-10, feasible on both, worst single-wind load term
+  -0.24 (blade, 16 m/s), design optimism -0.02. Pitch travel **2.01x** shipped, ADC 0.0948 vs 0.0471 - the scheduled
+  MPC spends 2.14x, so duty no longer separates them. The damper asks ~2.0 deg of pitch (limiter 10, not reached):
+  **the s23 "tower damper worth ~0" claim is replaced by its opposite.** A search that finds nothing selects the
+  shipped tuning itself and reports 0.00 (s52.1); the first random run did exactly that in 24 candidates.
 - **Residual line closed from the learning side (s30):** the residual trained over Cp/Ct in [0.85, 1.15] repairs
   only the underestimate side, nothing at +15 %, and costs 3-6 J at the exact model; the estimator is 10-40 J above
   every residual at every error. The tower weight is not the lever for the compensated MPC's negative high-wind

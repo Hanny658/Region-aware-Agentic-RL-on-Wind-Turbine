@@ -93,9 +93,10 @@ def propose_random(hist, n, rng, **_):
 
 
 def propose_local(hist, n, rng, **_):
-    if len(hist) < 2:
+    """(1+lambda) local search whose incumbent starts at the shipped tuning, which is a feasible point at 0."""
+    if not hist:
         return propose_random(hist, n, rng)
-    inc = to_x(max(hist[1:], key=rank_key)["params"])
+    inc = to_x(max(hist, key=rank_key)["params"])
     lo, hi = box_x()
     step = 0.15 * (hi - lo)
     return [from_x(np.clip(inc + rng.normal(0, step), lo, hi)) for _ in range(n)], \
@@ -133,7 +134,7 @@ def propose_bayes(hist, n, rng, **_):
 
     Modelling the constraints separately rather than folding them into one score is what keeps this arm a fair
     strong baseline: a surrogate fitted to a discontinuous feasibility-ranked scalar would be handicapped."""
-    done = [h for h in hist[1:] if h["assess"].get("constraints")]
+    done = [h for h in hist if h["assess"].get("constraints")]      # the shipped point too: it is data
     if len(done) < 5:
         return propose_random(hist, n, rng)
     lo, hi = box_x()
@@ -319,16 +320,19 @@ def main():
             hist.append({"i": len(hist), "params": p, "assess": asm, **rep, "why": why})
             seen.add(key_of(p))
             open(hp, "a").write(json.dumps(hist[-1]) + "\n")
-            best = max(hist[1:], key=rank_key) if len(hist) > 1 else None
+            best = max(hist, key=rank_key)        # the shipped tuning is always one of the options
             print(line(tag, len(hist) - 1, a.budget, p, asm, best), flush=True)
 
     if len(hist) < 2:                                 # --budget 0: the identity check on its own
         print(f"[{tag}] identity only, no candidates requested", flush=True)
         return
-    best = max(hist[1:], key=rank_key)
+    best = max(hist, key=rank_key)
     json.dump(best, open(root / "best.json", "w"), indent=1)
     a_ = best["assess"]
-    if a_["feasible"]:
+    if best["i"] == 0:
+        print(f"[{tag}] done. NO candidate improved on the shipped controller in {a.budget} simulations, so the "
+              f"selection is the shipped tuning itself and this arm bought 0.00 points", flush=True)
+    elif a_["feasible"]:
         print(f"[{tag}] done. selected {fmt(best['params'])}: regulation {a_['objective']:+.2f} points, "
               f"every constraint held", flush=True)
     else:

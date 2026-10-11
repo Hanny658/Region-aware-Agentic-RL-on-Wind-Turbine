@@ -26,6 +26,11 @@ Ranking is constraint domination (Deb 2000, the rule NSGA-II uses):
     a feasible candidate beats any infeasible one;
     between feasible candidates, the larger objective wins;
     between infeasible candidates, the smaller total resolved loss wins.
+
+The shipped controller is itself one of the candidates: evaluated against itself it reads exactly zero on every
+term with intervals of zero width, so it is feasible by construction and an objective of 0 is the floor of any
+honest selection. A search that finds nothing selects it and reports a gain of exactly zero; it never reports a
+controller worse than the one already in the field as its winner.
 """
 from __future__ import annotations
 
