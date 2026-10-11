@@ -2204,3 +2204,47 @@ A stronger classical baseline (4-6 parameters, or Zalkind-style automatic tuning
 on tuning depth; a turbulence-class sensitivity (A or C) would test whether the aggregation finding holds; a matched
 random-structure control for the gated configuration; and an archival release with a DOI for the code, the prompts
 and the generated rewards.
+
+## 51. The parameter search was asking the wrong question of the wrong box (2026-10-09 to 10-11; `docs/design_2026-10-11_rosco-native-search.md`, `scripts/rosco_native.py`, `eval/selection.py`, `scripts/dev/search_box_bounds.py`, `campaign_rosco_native.sh`)
+
+The proposer comparison launched on 10-09 (four proposers, three repeats, 16 candidates each, scored by the composite
+on the design winds) reached 8 of its 12 runs before an audit stopped it. Three defects, in order of seriousness.
+
+**Two of the four searched inputs were not ROSCO tuning quantities.** The search multiplied `PC_GS_KP` and `PC_GS_KI`
+by scalars. ROSCO generates those tables from `omega_pc` and `zeta_pc` as `Kp = (2 zeta omega + A(beta))/B(beta)`,
+`Ki = omega^2/B(beta)`. Scaling Ki by b is exactly `omega -> omega sqrt(b)`, but scaling Kp by a requires
+`2 zeta' omega' = a 2 zeta omega + (a-1) A(beta)` and A varies along the schedule, so the implied damping ratio is not
+constant: 6.8 % of spread for the s29 tuned baseline, 7.1-12.8 % for the three search winners. Those gain tables
+cannot be produced by any tuning file. A and B are recoverable exactly from the shipped tables given the shipped
+tuning (zeta 0.7, omega 0.6; round trip 8.7e-19), so the native parameterisation costs no new dependency and is
+self-checking.
+
+**Three box limits were ours, and two of them produced the result.** The filter corner was capped at 4.0 rad/s, just
+above 3P (3.80), and both `llm` repeats put their winner exactly on the cap; the measured ceiling is 19.2 rad/s, where
+a first-order filter passes 99.99 % of the generator-speed signal power. `FA_KI` was capped at 0.004 rad s/m, which
+allows the tower damper 0.25 deg of pitch authority against a 5 deg limiter it can therefore never reach -- **so the
+s23 finding that ROSCO's tower damper is worth about nothing at 600 s is withdrawn**, it was measured inside a box 50x
+too narrow. `FA_HPFCornerFreq` was frozen at 0.172 rad/s, a value from our own tower-damper template; ROSCO's own
+default for all three damper fields is 0.
+
+**The composite chose the controller.** Of the nine selected designs, five lost a load term and two lost more than 11
+points of tower-base DEL (`bayes r1` -11.4, `random r1` -20.3) while scoring highest, because a mean of four
+reductions trades one for the others. Replaced by the standard constrained statement: maximise the generator-speed
+regulation reduction subject to tower-base DEL, blade-root DEL and energy capture being no worse than the shipped
+controller, with a constraint violated only where the loss exceeds its own 95 % paired stratified bootstrap interval
+(measured median half-widths over the 14-episode design set: 1.30, 1.00 and 0.031 points), ranked by constraint
+domination. On the 140 candidates already evaluated, 29 % are feasible under this rule and every run found at least
+one -- but `local r0` and `random r1` found exactly one each and it was worse than shipped on regulation, so those
+runs would report no feasible improvement in 16 simulations.
+
+Two smaller fixes fell out. Parameters were being rounded to three significant figures before being written, which
+wrote the shipped corner 1.5708 as 1.57: that is the whole of the -0.15 the identity check used to read, and at six
+significant figures it now reads exactly +0.000. And `evaluate.py` only enables the wind-labelled above-rated subset
+by itself when the borrowed config run carries the composite objective, so `--relabel_wind` is now passed explicitly;
+without it the subset reverts to a per-controller pitch rule and the two sides stop being scored on the same samples.
+
+What survives from the paused campaign is the motivation above and nothing else: the designs are not reachable, one
+ceiling was load-bearing and the damper range was meaningless, so no proposer ranking is carried forward. The
+replacement campaign re-derives the paper's tuned baseline in the native parameterisation first (the s29 recipe, 40
+candidates), then runs the comparison at 24 candidates per run, then re-scores every selected tuning on held-out and
+fresh winds with the per-wind load check the design set cannot resolve.
