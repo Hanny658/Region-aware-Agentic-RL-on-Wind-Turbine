@@ -67,7 +67,14 @@ def assess(fit: dict, n_boot: int = N_BOOT, seed: int = 0) -> dict:
 
     cols = {name: np.array([p.get(col, np.nan) for p in pe], float) for name, col in REPORTED}
     obj_name, obj_col, _ = OBJECTIVE
-    objective = float(np.nanmean(cols[obj_name]))
+    ok = np.isfinite(cols[obj_name])
+    objective = float(np.nanmean(cols[obj_name])) if ok.any() else float("nan")
+    # the regulation metrics are defined only on episodes that are above rated for at least half their samples,
+    # so say how many episodes carry the objective rather than leaving the reader to assume all of them
+    obj_lo, obj_hi = float("nan"), float("nan")
+    if ok.all():
+        d = cols[obj_name][idx].mean(axis=1)
+        obj_lo, obj_hi = (float(x) for x in np.percentile(d, [2.5, 97.5]))
 
     cons: dict[str, dict] = {}
     for name, _col in LOAD_CONSTRAINTS:
@@ -92,8 +99,9 @@ def assess(fit: dict, n_boot: int = N_BOOT, seed: int = 0) -> dict:
                           "shortfall": FAILED_SHORTFALL}
 
     shortfall = float(sum(c["shortfall"] for c in cons.values()))
-    return {"objective": objective, "feasible": shortfall == 0.0, "shortfall": shortfall,
-            "n_episodes": len(pe), "constraints": cons,
+    return {"objective": objective, "objective_lo": obj_lo, "objective_hi": obj_hi,
+            "feasible": shortfall == 0.0, "shortfall": shortfall,
+            "n_episodes": len(pe), "n_objective": int(ok.sum()), "constraints": cons,
             **{name: float(np.nanmean(cols[name])) for name, _ in REPORTED}}
 
 

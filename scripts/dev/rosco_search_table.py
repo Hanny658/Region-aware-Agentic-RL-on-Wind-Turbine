@@ -155,10 +155,32 @@ if a.verify:
     print("\nThe selected tunings on wind seeds they were not designed on, same box, same protocol.")
     print(f"{'proposer':>9} {'rep':>4} {'design':>8} {'held-out':>9} {'fresh':>8} {'gap':>7}   "
           f"{'held-out tower':>15} {'fresh tower':>12}  feasible")
+    def worst_per_wind(fit):
+        """The worst load reduction at any single mean wind speed: the check the design set cannot resolve."""
+        by: dict[float, dict[str, list]] = {}
+        for e in fit.get("per_episode", []):
+            if e.get("mean_wind") is None:
+                continue
+            d = by.setdefault(e["mean_wind"], {})
+            for nm, col in (("tower", "TwrBsMyt_DEL_red_pct"), ("blade", "RootMyc1_DEL_red_pct")):
+                v = e.get(col)
+                if v is not None and v == v:
+                    d.setdefault(nm, []).append(float(v))
+        worst, at, which = float("inf"), None, None
+        for u, d in by.items():
+            for nm, v in d.items():
+                m = float(np.mean(v))
+                if m < worst:
+                    worst, at, which = m, u, nm
+        return (round(worst, 2), at, which) if at is not None else (float("nan"), None, None)
+
     for r in rows:
         p = {k[len("best_"):]: v for k, v in r.items() if k.startswith("best_")}
-        ho = assess(ev.run(p, 0, seeds=[3, 4, 5, 6]))
-        fr = assess(ev.run(p, 1, seeds=[7, 8, 9, 10]))
+        fit_ho = ev.run(p, 0, seeds=[3, 4, 5, 6])
+        fit_fr = ev.run(p, 1, seeds=[7, 8, 9, 10])
+        ho, fr = assess(fit_ho), assess(fit_fr)
+        r["heldout_worst_per_wind"], r["heldout_worst_at"], r["heldout_worst_which"] = worst_per_wind(fit_ho)
+        r["fresh_worst_per_wind"], r["fresh_worst_at"], r["fresh_worst_which"] = worst_per_wind(fit_fr)
         r["heldout_regulation"] = round(ho["objective"], 2)
         r["fresh_regulation"] = round(fr["objective"], 2)
         r["heldout_tower"] = round(ho["constraints"].get("tower", {}).get("value", float("nan")), 2)
@@ -171,6 +193,14 @@ if a.verify:
               f"{'held-out yes' if ho['feasible'] else 'held-out NO'}, "
               f"{'fresh yes' if fr['feasible'] else 'fresh NO'}")
     d = np.array([r["regulation"] - r["heldout_regulation"] for r in rows], float)
+    print("\nThe per-wind load check the 14-episode design set cannot resolve, done off the design winds:")
+    print(f"{'proposer':>9} {'rep':>4} {'worst load held out':>20} {'at':>5} {'which':>7} "
+          f"{'worst fresh':>12} {'at':>5} {'which':>7}")
+    for r in rows:
+        print(f"{r['proposer']:>9} {r['repeat']:>4} {r['heldout_worst_per_wind']:>20.2f} "
+              f"{str(r['heldout_worst_at']):>5} {str(r['heldout_worst_which']):>7} "
+              f"{r['fresh_worst_per_wind']:>12.2f} {str(r['fresh_worst_at']):>5} "
+              f"{str(r['fresh_worst_which']):>7}")
     print(f"\nOptimism of the design score: mean {d.mean():+.2f} points, worst {d.max():+.2f}.")
     print(f"Selected tunings that stay feasible off the design winds: "
           f"{sum(r['heldout_feasible'] for r in rows)} of {len(rows)} held out, "
