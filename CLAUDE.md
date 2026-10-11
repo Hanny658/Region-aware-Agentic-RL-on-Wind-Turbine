@@ -55,6 +55,20 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   16.2 / 17.1 on the low-turbulence held-out sets and 15.4 on the range set at 1.1x pitch travel. Against it the
   MPC rows keep 4.5-5.4 J at low turbulence (tower fatigue near rated only) and ~14 J at class B over the range
   (23-24 points of regulation plus 9 of tower). **Every comparison table must carry this row.**
+- **Parameter-search audit and redesign (2026-10-11, `docs/design_2026-10-11_rosco-native-search.md`,
+  `scripts/rosco_native.py`, `eval/selection.py`, `campaign_rosco_native.sh`):** the s29/s31 tuned baseline was
+  **not a ROSCO tuning**. It scaled `PC_GS_KP` / `PC_GS_KI` by two scalars, and because ROSCO builds the schedule as
+  `Kp = (2 zeta omega + A(beta))/B(beta)`, `Ki = omega^2/B(beta)`, a scalar on Kp implies a damping ratio that varies
+  6.8-12.8 % along the schedule: those gain tables are unreachable by any tuning file. A, B are recovered exactly from
+  the shipped tables (round trip 8.7e-19, shipped tuning zeta 0.7 / omega 0.6). The box limits were ours and two of
+  them produced results: the filter corner was capped at 4.0 rad/s and both llm winners sat on that cap (the measured
+  ceiling is 19.2 rad/s, where the filter passes 99.99 % of the generator-speed power), and `FA_KI` was capped at
+  0.004, worth **0.25 deg** of damper pitch authority, so **the s23 claim that ROSCO's tower damper is worth ~0 is
+  withdrawn**. The composite score is gone from selection and reporting: the search now maximises the generator-speed
+  regulation reduction subject to tower DEL, blade DEL and energy being no worse than shipped, a constraint counting
+  as violated only where the loss exceeds its own 95 % paired-bootstrap interval (measured median half-widths 1.30 /
+  1.00 / 0.031 points), ranked by constraint domination. Searched quantities: omega_pc, zeta_pc, F_LPFCornerFreq,
+  FA_KI, FA_HPFCornerFreq, every limit read off the plant (`scripts/dev/search_box_bounds.py`).
 - **Residual line closed from the learning side (s30):** the residual trained over Cp/Ct in [0.85, 1.15] repairs
   only the underestimate side, nothing at +15 %, and costs 3-6 J at the exact model; the estimator is 10-40 J above
   every residual at every error. The tower weight is not the lever for the compensated MPC's negative high-wind

@@ -1,0 +1,121 @@
+"""Selection rule for a controller parameter search: one objective, physical constraints, no weights (2026-10-11).
+
+Replaces the composite score that averaged four percentage reductions and charged invented penalties. That
+composite chose the controller rather than measuring it: on the search of 2026-10-09 the top-scoring designs
+paid for regulation with tower fatigue, up to 20 points of it, because a mean of four terms will trade one for
+the others.
+
+What a classical pitch-tuning exercise actually states is a constrained problem, so that is what this is:
+
+    objective    the generator-speed regulation error reduction against the paired shipped controller.
+                 One quantity -- the one the pitch loop's PI acts on. Power regulation is reported but not
+                 optimised: above rated at constant torque the two carry much the same information
+                 (correlation 0.94-0.95 on the model-based rows), so optimising both double-counts it.
+
+    constraints  tower-base damage-equivalent load, blade-root damage-equivalent load and energy capture,
+                 each no worse than the shipped controller.
+
+A constraint needs a tolerance, and rather than choose one we use the resolution of the measurement itself: a
+candidate is infeasible only where the loss is *resolvable* on its own episodes, i.e. where the upper end of
+the 95 % paired stratified bootstrap interval of that reduction still lies below zero. Nothing is invented and
+nothing is weighted. For reference, the measured median half-widths over the 14-episode design set are 1.30
+points (tower), 1.00 (blade) and 0.031 (energy), so the rule is strict where the measurement is sharp.
+
+Ranking is constraint domination (Deb 2000, the rule NSGA-II uses):
+
+    a feasible candidate beats any infeasible one;
+    between feasible candidates, the larger objective wins;
+    between infeasible candidates, the smaller total resolved loss wins.
+"""
+from __future__ import annotations
+
+import numpy as np
+
+OBJECTIVE = ("speed", "gen_speed_mse_red_pct", "generator-speed regulation error")
+REPORTED = (("power", "power_mse_red_pct"), ("speed", "gen_speed_mse_red_pct"),
+            ("tower", "TwrBsMyt_DEL_red_pct"), ("blade", "RootMyc1_DEL_red_pct"))
+LOAD_CONSTRAINTS = (("tower", "TwrBsMyt_DEL_red_pct"), ("blade", "RootMyc1_DEL_red_pct"))
+N_BOOT = 2000
+FAILED_SHORTFALL = 1.0e3        # an evaluation that did not complete ranks below every candidate that did
+
+
+def _resample(strata: np.ndarray, n_boot: int, seed: int) -> np.ndarray:
+    """Index matrix (n_boot, n_episodes) of a stratified bootstrap over episodes, strata = mean wind speed."""
+    rng = np.random.default_rng(seed)
+    blocks = [np.where(strata == s)[0] for s in np.unique(strata)]
+    return np.concatenate([rng.choice(b, size=(n_boot, len(b)), replace=True) for b in blocks], axis=1)
+
+
+def assess(fit: dict, n_boot: int = N_BOOT, seed: int = 0) -> dict:
+    """The selection record of one evaluation: objective, constraints with their intervals, feasibility.
+
+    `fit` is what evaluate.py writes: per-episode reductions against the paired shipped controller, plus the
+    per-episode energy of both sides."""
+    pe = [p for p in fit.get("per_episode", []) if p.get("mean_wind") is not None]
+    if fit.get("failed") or len(pe) < 4:
+        return {"objective": -FAILED_SHORTFALL, "feasible": False, "shortfall": FAILED_SHORTFALL,
+                "n_episodes": len(pe), "constraints": {},
+                "note": fit.get("failed", "too few usable episodes")}
+
+    u = np.array([p["mean_wind"] for p in pe], float)
+    idx = _resample(u, n_boot, seed)
+
+    def interval(v: np.ndarray) -> tuple[float, float, float]:
+        d = v[idx].mean(axis=1)
+        lo, hi = np.percentile(d, [2.5, 97.5])
+        return float(v.mean()), float(lo), float(hi)
+
+    cols = {name: np.array([p.get(col, np.nan) for p in pe], float) for name, col in REPORTED}
+    obj_name, obj_col, _ = OBJECTIVE
+    objective = float(np.nanmean(cols[obj_name]))
+
+    cons: dict[str, dict] = {}
+    for name, _col in LOAD_CONSTRAINTS:
+        v = cols[name]
+        if not np.isfinite(v).all():
+            cons[name] = {"value": float("nan"), "lo": float("nan"), "hi": float("nan"),
+                          "shortfall": FAILED_SHORTFALL}
+            continue
+        val, lo, hi = interval(v)
+        cons[name] = {"value": val, "lo": lo, "hi": hi, "shortfall": max(0.0, -hi)}
+
+    # energy capture: a ratio of sums, so it is resampled as a ratio rather than averaged per episode
+    en = np.array([p.get("energy_MWh", np.nan) for p in pe], float)
+    eb = np.array([p.get("energy_base_MWh", np.nan) for p in pe], float)
+    if np.isfinite(en).all() and np.isfinite(eb).all() and eb.sum() > 0:
+        d = 100.0 * (1.0 - en[idx].sum(axis=1) / eb[idx].sum(axis=1))      # loss, positive = energy lost
+        lo, hi = np.percentile(-d, [2.5, 97.5])                            # as a reduction: positive = no loss
+        val = float(100.0 * (en.sum() / eb.sum() - 1.0))
+        cons["energy"] = {"value": val, "lo": float(lo), "hi": float(hi), "shortfall": max(0.0, -float(hi))}
+    else:
+        cons["energy"] = {"value": float("nan"), "lo": float("nan"), "hi": float("nan"),
+                          "shortfall": FAILED_SHORTFALL}
+
+    shortfall = float(sum(c["shortfall"] for c in cons.values()))
+    return {"objective": objective, "feasible": shortfall == 0.0, "shortfall": shortfall,
+            "n_episodes": len(pe), "constraints": cons,
+            **{name: float(np.nanmean(cols[name])) for name, _ in REPORTED}}
+
+
+def rank_key(rec: dict) -> tuple[int, float]:
+    """Constraint domination, as a key for max(): feasible first, then the objective, then the smaller loss."""
+    a = rec.get("assess", rec)
+    return (1 if a.get("feasible") else 0,
+            a.get("objective", -FAILED_SHORTFALL) if a.get("feasible") else -a.get("shortfall", FAILED_SHORTFALL))
+
+
+def best_of(records: list[dict]) -> dict | None:
+    """The selected design among records carrying an `assess` block."""
+    return max(records, key=rank_key) if records else None
+
+
+def describe(a: dict) -> str:
+    """One line: what this candidate does and whether it may be shipped."""
+    if not a.get("constraints"):
+        return f"unusable ({a.get('note', 'no episodes')})"
+    c = a["constraints"]
+    tag = "feasible" if a["feasible"] else f"infeasible by {a['shortfall']:.2f}"
+    return (f"speed {a['objective']:+6.2f}  power {a.get('power', float('nan')):+6.2f}  "
+            f"tower {c['tower']['value']:+6.2f} [{c['tower']['lo']:+.2f},{c['tower']['hi']:+.2f}]  "
+            f"blade {c['blade']['value']:+6.2f} [{c['blade']['lo']:+.2f},{c['blade']['hi']:+.2f}]  "
+            f"energy {c['energy']['value']:+6.3f}  {tag}")

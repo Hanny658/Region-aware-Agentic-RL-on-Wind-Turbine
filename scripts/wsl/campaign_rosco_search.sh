@@ -1,4 +1,10 @@
 #!/bin/bash
+# SUPERSEDED on 2026-10-11 by campaign_rosco_native.sh. Kept because its 8 finished runs are on disk and
+# keep one finding: an unconstrained mean of four reductions makes a parameter search buy regulation with
+# tower fatigue. Its box is not usable - two of its four inputs are scalar multipliers on ROSCO's gain
+# tables rather than ROSCO tuning quantities, and three of its limits were chosen rather than measured.
+# See docs/design_2026-10-11_rosco-native-search.md. Do not start this script.
+#
 # Who should propose a classical controller's parameters? (2026-10-09)
 #
 # The agent is used here as a pre-deployment design tool rather than a layer in the loop: starting from the SHIPPED

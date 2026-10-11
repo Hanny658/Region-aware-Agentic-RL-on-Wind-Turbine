@@ -1,14 +1,20 @@
-"""Proposer comparison on the shipped ROSCO pitch loop (2026-10-09; campaign_rosco_search.sh).
+"""Proposer comparison on the shipped ROSCO pitch loop (2026-10-09, redesigned 2026-10-11).
 
-Four proposers search the same four-parameter box from the same shipped start under the same simulation budget. This
-reads their histories and answers the three questions a design tool is judged on:
+Four proposers search the same five ROSCO tuning quantities from the same shipped start under the same
+simulation budget and the same constrained selection rule. This reads their histories and answers the three
+questions a design tool is judged on:
 
-  how much      the best J each proposer reaches, and its four terms
+  how much      the regulation the selected tuning buys, and what it does to the loads it must not harm
   how reliably  the spread over repeats, because one run cannot separate a proposer from a lucky draw
-  how fast      the number of simulations before the first candidate above a useful threshold
+  how fast      the simulations spent before the first feasible tuning that improves on the shipped one
 
-With --verify it also re-scores each arm's winner on the held-out and fresh wind seeds, which is the check roadmap
-s38 failed: a design search is only useful if the design winds rank candidates the way held-out winds do.
+Everything is reported in the quantities the measurement produces -- percentage reductions against the paired
+shipped controller, energy, pitch travel, actuator duty -- with no composite anywhere. Selection is
+`eval/selection.py`: one objective, three constraints at "no worse than shipped", constraint domination.
+
+With --verify each selected tuning is re-scored on the held-out and fresh wind seeds, which is the check
+roadmap s38 failed: a design search is only useful if the design winds rank candidates the way held-out winds
+do.
 
     ~/wtrl/run.sh python scripts/dev/rosco_search_table.py [--csv docs/tables/rosco_search.csv] [--verify]
 """
@@ -19,27 +25,33 @@ import csv
 import glob
 import json
 import os
-import subprocess
 import sys
-from pathlib import Path
 
 import numpy as np
 
-PROJ = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJ))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from eval.selection import rank_key  # noqa: E402
+from scripts.rosco_native import FA_INT_SAT, fmt  # noqa: E402
+
+HPF_INTEGRAL_M_S = 1.076      # median max |integral of high-passed nacelle fore-aft acceleration|, from the
+                              # shipped baselines (scripts/dev/search_box_bounds.py); used only to say whether
+                              # the damper's pitch contribution would reach its 10 deg limiter
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--root", default=os.path.expanduser("~/wtrl/exp/roscosearch"))
-ap.add_argument("--thresh", type=float, default=10.0, help="J a candidate must exceed to count as a useful find")
+ap.add_argument("--root", default=os.path.expanduser("~/wtrl/exp/roscosearch_native"))
 ap.add_argument("--csv", default=None)
-ap.add_argument("--verify", action="store_true", help="re-score each arm's winner on held-out and fresh seeds")
+ap.add_argument("--verify", action="store_true", help="re-score each selected tuning on held-out and fresh seeds")
 ap.add_argument("--workers", type=int, default=7)
 ap.add_argument("--port0", type=int, default=7700)
+ap.add_argument("--means", nargs="+", type=float, default=[12, 14, 16, 18, 20, 22, 24])
+ap.add_argument("--ti", default="B")
 a = ap.parse_args()
 
-runs = {}
+runs: dict[str, dict[int, list]] = {}
 for h in sorted(glob.glob(f"{a.root}/*/history.jsonl")):
     name = os.path.basename(os.path.dirname(h))
+    if "_r" not in name:
+        continue
     arm, rep = name.rsplit("_r", 1)
     hist = [json.loads(line) for line in open(h)]
     if len(hist) > 1:
@@ -47,63 +59,87 @@ for h in sorted(glob.glob(f"{a.root}/*/history.jsonl")):
 if not runs:
     sys.exit(f"no histories under {a.root}")
 
-ORDER = [k for k in ("random", "local", "bayes", "llm") if k in runs] + \
-        [k for k in runs if k not in ("random", "local", "bayes", "llm")]
+ORDER = [k for k in ("random", "local", "bayes", "llm", "tune") if k in runs] + \
+        [k for k in runs if k not in ("random", "local", "bayes", "llm", "tune")]
 
-print("Each run evaluates the shipped controller first, free of budget; the selection score is measured against the shipped")
-print(f"baselines, so a positive score is better than shipped. 'first >{a.thresh:g}' counts simulations, not wall clock.\n")
-print(f"{'proposer':>9} {'rep':>4} {'budget':>7} {'best score':>11} {'at sim':>7} {f'first >{a.thresh:g}':>10} "
-      f"{'positive':>9} {'median score':>13}   best parameters")
+print("Each run evaluates the shipped controller first, free of budget; its objective must read exactly 0.")
+print("A tuning is selected only if tower-base load, blade-root load and energy capture are all no worse than")
+print("shipped; 'sims to first' counts simulations to the first such tuning that also improves regulation.\n")
+hdr = (f"{'proposer':>9} {'rep':>4} {'budget':>7} {'identity':>9} {'feasible':>9} {'sims to first':>14} "
+       f"{'regulation':>11} {'power MSE':>10} {'tower DEL':>10} {'blade DEL':>10} {'energy':>7} "
+       f"{'travel':>7} {'ADC':>6}")
+print(hdr)
 rows = []
 for arm in ORDER:
     for rep in sorted(runs[arm]):
         hist = runs[arm][rep]
         start, cand = hist[0], hist[1:]
-        js = np.array([h["result"]["J"] for h in cand], float)
-        best_i = int(np.argmax(js))
-        first = next((i + 1 for i, v in enumerate(js) if v > a.thresh), None)
-        p = cand[best_i]["params"]
-        rows.append({"proposer": arm, "repeat": rep, "budget": len(cand), "start_J": round(start["result"]["J"], 2),
-                     "best_J": round(float(js[best_i]), 2), "best_at": best_i + 1,
-                     f"first_above_{a.thresh:g}": first if first else "",
-                     "n_positive": int((js > 0).sum()), "median_J": round(float(np.median(js)), 2),
-                     **{f"best_{k}": v for k, v in p.items()},
-                     **{t: round(float(cand[best_i]["result"].get(t, float("nan"))), 2)
-                        for t in ("power", "speed", "tower", "blade")},
-                     "energy_loss_pct": round(float(cand[best_i]["result"].get("energy_loss_pct", 0.0)), 3),
-                     "worst_term": round(min(float(cand[best_i]["result"].get(t, 0.0))
-                                             for t in ("power", "speed", "tower", "blade")), 2)})
-        print(f"{arm:>9} {rep:>4} {len(cand):>7} {js[best_i]:>11.2f} {best_i + 1:>7} {str(first or '-'):>10} "
-              f"{int((js > 0).sum()):>4}/{len(cand):<4} {np.median(js):>13.2f}   "
-              f"kp {p['kp_scale']:.3g} ki {p['ki_scale']:.3g} corner {p['lpf_corner']:.3g} damper {p['fa_ki']:.4g}")
+        best = max(cand, key=rank_key)
+        asm = best["assess"]
+        c = asm.get("constraints", {})
+        n_feas = sum(1 for h in cand if h["assess"].get("feasible"))
+        first = next((h["i"] for h in cand
+                      if h["assess"].get("feasible") and h["assess"]["objective"] > 0), None)
+        dem = np.rad2deg(best["params"]["fa_ki"] * HPF_INTEGRAL_M_S)
+        r = {"proposer": arm, "repeat": rep, "budget": len(cand),
+             "identity_objective": round(start["assess"]["objective"], 3),
+             "n_feasible": n_feas, "sims_to_first_feasible_gain": first if first else "",
+             "selected_feasible": bool(asm.get("feasible")),
+             "regulation": round(asm.get("objective", float("nan")), 2),
+             "power": round(asm.get("power", float("nan")), 2),
+             "tower": round(c.get("tower", {}).get("value", float("nan")), 2),
+             "tower_lo": round(c.get("tower", {}).get("lo", float("nan")), 2),
+             "tower_hi": round(c.get("tower", {}).get("hi", float("nan")), 2),
+             "blade": round(c.get("blade", {}).get("value", float("nan")), 2),
+             "energy": round(c.get("energy", {}).get("value", float("nan")), 3),
+             "travel_ratio": best.get("travel_ratio", float("nan")),
+             "adc": best.get("adc", float("nan")),
+             "damper_demand_deg": round(float(dem), 2),
+             "damper_limiter_reached": bool(dem > np.rad2deg(FA_INT_SAT)),
+             **{f"best_{k}": v for k, v in best["params"].items()}}
+        rows.append(r)
+        print(f"{arm:>9} {rep:>4} {len(cand):>7} {r['identity_objective']:>9.3f} {n_feas:>4}/{len(cand):<4} "
+              f"{str(first or '-'):>14} {r['regulation']:>11.2f} {r['power']:>10.2f} {r['tower']:>10.2f} "
+              f"{r['blade']:>10.2f} {r['energy']:>7.3f} {r['travel_ratio']:>7.3f} {r['adc']:>6.4f}"
+              + ("" if asm.get("feasible") else "   <- no feasible tuning found; least-violating shown"))
 
-print(f"\n{'proposer':>9} {'runs':>5} {'best score: mean':>17} {'sd':>6} {'min':>7} {'max':>7} "
-      f"{'runs that found >' + f'{a.thresh:g}':>22} {'median sims to it':>18}")
-for arm in ORDER:
-    b = np.array([r["best_J"] for r in rows if r["proposer"] == arm], float)
-    f = [r[f"first_above_{a.thresh:g}"] for r in rows if r["proposer"] == arm]
-    hit = [x for x in f if x != ""]
-    print(f"{arm:>9} {len(b):>5} {b.mean():>17.2f} {b.std(ddof=1) if len(b) > 1 else 0:>6.2f} "
-          f"{b.min():>7.2f} {b.max():>7.2f} {len(hit):>13d} of {len(b):<6} "
-          f"{(np.median(hit) if hit else float('nan')):>18.1f}")
-
-print("\nWhat each arm's best candidate actually delivers: reductions against the shipped controller, in points")
-print("(negative = worse than shipped; the selection score only averages the four, it does not forbid a loss):")
-print(f"{'proposer':>9} {'rep':>4} {'power MSE':>10} {'speed MSE':>10} {'tower DEL':>10} {'blade DEL':>10} "
-      f"{'energy':>7} {'worst':>7}")
+print("\nThe selected tunings, in ROSCO's own quantities:")
 for r in rows:
-    print(f"{r['proposer']:>9} {r['repeat']:>4} {r['power']:>10.1f} {r['speed']:>10.1f} "
-          f"{r['tower']:>10.1f} {r['blade']:>10.1f} {r['energy_loss_pct']:>7.2f} {r['worst_term']:>7.1f}")
+    p = {k[len("best_"):]: v for k, v in r.items() if k.startswith("best_")}
+    note = ""
+    if p["fa_ki"] > 0:
+        note = (f"   damper demand about {r['damper_demand_deg']:.1f} deg"
+                + ("  (reaches the 10 deg limiter)" if r["damper_limiter_reached"] else ""))
+    print(f"{r['proposer']:>9} {r['repeat']:>4}   {fmt(p)}{note}")
 
-print("\nBest candidates whose every term stays within 1 point of the shipped controller:")
+print(f"\n{'proposer':>9} {'runs':>5} {'regulation: mean':>17} {'sd':>6} {'min':>7} {'max':>7} "
+      f"{'runs with a feasible gain':>26} {'median sims to it':>18}")
 for arm in ORDER:
     rs = [r for r in rows if r["proposer"] == arm]
-    print(f"{arm:>9} {sum(1 for r in rs if r['worst_term'] >= -1.0):>2} of {len(rs)}")
+    ok = [r for r in rs if r["selected_feasible"]]
+    b = np.array([r["regulation"] for r in ok], float) if ok else np.array([np.nan])
+    f = [r["sims_to_first_feasible_gain"] for r in rs if r["sims_to_first_feasible_gain"] != ""]
+    print(f"{arm:>9} {len(rs):>5} {b.mean():>17.2f} {(b.std(ddof=1) if len(b) > 1 else 0.0):>6.2f} "
+          f"{b.min():>7.2f} {b.max():>7.2f} {len(ok):>17d} of {len(rs):<6} "
+          f"{(np.median(f) if f else float('nan')):>18.1f}")
 
-# ------------------------------------------------------------------ held-out verification of the winners
+print("\nBest feasible regulation so far, against simulations spent (the whole trace, so no threshold is needed):")
+marks = [2, 4, 6, 8, 12, 16, 20, 24]
+print(f"{'proposer':>9} {'rep':>4} " + " ".join(f"{m:>7}" for m in marks))
+for arm in ORDER:
+    for rep in sorted(runs[arm]):
+        cand = runs[arm][rep][1:]
+        cells = []
+        for m in marks:
+            seen = [h["assess"]["objective"] for h in cand
+                    if h["i"] <= m and h["assess"].get("feasible")]
+            cells.append(f"{max(seen):>7.2f}" if seen else f"{'-':>7}")
+        print(f"{arm:>9} {rep:>4} " + " ".join(cells))
+
+# ------------------------------------------------------------------ held-out verification of the selected tunings
 if a.verify:
-    from scripts.rosco_tune import Evaluator, clip  # noqa: E402
-    from scripts.mpc_param_search import summarise  # noqa: E402
+    from eval.selection import assess  # noqa: E402
+    from scripts.rosco_native import Evaluator  # noqa: E402
 
     class Args:
         root = a.root + "/_verify"
@@ -115,23 +151,42 @@ if a.verify:
         port0 = a.port0
 
     ev = Evaluator(Args())
-    ev.extra_args = ["--means", "12", "14", "16", "18", "20", "22", "24", "--ti", "B"]
-    print("\nheld-out (seeds 3-6) and fresh (seeds 7-10) score of each arm's winner, same box, same protocol")
-    print(f"{'proposer':>9} {'rep':>4} {'design score':>13} {'held-out':>9} {'fresh':>8}   (design minus held-out)")
+    ev.extra_args = ["--means", *[f"{m:g}" for m in a.means], "--ti", a.ti]
+    print("\nThe selected tunings on wind seeds they were not designed on, same box, same protocol.")
+    print(f"{'proposer':>9} {'rep':>4} {'design':>8} {'held-out':>9} {'fresh':>8} {'gap':>7}   "
+          f"{'held-out tower':>15} {'fresh tower':>12}  feasible")
     for r in rows:
-        p = clip({k[len('best_'):]: v for k, v in r.items() if k.startswith("best_") and k != "best_J" and k != "best_at"})
-        ho = summarise(ev.run(p, 0, seeds=[3, 4, 5, 6]))["J"]
-        fr = summarise(ev.run(p, 1, seeds=[7, 8, 9, 10]))["J"]
-        r["heldout_J"], r["fresh_J"] = round(ho, 2), round(fr, 2)
-        print(f"{r['proposer']:>9} {r['repeat']:>4} {r['best_J']:>13.2f} {ho:>9.2f} {fr:>8.2f}   {r['best_J'] - ho:>+8.2f}")
-    d = np.array([r["best_J"] - r["heldout_J"] for r in rows], float)
-    print(f"\noptimism of the design score: mean {d.mean():+.2f} points, worst {d.max():+.2f}")
+        p = {k[len("best_"):]: v for k, v in r.items() if k.startswith("best_")}
+        ho = assess(ev.run(p, 0, seeds=[3, 4, 5, 6]))
+        fr = assess(ev.run(p, 1, seeds=[7, 8, 9, 10]))
+        r["heldout_regulation"] = round(ho["objective"], 2)
+        r["fresh_regulation"] = round(fr["objective"], 2)
+        r["heldout_tower"] = round(ho["constraints"].get("tower", {}).get("value", float("nan")), 2)
+        r["fresh_tower"] = round(fr["constraints"].get("tower", {}).get("value", float("nan")), 2)
+        r["heldout_feasible"] = bool(ho["feasible"])
+        r["fresh_feasible"] = bool(fr["feasible"])
+        print(f"{r['proposer']:>9} {r['repeat']:>4} {r['regulation']:>8.2f} {r['heldout_regulation']:>9.2f} "
+              f"{r['fresh_regulation']:>8.2f} {r['regulation'] - r['heldout_regulation']:>+7.2f}   "
+              f"{r['heldout_tower']:>15.2f} {r['fresh_tower']:>12.2f}  "
+              f"{'held-out yes' if ho['feasible'] else 'held-out NO'}, "
+              f"{'fresh yes' if fr['feasible'] else 'fresh NO'}")
+    d = np.array([r["regulation"] - r["heldout_regulation"] for r in rows], float)
+    print(f"\nOptimism of the design score: mean {d.mean():+.2f} points, worst {d.max():+.2f}.")
+    print(f"Selected tunings that stay feasible off the design winds: "
+          f"{sum(r['heldout_feasible'] for r in rows)} of {len(rows)} held out, "
+          f"{sum(r['fresh_feasible'] for r in rows)} of {len(rows)} fresh.")
     if len(rows) > 2:
-        c = np.corrcoef([r["best_J"] for r in rows], [r["heldout_J"] for r in rows])[0, 1]
-        print(f"correlation of the design score with the held-out score over the {len(rows)} winners: {c:+.2f}")
+        x = [r["regulation"] for r in rows]
+        y = [r["heldout_regulation"] for r in rows]
+        c = np.corrcoef(x, y)[0, 1]
+        rk = np.corrcoef(np.argsort(np.argsort(x)), np.argsort(np.argsort(y)))[0, 1]
+        print(f"Design against held-out over the {len(rows)} selected tunings: correlation {c:+.2f}, "
+              f"rank correlation {rk:+.2f} (roadmap s38 measured -0.9 for the model-based design search).")
 
 if a.csv and rows:
     keys = list(dict.fromkeys(k for r in rows for k in r))
     with open(a.csv, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=keys); w.writeheader(); w.writerows(rows)
+        w = csv.DictWriter(f, fieldnames=keys)
+        w.writeheader()
+        w.writerows(rows)
     print("\n->", a.csv)

@@ -1,25 +1,30 @@
-"""Who should propose a classical controller's parameters? (2026-10-09)
+"""Who should propose a classical controller's parameters? (2026-10-09, redesigned 2026-10-11)
 
-Roadmap s29 tuned the shipped ROSCO pitch loop with a fixed recipe, half random draws and half a local search, and
-the margin it found turned out to be half of everything the later rungs of the paper add. That makes the proposer
-itself worth measuring: under a fixed simulation budget, starting from the shipped settings, how much of the
-available margin does a language model find, and how much does random search or Bayesian optimisation find?
+Roadmap s29 tuned the shipped ROSCO pitch loop with a fixed recipe, and the margin it found turned out to be
+half of everything the later rungs of the paper add. That makes the proposer itself worth measuring: under a
+fixed simulation budget, starting from the shipped settings, how much of the available margin does a language
+model find, and how much does random search or Bayesian optimisation find?
 
-This runs the same search under four proposers, on the same box, from the same start, with the same budget and the
-same evaluation, so the only thing that differs is who picks the next point.
+Four proposers, one box, one start, one budget, one evaluation, so the only thing that differs is who picks
+the next point:
 
-    random   log-uniform draws from the box, with a coin flip for the damper-off corner
+    random   draws from the box, log axis for the three spans of decades, linear for the two of order one
     local    one random point, then a (1+lambda) local search around the incumbent
-    bayes    Gaussian-process surrogate with expected improvement, maximised over a dense random candidate set
-    llm      a reasoning model, shown the box, the objective and the full history with its four terms
+    bayes    constrained Bayesian optimisation: a GP on the objective and one per constraint, with the
+             acquisition expected improvement times the probability of feasibility (Gardner et al. 2014)
+    llm      a reasoning model, shown the five quantities with their units and physical meaning, the objective,
+             the constraints and the whole history
+    tune     the recipe of roadmap s29, half random draws then a local search -- used to re-derive the paper's
+             tuned baseline in the native parameterisation, not as an arm of the comparison
 
-The search objective is J on the design winds against the ORIGINAL shipped-GSPI baselines, so J > 0 means better
-than the shipped controller and the numbers are directly comparable with every other table in the repository. Each
-arm is run with several repeats, because s29's random half found exactly one good point in twenty draws and one run
-cannot tell that apart from skill.
+The searched quantities are ROSCO's own (`scripts/rosco_native.py`: omega_pc, zeta_pc, F_LPFCornerFreq, FA_KI,
+FA_HPFCornerFreq), every box limit is read off the plant, and selection is the constrained rule of
+`eval/selection.py` -- one objective, three constraints at "no worse than shipped", no weights. Several
+repeats per arm, because s29's random half found exactly one good point in twenty draws and one run cannot
+tell that apart from skill.
 
-    ~/wtrl/run.sh python scripts/rosco_search.py --proposer llm --repeat 0 --budget 20 \\
-        --means 12 14 16 18 20 22 24 --seeds 1 2 --episode_s 600
+    ~/wtrl/run.sh python scripts/rosco_search.py --proposer llm --repeat 0 --budget 24 \\
+        --means 12 14 16 18 20 22 24 --ti B --seeds 1 2 --episode_s 600
 """
 from __future__ import annotations
 
@@ -35,173 +40,257 @@ import numpy as np
 
 PROJ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJ))
-from scripts.rosco_tune import BOX, START, Evaluator, clip, key_of, make_template  # noqa: E402
-from scripts.mpc_param_search import summarise  # noqa: E402
+from eval.selection import LOAD_CONSTRAINTS, REPORTED, assess, rank_key  # noqa: E402
+from scripts.rosco_native import (BOX, KEYS, START, Evaluator, box_x, canon, fmt,  # noqa: E402
+                                  from_x, key_of, to_x)
 
-KEYS = list(BOX)
-# the damper has a meaningful zero, so it is searched on a shifted log axis rather than a plain one
-SHIFT = {"fa_ki": 2.0e-4}
-
-
-def to_x(p):
-    return np.array([math.log(p[k] + SHIFT.get(k, 0.0)) for k in KEYS])
+SCORED_S = 580.0            # 600 s simulated, the first 20 s discarded
+RATE_LIMIT_DEG_S = 10.0     # the controller's own pitch rate limit, for the actuator duty cycle
 
 
-def from_x(x):
-    return clip({k: math.exp(v) - SHIFT.get(k, 0.0) for k, v in zip(KEYS, x)})
+# ----------------------------------------------------------------------------- the record of one candidate
+def record(fit: dict) -> tuple[dict, dict]:
+    """The selection block and the reported quantities of one evaluation."""
+    a = assess(fit)
+    pe = [p for p in fit.get("per_episode", []) if p.get("mean_wind") is not None]
+    per_wind: dict[str, dict] = {}
+    for p in pe:
+        d = per_wind.setdefault(f"{p['mean_wind']:g}", {})
+        for name, col in REPORTED:
+            v = p.get(col)
+            if v is not None and v == v:
+                d.setdefault(name, []).append(float(v))
+    rep = {"per_wind": {u: {n: round(float(np.mean(v)), 1) for n, v in d.items()} for u, d in per_wind.items()}}
+    tr = np.array([p.get("pitch_travel_deg", np.nan) for p in pe], float)
+    tb = np.array([p.get("pitch_travel_base_deg", np.nan) for p in pe], float)
+    if np.isfinite(tr).all() and np.isfinite(tb).all() and tb.sum() > 0:
+        rep["travel_ratio"] = round(float(tr.sum() / tb.sum()), 3)
+        rep["adc"] = round(float(np.mean(tr) / SCORED_S / RATE_LIMIT_DEG_S), 4)
+        rep["adc_base"] = round(float(np.mean(tb) / SCORED_S / RATE_LIMIT_DEG_S), 4)
+    return a, rep
 
 
-def box_x():
-    lo = np.array([math.log(max(BOX[k][0], 1e-9) + SHIFT.get(k, 0.0)) for k in KEYS])
-    hi = np.array([math.log(BOX[k][1] + SHIFT.get(k, 0.0)) for k in KEYS])
-    return lo, hi
+def line(tag: str, i: int, budget: int, p: dict, a: dict, best: dict | None) -> str:
+    c = a.get("constraints", {})
+    cons = "  ".join(f"{k} {c[k]['value']:+6.2f}" for k in ("tower", "blade") if k in c)
+    en = f"energy {c['energy']['value']:+6.3f}" if "energy" in c else ""
+    flag = "ok " if a.get("feasible") else f"x{a.get('shortfall', 0):.1f}".ljust(3)
+    bs = "none yet"
+    if best is not None and best["assess"].get("feasible"):
+        bs = f"{best['assess']['objective']:+.2f}"
+    return (f"[{tag}] {i:3d}/{budget}  {fmt(p)}  ->  speed {a.get('objective', float('nan')):+7.2f}  "
+            f"{cons}  {en}  {flag}  best feasible {bs}")
 
 
 # ----------------------------------------------------------------------------- proposers
-def propose_random(hist, n, rng, **_):
-    out = []
+def _uniform(n, rng):
     lo, hi = box_x()
-    while len(out) < n:
-        p = from_x(rng.uniform(lo, hi))
-        if rng.random() < 0.5:
-            p["fa_ki"] = 0.0
-        out.append(clip(p))
-    return out, "log-uniform draw from the box"
+    return [from_x(rng.uniform(lo, hi)) for _ in range(n)]
+
+
+def propose_random(hist, n, rng, **_):
+    return _uniform(n, rng), "draw from the box"
 
 
 def propose_local(hist, n, rng, **_):
-    if not hist:
+    if len(hist) < 2:
         return propose_random(hist, n, rng)
-    inc = max(hist, key=lambda h: h["result"]["J"])["params"]
-    out = []
-    while len(out) < n:
-        p = {k: (inc[k] if inc[k] > 0 else 5e-4 * (rng.random() < 0.3)) * math.exp(rng.normal(0, 0.3)) for k in KEYS}
-        out.append(clip(p))
-    return out, "Gaussian step around the incumbent"
+    inc = to_x(max(hist[1:], key=rank_key)["params"])
+    lo, hi = box_x()
+    step = 0.15 * (hi - lo)
+    return [from_x(np.clip(inc + rng.normal(0, step), lo, hi)) for _ in range(n)], \
+        "Gaussian step around the incumbent"
 
 
-def _gp_posterior(X, y, Xs, length=0.9, noise=1.0):
-    """Zero-mean GP with an RBF kernel; returns the posterior mean and standard deviation at Xs."""
+def propose_tune(hist, n, rng, budget=40, **_):
+    """The recipe of roadmap s29: random draws for the first half of the budget, then a local search."""
+    if len(hist) - 1 < budget // 2:
+        return propose_random(hist, n, rng)
+    return propose_local(hist, n, rng)
+
+
+def _gp(X, y, Xs, length=0.35, noise=0.05):
+    """Zero-mean GP with an RBF kernel on the unit cube; posterior mean and standard deviation at Xs."""
     def k(A, B):
-        d2 = ((A[:, None, :] - B[None, :, :]) ** 2).sum(-1)
-        return np.exp(-0.5 * d2 / length ** 2)
-    ym = y.mean()
-    K = k(X, X) + noise * np.eye(len(X))
-    L = np.linalg.cholesky(K)
-    al = np.linalg.solve(L.T, np.linalg.solve(L, y - ym))
+        return np.exp(-0.5 * ((A[:, None, :] - B[None, :, :]) ** 2).sum(-1) / length ** 2)
+    ym, ys = y.mean(), (y.std() or 1.0)
+    L = np.linalg.cholesky(k(X, X) + noise * np.eye(len(X)))
+    al = np.linalg.solve(L.T, np.linalg.solve(L, (y - ym) / ys))
     Ks = k(X, Xs)
-    mu = ym + Ks.T @ al
+    mu = Ks.T @ al
     v = np.linalg.solve(L, Ks)
-    var = np.clip(1.0 - (v ** 2).sum(0), 1e-9, None)
-    return mu, np.sqrt(var)
+    sd = np.sqrt(np.clip(1.0 - (v ** 2).sum(0), 1e-9, None))
+    return ym + ys * mu, ys * sd
+
+
+def _ncdf(z):
+    from math import erf, sqrt
+    return np.array([0.5 * (1.0 + erf(float(v) / sqrt(2.0))) for v in np.atleast_1d(z)])
 
 
 def propose_bayes(hist, n, rng, **_):
-    if len(hist) < 4:
+    """Constrained Bayesian optimisation: EI on the objective times the probability that every constraint holds.
+
+    Modelling the constraints separately rather than folding them into one score is what keeps this arm a fair
+    strong baseline: a surrogate fitted to a discontinuous feasibility-ranked scalar would be handicapped."""
+    done = [h for h in hist[1:] if h["assess"].get("constraints")]
+    if len(done) < 5:
         return propose_random(hist, n, rng)
-    X = np.array([to_x(h["params"]) for h in hist])
-    y = np.array([h["result"]["J"] for h in hist], float)
-    y = np.clip(y, -50, None)                       # a failed candidate must not dominate the length scale
-    s = y.std() or 1.0
-    yn = (y - y.mean()) / s
     lo, hi = box_x()
-    cand = rng.uniform(lo, hi, size=(4000, len(KEYS)))
-    mu, sd = _gp_posterior(X, yn, cand, noise=0.1)
-    best = yn.max()
-    z = (mu - best - 0.01) / sd
-    from math import erf, sqrt
-    Phi = np.array([0.5 * (1 + erf(v / sqrt(2))) for v in z])
-    phi = np.exp(-0.5 * z ** 2) / math.sqrt(2 * math.pi)
-    ei = (mu - best - 0.01) * Phi + sd * phi
+    span = hi - lo
+    X = np.array([(to_x(h["params"]) - lo) / span for h in done])
+    cand_x = rng.uniform(lo, hi, size=(4000, len(KEYS)))
+    cand = (cand_x - lo) / span
+
+    y = np.clip(np.array([h["assess"]["objective"] for h in done], float), -100.0, None)
+    mu, sd = _gp(X, y, cand)
+    feas = np.array([h["assess"]["feasible"] for h in done])
+    best = float(y[feas].max()) if feas.any() else None
+
+    p_feas = np.ones(len(cand))
+    for name, _col in LOAD_CONSTRAINTS + (("energy", None),):
+        cv = np.array([h["assess"]["constraints"][name]["value"] for h in done], float)
+        if not np.isfinite(cv).all():
+            continue
+        cm, cs = _gp(X, cv, cand)
+        p_feas *= _ncdf(cm / np.maximum(cs, 1e-9))          # P(reduction >= 0)
+
+    if best is None:
+        acq = p_feas                                        # nothing feasible yet: go looking for feasibility
+        why = "probability of feasibility under GP surrogates (no feasible point yet)"
+    else:
+        z = (mu - best) / np.maximum(sd, 1e-9)
+        acq = ((mu - best) * _ncdf(z) + sd * np.exp(-0.5 * z ** 2) / math.sqrt(2 * math.pi)) * p_feas
+        why = "expected improvement times probability of feasibility under GP surrogates"
+
     out, taken = [], []
-    for i in np.argsort(-ei):
-        p = from_x(cand[i])
+    for i in np.argsort(-acq):
+        p = from_x(cand_x[i])
         if key_of(p) in {key_of(q) for q in out}:
             continue
-        if taken and min(np.linalg.norm(cand[i] - cand[j]) for j in taken) < 0.25:
-            continue                                # keep a batch from collapsing onto one point
-        out.append(p); taken.append(i)
+        if taken and min(float(np.linalg.norm(cand[i] - cand[j])) for j in taken) < 0.15:
+            continue                                        # keep a batch from collapsing onto one point
+        out.append(p)
+        taken.append(i)
         if len(out) >= n:
             break
-    return out, "expected improvement under a GP surrogate"
+    return out, why
 
 
-SYSTEM = """You propose parameter sets for the pitch controller of a 5 MW wind turbine, to be tested in aeroelastic
-simulation. You are given a box of four parameters, the objective, and every parameter set tried so far with its
-measured score. Propose the next batch. You are being compared against random search and Bayesian optimisation on
-an equal simulation budget, so spend each candidate deliberately: early on, resolve which parameter the objective
-is actually sensitive to; later, exploit it. Answer with JSON only:
-{"candidates": [{"kp_scale": x, "ki_scale": x, "lpf_corner": x, "fa_ki": x, "why": "one short sentence"}, ...]}"""
+SYSTEM = """You propose tunings for the pitch controller of a 5 MW wind turbine, to be tested in aeroelastic
+simulation. You are given the tunable quantities with their units and physical meaning, the objective, the
+constraints, and every tuning tried so far with what it measured. Propose the next batch. You are being
+compared against random search and constrained Bayesian optimisation on an equal simulation budget, so spend
+each candidate deliberately: early on, find out which quantity the objective and the constraints are actually
+sensitive to; later, exploit it. Answer with JSON only:
+{"candidates": [{"omega_pc": x, "zeta_pc": x, "lpf_corner": x, "fa_ki": x, "fa_hpf": x,
+                 "why": "one short sentence"}, ...]}"""
+
+OBJECTIVE_TEXT = """The controller is ROSCO's gain-scheduled PI collective-pitch loop on the NREL 5 MW turbine,
+above rated, over 12 to 24 m/s in 2 m/s steps at IEC turbulence class B, 600 s per wind field.
+
+Tunable quantities, all of them ROSCO's own; the gain schedule is regenerated from omega_pc and zeta_pc exactly
+as ROSCO's toolbox does, so every candidate is a controller that could be shipped in a tuning file:
+  omega_pc   [rad/s]   target natural frequency of the pitch loop. Shipped 0.6. The first tower fore-aft mode
+                       is at 2.04 rad/s and a loop whose bandwidth reaches it drives thrust into that mode.
+  zeta_pc    [-]       target damping ratio of the pitch loop. Shipped 0.7.
+  lpf_corner [rad/s]   corner of the first-order low-pass filter on measured generator speed. Shipped 1.5708.
+                       The blade-passing frequency at rated speed is 3.80 rad/s; above 19.2 rad/s the filter
+                       passes essentially the whole signal.
+  fa_ki   [rad s/m]    gain of ROSCO's fore-aft tower damper, which feeds high-passed nacelle fore-aft
+                       acceleration to collective pitch. 0 turns it off, which is how the turbine ships. Its
+                       pitch contribution is limited to 10 degrees.
+  fa_hpf     [rad/s]   corner of the high pass on that acceleration signal; only acts when fa_ki > 0. It has to
+                       reject quasi-static thrust and pass the 2.04 rad/s tower mode.
+
+Objective, to maximise: the reduction of generator-speed regulation error (mean square deviation from rated
+speed on above-rated samples) against the shipped controller on the same wind fields, in percent.
+
+Constraints, all against the shipped controller on the same wind fields: tower-base fore-aft damage-equivalent
+load, blade-root out-of-plane damage-equivalent load, and energy capture must each be no worse than shipped. A
+candidate counts as infeasible only where the loss is larger than the measurement can resolve. A candidate that
+improves regulation but loses tower fatigue is of no use."""
 
 
-def propose_llm(hist, n, rng, client=None, objective="", **_):
+def propose_llm(hist, n, rng, client=None, **_):
     rows = []
-    for h in sorted(hist, key=lambda r: -r["result"]["J"])[:40]:
-        p, r = h["params"], h["result"]
-        rows.append(f"  kp {p['kp_scale']:.3g}  ki {p['ki_scale']:.3g}  corner {p['lpf_corner']:.3g}  damper {p['fa_ki']:.4g}"
-                    f"   ->  J {r['J']:+7.2f}   terms {r.get('J_power_mse_red_pct', float('nan')):+6.1f}"
-                    f" {r.get('J_gen_speed_mse_red_pct', float('nan')):+6.1f}"
-                    f" {r.get('J_TwrBsMyt_DEL_red_pct', float('nan')):+6.1f}"
-                    f" {r.get('J_RootMyc1_DEL_red_pct', float('nan')):+6.1f}")
+    for h in sorted(hist[1:], key=rank_key, reverse=True)[:40]:
+        a, p = h["assess"], h["params"]
+        c = a.get("constraints", {})
+        if not c:
+            rows.append(f"  {fmt(p)}   ->  did not run")
+            continue
+        rows.append(f"  omega {p['omega_pc']:.3f} zeta {p['zeta_pc']:.3f} corner {p['lpf_corner']:.3f} "
+                    f"damper {p['fa_ki']:.4f} hpf {p['fa_hpf']:.3f}"
+                    f"  ->  speed {a['objective']:+7.2f}  power {a.get('power', float('nan')):+7.2f}"
+                    f"  tower {c['tower']['value']:+7.2f}  blade {c['blade']['value']:+6.2f}"
+                    f"  energy {c['energy']['value']:+6.3f}"
+                    f"  {'FEASIBLE' if a['feasible'] else 'infeasible'}")
     box = "\n".join(f"  {k}: {v[0]} to {v[1]}" for k, v in BOX.items())
-    user = (f"{objective}\n\nBox (a candidate outside it is clipped):\n{box}\n\n"
-            f"Shipped controller: kp 1.0, ki 1.0, corner 1.5708 rad/s, damper 0 (its J is 0 by definition).\n\n"
-            f"Tried so far, best first ({len(hist)} of a budget that is nearly spent if this list is long):\n"
+    user = (f"{OBJECTIVE_TEXT}\n\nBox (a candidate outside it is clipped):\n{box}\n\n"
+            f"The shipped controller is omega_pc 0.6, zeta_pc 0.7, lpf_corner 1.5708, fa_ki 0 and scores 0 on "
+            f"every quantity by definition.\n\nTried so far, best first under the rule that a feasible tuning "
+            f"beats an infeasible one ({len(hist) - 1} used of the budget):\n"
             + ("\n".join(rows) if rows else "  (nothing yet)")
-            + f"\n\nTerms are power MSE, generator-speed MSE, tower-base fatigue, blade-root fatigue, each a percentage "
-              f"reduction against the shipped controller. Propose exactly {n} candidates.")
+            + f"\n\nAll numbers are percentage reductions against the shipped controller; positive is better, and "
+              f"for energy a negative value means energy was lost. Propose exactly {n} candidates.")
     out = client.ask_json(SYSTEM, user, tag=f"rosco_search_{len(hist):02d}")
     cands, why = [], []
     for c in (out.get("candidates") or [])[:n]:
         try:
-            cands.append(clip({k: float(c[k]) for k in KEYS}))
+            cands.append(canon({k: float(c[k]) for k in KEYS}))
             why.append(str(c.get("why", ""))[:160])
         except (KeyError, TypeError, ValueError):
             continue
     while len(cands) < n:                            # a malformed reply must not shrink the budget
-        extra, _ = propose_random(hist, 1, rng)
-        cands += extra; why.append("(filled randomly: the model returned fewer candidates than asked)")
+        cands += _uniform(1, rng)
+        why.append("(filled randomly: the model returned fewer candidates than asked)")
     return cands, " | ".join(why)
 
 
-PROPOSERS = {"random": propose_random, "local": propose_local, "bayes": propose_bayes, "llm": propose_llm}
-
-OBJECTIVE = """Objective J: the mean of four percentage reductions against the shipped controller, measured on the
-same wind fields - power mean-square error and generator-speed mean-square error above rated, tower-base fore-aft
-damage-equivalent load, blade-root out-of-plane damage-equivalent load - minus 20 per percent of energy lost beyond
-1 percent. J = 0 is the shipped controller. Higher is better. The parameters are multipliers on ROSCO's
-gain-scheduled proportional and integral pitch gains, the corner frequency of the generator-speed low-pass filter in
-rad/s (shipped 1.5708; the blade-passing frequency at rated speed is about 3.8), and the gain of the fore-aft tower
-damper (0 turns it off)."""
+PROPOSERS = {"random": propose_random, "local": propose_local, "bayes": propose_bayes,
+             "llm": propose_llm, "tune": propose_tune}
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--proposer", choices=list(PROPOSERS), required=True)
     ap.add_argument("--repeat", type=int, default=0, help="independent run of the same proposer")
-    ap.add_argument("--budget", type=int, default=20, help="candidates after the shipped start, which is free")
+    ap.add_argument("--budget", type=int, default=24, help="candidates after the shipped start, which is free")
     ap.add_argument("--batch", type=int, default=2)
     ap.add_argument("--parallel", type=int, default=2)
-    ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--workers", type=int, default=7)
     ap.add_argument("--seeds", nargs="+", type=int, default=[1, 2])
     ap.add_argument("--means", nargs="+", type=float, default=None)
     ap.add_argument("--ti", default=None)
     ap.add_argument("--episode_s", type=float, default=600.0)
-    ap.add_argument("--root", default="~/wtrl/exp/roscosearch")
+    ap.add_argument("--root", default="~/wtrl/exp/roscosearch_native")
+    ap.add_argument("--name", default=None, help="run directory name (default <proposer>_r<repeat>)")
     ap.add_argument("--template", default="~/wtrl/runs/template_5mw")
     ap.add_argument("--config_run", default="~/wtrl/exp/jg3t_s0")
     ap.add_argument("--port0", type=int, default=7800)
+    ap.add_argument("--emit_template", default=None, metavar="DST",
+                    help="write the case template of this run's selected design to DST and exit")
     a = ap.parse_args()
 
-    a.root = os.path.expanduser(f"{a.root}/{a.proposer}_r{a.repeat}")
+    a.root = os.path.expanduser(f"{a.root}/{a.name or f'{a.proposer}_r{a.repeat}'}")
     root = Path(a.root)
     root.mkdir(parents=True, exist_ok=True)
+    tag = f"{a.proposer}/r{a.repeat}"
+
+    if a.emit_template:
+        from scripts.rosco_native import make_template
+        best = json.load(open(root / "best.json"))
+        make_template(Path(os.path.expanduser(a.template)), Path(os.path.expanduser(a.emit_template)), best["params"])
+        print(f"[{tag}] {fmt(best['params'])} -> {a.emit_template}")
+        return
+
     ev = Evaluator(a)
-    if a.means:                                      # let the evaluator see a protocol the config_run does not carry
+    if a.means:
         ev.extra_args = ["--means", *[f"{m:g}" for m in a.means]] + (["--ti", a.ti] if a.ti else [])
     hp = root / "history.jsonl"
-    hist = [json.loads(line) for line in open(hp)] if hp.exists() else []
-    rng = np.random.default_rng([911, a.repeat, hash(a.proposer) % 10_000])
+    hist = [json.loads(l) for l in open(hp)] if hp.exists() else []
+    rng = np.random.default_rng([911, a.repeat, sum(map(ord, a.proposer))])
     for _ in range(len(hist)):
         rng.random()                                 # keep a resumed run on the stream it would have had
 
@@ -211,30 +300,40 @@ def main():
         client = LLMClient(transcript_path=root / "llm_transcript.jsonl")
 
     if not hist:
-        r = summarise(ev.run(START, 0))
-        hist.append({"i": 0, "params": clip(START), "result": r, "why": "the shipped controller, free of budget"})
+        asm, rep = record(ev.run(START, 0))
+        hist.append({"i": 0, "params": canon(START), "assess": asm, **rep,
+                     "why": "the shipped controller, free of budget"})
         open(hp, "a").write(json.dumps(hist[-1]) + "\n")
-        print(f"[{a.proposer}/r{a.repeat}] shipped start J {r['J']:+.2f} (identity check: should be near 0)", flush=True)
+        print(f"[{tag}] shipped start: objective {asm['objective']:+.3f} "
+              f"(identity check, must be exactly 0.000)", flush=True)
 
     seen = {key_of(h["params"]) for h in hist}
     while len(hist) - 1 < a.budget:
         n = min(a.batch, a.budget - (len(hist) - 1))
-        cands, why = PROPOSERS[a.proposer](hist, n, rng, client=client, objective=OBJECTIVE)
-        cands = [c for c in cands if key_of(c) not in seen] or propose_random(hist, n, rng)[0]
+        cands, why = PROPOSERS[a.proposer](hist, n, rng, client=client, budget=a.budget)
+        cands = [c for c in cands if key_of(c) not in seen] or _uniform(n, rng)
         with ThreadPoolExecutor(max_workers=a.parallel) as pool:
             res = list(pool.map(lambda ic: ev.run(ic[1], ic[0] % a.parallel), enumerate(cands)))
         for p, fit in zip(cands, res):
-            rec = {"i": len(hist), "params": p, "result": summarise(fit), "why": why}
-            hist.append(rec); seen.add(key_of(p))
-            open(hp, "a").write(json.dumps(rec) + "\n")
-            b = max(h["result"]["J"] for h in hist)
-            print(f"[{a.proposer}/r{a.repeat}] {len(hist) - 1:3d}/{a.budget}  "
-                  f"kp {p['kp_scale']:.3g} ki {p['ki_scale']:.3g} corner {p['lpf_corner']:.3g} damper {p['fa_ki']:.4g}"
-                  f"  ->  J {rec['result']['J']:+7.2f}   best so far {b:+7.2f}", flush=True)
+            asm, rep = record(fit)
+            hist.append({"i": len(hist), "params": p, "assess": asm, **rep, "why": why})
+            seen.add(key_of(p))
+            open(hp, "a").write(json.dumps(hist[-1]) + "\n")
+            best = max(hist[1:], key=rank_key) if len(hist) > 1 else None
+            print(line(tag, len(hist) - 1, a.budget, p, asm, best), flush=True)
 
-    best = max(hist, key=lambda h: h["result"]["J"])
+    if len(hist) < 2:                                 # --budget 0: the identity check on its own
+        print(f"[{tag}] identity only, no candidates requested", flush=True)
+        return
+    best = max(hist[1:], key=rank_key)
     json.dump(best, open(root / "best.json", "w"), indent=1)
-    print(f"[{a.proposer}/r{a.repeat}] done. best J {best['result']['J']:+.2f} at {best['params']}", flush=True)
+    a_ = best["assess"]
+    if a_["feasible"]:
+        print(f"[{tag}] done. selected {fmt(best['params'])}: regulation {a_['objective']:+.2f} points, "
+              f"every constraint held", flush=True)
+    else:
+        print(f"[{tag}] done. NO FEASIBLE TUNING in {a.budget} simulations; least-violating candidate "
+              f"{fmt(best['params'])} short by {a_['shortfall']:.2f} points", flush=True)
 
 
 if __name__ == "__main__":

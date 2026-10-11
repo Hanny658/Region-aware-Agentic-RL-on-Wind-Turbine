@@ -139,17 +139,44 @@ of at least zero:
 2. blade-root damage-equivalent load,
 3. energy capture.
 
-Applied on the 14-episode design set, whose resolution is about a point; the per-wind-speed values are
-reported for every candidate and the per-wind check is applied in the verification stage, on the 28 held-out
-episodes, where the resolution supports it. This is deliberately the honest order: we do not pretend that two
-episodes per wind speed can enforce a per-wind constraint.
+A constraint needs a tolerance, and rather than choose one we use the resolution of the measurement itself: a
+candidate is infeasible only where the loss is *resolvable on its own episodes*, that is, where the upper end
+of the 95 % paired stratified bootstrap interval of that reduction still lies below zero. Measured half-widths
+over the 14-episode design set, across the 140 candidates already evaluated:
+
+| constraint | median 95 % half-width | quartiles | worst |
+|---|---|---|---|
+| tower-base DEL | 1.30 points | 0.80 – 6.38 | 18.83 |
+| blade-root DEL | 1.00 point | 0.70 – 1.63 | 3.78 |
+| energy capture | 0.031 points | 0.022 – 0.040 | 0.143 |
+
+So the rule is strict where the measurement is sharp and forgiving where it is not, and it needs no constant of
+ours. It also disposes of a real problem: half the candidates evaluated so far differ from the shipped
+controller in energy by about a thousandth of a point, which a constraint written at a hard zero would have
+rejected for noise.
+
+The constraint is applied on the 14-episode design set; the per-wind-speed values are reported for every
+candidate, and the per-wind check is applied in the verification stage on the 28 held-out episodes, where the
+resolution supports it. This is deliberately the honest order: we do not pretend that two episodes per wind
+speed can enforce a per-wind constraint.
+
+Is the constrained search workable at this budget? On the 140 candidates of the paused campaign, 41 (29 %) are
+feasible under this rule, and every one of the nine runs found at least one — but two runs (`local r0`,
+`random r1`) found exactly one feasible candidate each and it was *worse* than the shipped controller on
+regulation, so under the new rule those runs report "no feasible improvement in 16 simulations". That is a
+meaningful outcome rather than a failure of the rule.
 
 **Ranking rule** — constraint domination (Deb 2000, the rule NSGA-II uses), which needs no weights:
 
 * a feasible candidate beats any infeasible candidate;
 * between two feasible candidates, the larger speed-regulation reduction wins;
-* between two infeasible candidates, the smaller total shortfall (summed over the violated constraints, in
+* between two infeasible candidates, the smaller total resolved loss (summed over the violated constraints, in
   points) wins.
+
+The Bayesian arm models the objective and each constraint with its own Gaussian process and acquires on
+expected improvement times the probability of feasibility (Gardner et al. 2014). Fitting one surrogate to a
+feasibility-ranked scalar would have handicapped that arm, and the comparison is only worth reporting if each
+arm is the competent version of its method.
 
 With this rule the ±100 clip, the 20-point penalty, the 1 % energy tolerance and the composite all leave the
 experiment, and every reported number is one of the four published reductions, the energy, the travel ratio or
@@ -188,9 +215,14 @@ Cost, from the measured 4.6 min per candidate at 7 workers (14 episodes of 600 s
 
 | stage | cost |
 |---|---|
-| 4 arms × 3 repeats × 24 candidates | 288 evaluations ≈ 110 min per run ≈ **22 h** |
-| verification of 12 winners on held-out and fresh (28 + 28 episodes each) | ≈ **5 h** |
-| total | **≈ 27 h**, pausable at the candidate as before |
+| 1 — the paper's tuned baseline re-derived natively, 40 candidates on the s29 recipe | ≈ **3 h** |
+| 2 — 4 arms × 3 repeats × 24 candidates = 288 evaluations, ≈ 110 min per run | ≈ **22 h** |
+| 3 — verification of the 12 selected tunings on held-out and fresh (28 + 28 episodes each) | ≈ **5 h** |
+| total | **≈ 30 h**, pausable at the candidate as before |
+
+Stage 1 runs first and on its own, because two statements in the manuscript depend on it and it costs a tenth
+of the campaign. It emits `~/wtrl/runs/template_5mw_rosco_tuned_native` so that everything downstream — the
+ladder, the gated learned layer — can be re-measured against a baseline that is an actual ROSCO tuning.
 
 A 16-candidate variant costs ≈ 20 h in total if the longer run is unwelcome; the trace reporting means a
 smaller budget shortens the comparison rather than invalidating it.
