@@ -55,6 +55,7 @@ def assess(fit: dict, n_boot: int = N_BOOT, seed: int = 0) -> dict:
     if fit.get("failed") or len(pe) < 4:
         return {"objective": -FAILED_SHORTFALL, "feasible": False, "shortfall": FAILED_SHORTFALL,
                 "n_episodes": len(pe), "constraints": {},
+                "failure_kind": fit.get("failure_kind", "" if pe else "no episodes"),
                 "note": fit.get("failed", "too few usable episodes")}
 
     u = np.array([p["mean_wind"] for p in pe], float)

@@ -78,12 +78,15 @@ for arm in ORDER:
         asm = best["assess"]
         c = asm.get("constraints", {})
         n_feas = sum(1 for h in cand if h["assess"].get("feasible"))
+        n_div = sum(1 for h in cand if h["assess"].get("failure_kind") == "diverged")
+        n_infra = sum(1 for h in cand if h["assess"].get("failure_kind") == "infrastructure")
         first = next((h["i"] for h in cand
                       if h["assess"].get("feasible") and h["assess"]["objective"] > 0), None)
         dem = np.rad2deg(best["params"]["fa_ki"] * HPF_INTEGRAL_M_S)
         r = {"proposer": arm, "repeat": rep, "budget": len(cand),
              "identity_objective": round(start["assess"]["objective"], 3),
-             "n_feasible": n_feas, "sims_to_first_feasible_gain": first if first else "",
+             "n_feasible": n_feas, "n_diverged": n_div, "n_infrastructure_failures": n_infra,
+             "sims_to_first_feasible_gain": first if first else "",
              "selected_feasible": bool(asm.get("feasible")),
              "regulation": round(asm.get("objective", float("nan")), 2),
              "power": round(asm.get("power", float("nan")), 2),
@@ -102,6 +105,14 @@ for arm in ORDER:
               f"{str(first or '-'):>14} {r['regulation']:>11.2f} {r['power']:>10.2f} {r['tower']:>10.2f} "
               f"{r['blade']:>10.2f} {r['energy']:>7.3f} {r['travel_ratio']:>7.3f} {r['adc']:>6.4f}"
               + ("" if asm.get("feasible") else "   <- no feasible tuning found; least-violating shown"))
+
+n_infra = sum(r["n_infrastructure_failures"] for r in rows)
+n_div = sum(r["n_diverged"] for r in rows)
+print(f"\nCandidates the plant could not run: {n_div} diverged (a result: the search reached the stability "
+      f"boundary).")
+if n_infra:
+    print(f"*** {n_infra} evaluation(s) failed for reasons that are NOT a plant failure. Those are lost budget, "
+          f"not findings: check the log_tail of the affected cache entries before trusting any count above. ***")
 
 print("\nThe selected tunings, in ROSCO's own quantities:")
 for r in rows:

@@ -115,7 +115,15 @@ def fitness(results: list[dict], base: dict, target: str = "blade") -> dict:
     energy_loss_pct = 100.0 * (1.0 - e_new / e_base)
     key = "TwrBsMyt_DEL_MNm" if target == "tower" else "RootMoop_DEL_MNm"
     if target == "tower" and not all(key in r["metrics"] and key in base[r["wind_file"]] for r in results):
-        raise ValueError("fitness target 'tower' needs .outb metrics (OpenFAST backend)")
+        # Name the episodes that are missing it. A parameter search walks into configurations that destabilise the
+        # plant, OpenFAST then aborts and writes no .outb, and without this the result is indistinguishable from a
+        # broken machine -- which is the difference between "the search found the stability boundary" and "throw
+        # the campaign away".
+        missing = [r["wind_file"] for r in results if key not in r["metrics"]]
+        missing_base = [r["wind_file"] for r in results if key not in base[r["wind_file"]]]
+        raise ValueError(f"fitness target 'tower' needs .outb metrics (OpenFAST backend); "
+                         f"{len(missing)} of {len(results)} episodes produced none "
+                         f"({', '.join(missing[:8])}){'; baselines missing for ' + ', '.join(missing_base[:8]) if missing_base else ''}")
     del_red = [100.0 * (1.0 - r["metrics"][key] / base[r["wind_file"]][key]) for r in results]
     del_red_pct = float(np.mean(del_red))
     r3 = [(r["metrics"]["gen_speed_std_R3"], base[r["wind_file"]]["gen_speed_std_R3"])

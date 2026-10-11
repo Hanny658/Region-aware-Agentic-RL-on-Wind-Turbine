@@ -208,8 +208,16 @@ class Evaluator:
                            env={**os.environ, "WTRL_TEMPLATE": str(tpl)})
         shutil.rmtree(tpl, ignore_errors=True)
         if not out.exists():
-            json.dump({"per_episode": [], "failed": "evaluation did not complete",
-                       "log_tail": (r.stdout[-1200:] + r.stderr[-1200:])}, open(out, "w"), indent=1)
+            log = r.stdout[-4000:] + r.stderr[-4000:]
+            # Two failures look the same from here and must not: a candidate the plant cannot run, which is a
+            # result, and a broken machine, which is not. OpenFAST writes no .outb when it aborts, so the
+            # episode-level complaint from fitness() identifies the first kind.
+            diverged = "episodes produced none" in log or "needs .outb metrics" in log
+            json.dump({"per_episode": [],
+                       "failed": ("at least one episode did not run to completion (the plant diverged)"
+                                  if diverged else "evaluation did not complete (not a plant failure)"),
+                       "failure_kind": "diverged" if diverged else "infrastructure",
+                       "log_tail": log[-2500:]}, open(out, "w"), indent=1)
         return json.load(open(out))
 
 
