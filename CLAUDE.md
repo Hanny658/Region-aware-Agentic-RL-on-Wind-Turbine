@@ -95,6 +95,20 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   has a second instance with no learning involved. **The duty argument against the MPC is gone: a PI tuning
   reaches +33 regulation at 1.12x travel, the scheduled MPC sits at 2.14x.** Open, ~1 h: the per-wind measurement
   of the three unverified band members; stage 1 holds the stated rule and stands until something beats it.
+- **THE LADDER IN THE FOUR PUBLISHED REDUCTIONS (roadmap s54, 2026-10-12; `scripts/dev/ladder_published.py`,
+  `docs/tables/ladder_published_{fresh,heldout}.csv`, no simulations - the rungs are joined on the wind file so
+  all rows are the same 28 episodes).** Fresh seeds 7-10, each term against the paired shipped controller:
+  superseded tuned baseline +24.5 / +30.7 / **+7.1** / +1.4 at 1.120x travel; native tuned baseline +25.3 /
+  +29.7 / **+25.3** / +1.7 at 2.016x; scheduled offset-free LPV-MPC +49.1 / +55.4 / **+17.4** / -0.0 at 2.076x;
+  MPC + gated layer +51.5 / +58.0 / +18.9 / +1.8 at 2.899x. **The model-based controller's tower-fatigue
+  advantage was an artefact of the baseline not being a tuning file:** +10.3 against the superseded row,
+  -7.91 [8.85, 6.97] fresh and -7.43 [8.37, 6.44] held out against the native one, paired intervals clear of
+  zero; the learned layer recovers +1.4 to +2.0 of it, not enough. The two baselines are indistinguishable in
+  regulation (speed MSE -0.91 [-1.94, +0.10]), so the native tuning buys +18.2 of tower DEL for no regulation -
+  it buys it with pitch travel, 1.12x -> 2.02x, which is also where the MPC sits (2.08x), so **at equal duty the
+  second rung is a TRADE: +23.7 power and +25.6 speed for -7.9 tower.** The composite hid it by averaging the
+  four terms. The PI-base learned rung (s34/s37/s41, +4.2) sits on the SUPERSEDED baseline: re-deriving it needs
+  retraining, so either name the row it is a gain over or re-run those seeds.
 - **The legitimate tuning space is a FRONT, not a point (roadmap s52.2, s53.3; band: +22.6 to +37.0 regulation,
   +2.5 to +22.8 tower DEL, 1.00x to 2.72x travel).** Same box, same protocol, every row a
   tuning file the controller can take: llm r0 regulation **+47.79** with tower DEL -0.61 (set mean inside the

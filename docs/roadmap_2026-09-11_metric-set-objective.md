@@ -2570,3 +2570,52 @@ bayes member, whose damper gain is 0.0012 against the 0.0331 of the standing bas
 So the rule is already pointing somewhere: of the four measured, none holds, and the standing baseline
 (+28.30 design, +28.32 held out, +29.75 fresh, tower +22.77, worst per wind -0.24) still stands. Six members
 remain, all of them below +32 of regulation, three of them at or under the shipped pitch travel.
+
+## 54 The ladder in the four published reductions, and what the composite was hiding (2026-10-12, no simulations)
+
+`scripts/dev/ladder_published.py`, `docs/tables/ladder_published_{fresh,heldout}.csv`. Every rung of the
+manuscript's ladder already exists as an evaluation on disk, and every evaluation carries its per-episode
+reductions against the paired shipped controller and the wind file each episode used. Joining the rungs on the
+wind file gives the ladder on one common set of 28 episodes with no simulation at all, and once the composite is
+not used to collapse the four terms, the rungs can only be read term by term. That changes the paper's second
+rung.
+
+Fresh seeds 7-10, 28 episodes, each term a reduction against the paired shipped controller, interval a
+stratified paired bootstrap over episodes:
+
+| rung | power MSE | speed MSE | tower DEL | blade DEL | energy | travel |
+|---|---|---|---|---|---|---|
+| tuned baseline, superseded (hand-scaled gains) | +24.5 | +30.7 | **+7.1** | +1.4 | +0.122 | 1.120x |
+| tuned baseline, native (s52) | +25.3 | +29.7 | **+25.3** | +1.7 | +0.167 | 2.016x |
+| scheduled offset-free LPV-MPC | +49.1 | +55.4 | **+17.4** | -0.0 | +0.257 | 2.076x |
+| MPC + wind-gated learned layer | +51.5 | +58.0 | +18.9 | +1.8 | +0.088 | 2.899x |
+| superseded baseline + gated layer | +32.5 | +39.3 | +6.8 | +2.2 | +0.133 | 1.417x |
+
+**The model-based controller's tower-fatigue advantage was an artefact of the baseline not being a tuning
+file.** Against the superseded row it gains +10.3 points of tower DEL; against a baseline the controller can
+actually take it *loses* 7.91 [8.85, 6.97] on the fresh seeds and 7.43 [8.37, 6.44] on the held-out seeds, both
+intervals clear of zero on paired episodes. The learned layer recovers +1.44 [0.70, 2.21] of it (fresh) and
++2.03 [1.29, 2.77] (held out) - real, resolved, and not enough: the whole stack ends 6.4 points of tower
+fatigue below the tuned PI loop.
+
+Three things make this a fair comparison rather than a baseline chosen to flatter:
+
+1. **The two baselines are the same controller in regulation.** Native minus superseded: speed MSE
+   -0.91 [-1.94, +0.10], not resolved; power MSE +0.85 [+0.31, +1.39]. The native tuning buys
+   +18.18 [+16.78, +19.86] points of tower DEL without giving up regulation.
+2. **It is not bought for free, it is bought with pitch travel**: 1.120x shipped for the superseded row,
+   2.016x for the native one, because the damper is on. The band has members that do not spend it (the one-knob
+   corner at 1.004x, +22.6 regulation, +7.8 tower), so which member is named decides the duty column.
+3. **At the same duty the comparison is a clean trade.** The native baseline spends 2.016x and the scheduled
+   MPC 2.076x - within 3 % of each other - and over that trade the MPC buys 23.7 power / 25.6 speed and gives
+   up 7.9 tower. Nothing in the comparison is carried by actuator duty any more (section 53.4).
+
+The composite could not show any of this: it averaged the four terms, so +25.6 of regulation and -7.9 of tower
+fatigue appeared as one positive number, and the rung looked like a strict improvement. Reporting the four
+published reductions makes the second rung a trade and the third a small gain on every term.
+
+Consequence for the manuscript beyond the baseline row: the learned-layer rung on the PI base (s34, s37, s41)
+was trained and measured on the *superseded* baseline, so its +4.2 is a gain over a controller that is no longer
+the baseline. The MPC-base rung is unaffected. Re-deriving the PI-base rung needs retraining, not re-reading, so
+it is a decision rather than a table fix: either report it as what it is (a gain over the hand-scaled row, with
+the row named) or re-run the three agent seeds on the native baseline.
