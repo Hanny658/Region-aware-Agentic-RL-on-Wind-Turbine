@@ -81,8 +81,22 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   MPC spends 2.14x, so duty no longer separates them. The damper asks ~2.0 deg of pitch (limiter 10, not reached):
   **the s23 "tower damper worth ~0" claim is replaced by its opposite.** A search that finds nothing selects the
   shipped tuning itself and reports 0.00 (s52.1); the first random run did exactly that in 24 candidates.
-- **The legitimate tuning space is a FRONT, not a point, and which end is "the tuned baseline" is an OPEN
-  DECISION (roadmap s52.2; stage 2 paused 2026-10-12 after 8 of 12 runs).** Same box, same protocol, every row a
+- **CAMPAIGN FINISHED (roadmap s53, 2026-10-12 16:33): 12 runs, 321 tunings, all 12 identity checks exactly
+  0.000, 37 divergences, ZERO infrastructure failures.** Proposers (runs that bought a shippable gain; regulation
+  of the selection, mean (sd); median sims to the first gain): random **0/3**; local 1/3, +14.30, 18; bayes 2/3,
+  +31.06 (22.20), 14; **llm 3/3, +42.18 (5.22), 8** - the model arm sweeps one quantity at a time with the plant
+  frequencies as landmarks (its transcript says so), which is what found the one-knob ladder. **Do not write that
+  it designs a better controller:** s53.2 shows the objective as stated was insufficient. Design vs held-out
+  correlation **+1.00**, rank +1.00, optimism -0.13, 12/12 feasible held out and fresh - the s38 "a small design
+  set cannot rank designs" does NOT transfer to this space. **DECISIVE (s53.2): the set-mean load constraint is
+  gamed on a classical controller too** - off the design winds the three most-regulating winners lose 2.7 to 7.6
+  points of tower DEL at a single wind speed (llm r0 -4.64 at 12 m/s, llm r1 -7.61 at 12, llm r2 -3.73 at 24)
+  while holding the set mean; the size of the set-mean margin predicts whether a tuning holds per wind. s32 now
+  has a second instance with no learning involved. **The duty argument against the MPC is gone: a PI tuning
+  reaches +33 regulation at 1.12x travel, the scheduled MPC sits at 2.14x.** Open, ~1 h: the per-wind measurement
+  of the three unverified band members; stage 1 holds the stated rule and stands until something beats it.
+- **The legitimate tuning space is a FRONT, not a point (roadmap s52.2, s53.3; band: +22.6 to +37.0 regulation,
+  +2.5 to +22.8 tower DEL, 1.00x to 2.72x travel).** Same box, same protocol, every row a
   tuning file the controller can take: llm r0 regulation **+47.79** with tower DEL -0.61 (set mean inside the
   measurement resolution, but **-5.9 at 18 m/s**) at 1.76x travel; bayes r1 +46.76 / +4.24 at 1.53x; stage 1
   +28.30 / +22.77 at 2.01x; local r0 +14.30 / +17.78 at 2.72x. The regulation objective walks up the front and

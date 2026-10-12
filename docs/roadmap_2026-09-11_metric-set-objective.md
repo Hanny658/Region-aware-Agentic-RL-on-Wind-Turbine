@@ -2438,3 +2438,102 @@ line and no actuator duty.
 and the one-knob +22.62 - and take as the tuned baseline the largest regulation reduction whose per-wind load
 terms hold where they can be measured. Stage 1 is already verified on both sets and stands as the load-optimal
 member of the band.
+
+## 53. The ROSCO-native campaign, finished (2026-10-12 16:33; 12 runs, 321 tunings, 3 stages)
+
+`campaign_rosco_native.sh` ran to the end: stage 1 (the re-derived baseline, section 52), stage 2 (four
+proposers, three repeats, 24 candidates each) and stage 3 (every selected tuning re-scored on held-out seeds 3-6
+and fresh seeds 7-10 with the per-wind load check). Tables `docs/tables/rosco_search.csv`,
+`rosco_tuned_baseline.csv`, `rosco_perwind.csv`. Health: every one of the 12 identity checks read exactly 0.000,
+37 of the 321 distinct tunings could not be run by the plant (divergence, a result), and **no evaluation failed
+for any other reason**, so no count here is contaminated by a broken machine.
+
+### 53.1 Who should propose the parameters of a classical controller
+
+Same box, same start, same budget, same episodes, same selection rule; a run that found nothing selects the
+shipped tuning and buys 0.00.
+
+| proposer | runs that bought a shippable gain | regulation of the selection, mean (sd) | median simulations to the first gain |
+|---|---|---|---|
+| random | 0 of 3 | - | - |
+| local, (1+lambda) from the shipped tuning | 1 of 3 | +14.30 | 18 |
+| constrained Bayesian | 2 of 3 | +31.06 (22.20) | 14 |
+| reasoning model | **3 of 3** | **+42.18 (5.22)** | **8** |
+
+Random search at 24 candidates finds feasible tunings (6 to 7 of 24) but never one that also improves
+regulation. The ordering is the s37 shape on this base, now with a mechanism that is on the record: the model
+arm sweeps one quantity at a time and uses the plant frequencies as landmarks (its own words, *isolating
+low-pass sensitivity at shipped PI settings*, then *probe whether further increasing filter bandwidth beyond the
+3.8 rad/s result improves regulation*), which is what produced both the one-knob ladder of section 52.3 and the
+low-duty family in 53.3. **Do not write that the model designs a better controller**: it was the fastest and the
+most reliable at the objective as stated, and 53.2 is about the objective as stated being insufficient.
+
+**The design set ranks candidates the way unseen winds do, here.** Over the 12 selected tunings, design against
+held-out correlation **+1.00** and rank correlation **+1.00**, optimism of the design score -0.13 points on
+average (worst +0.70), and 12 of 12 stay feasible on held-out and on fresh winds. The s38 warning that a small
+design set cannot rank designs (rank correlation -0.9 there) does **not** transfer to this space: five smooth
+tuning quantities on a deterministic controller, with paired episodes, rank cleanly. That is a statement about
+the search space, not about the evaluation protocol.
+
+### 53.2 The decisive result: the set-mean load constraint is not enough, on a classical controller too
+
+Off the design winds, with four episodes per wind speed, the worst load reduction at any single wind speed:
+
+| selected tuning | set-mean tower DEL | worst per wind, held out | worst per wind, fresh | shippable |
+|---|---|---|---|---|
+| llm r0, +47.79 regulation | -0.61 | **-4.64** (tower, 12 m/s) | -2.87 (tower, 24) | no |
+| llm r1, +41.27 | -0.94 | **-7.61** (tower, 12) | -2.07 (tower, 24) | no |
+| llm r2, +37.47 | +0.73 | -2.72 (tower, 16) | -3.73 (tower, 24) | no |
+| bayes r1, +46.76 | +4.24 | -0.71 (tower, 22) | -1.24 (tower, 24) | marginal |
+| bayes r2, +15.37 | +5.08 | +2.37 | +0.25 | yes |
+| local r0, +14.30 | +17.78 | +1.12 | +0.33 | yes |
+| stage 1, +28.30 | +22.77 | -0.24 | -0.34 | yes |
+
+Every one of these holds the constraints as the search stated them, on the set mean, inside the resolution of
+that measurement. The three tunings with the most regulation lose 2 to 8 points of tower-base fatigue at one
+wind speed. The size of the set-mean margin predicts whether a tuning holds per wind, which is the useful rule
+of thumb: a tuning that clears the load constraint by a point or two is holding it on average only. This is s32
+again - a set-mean constraint is gamed across wind speeds - and it now has a second, independent instance on a
+deterministic classical controller, where no learning is involved at all. **The per-wind constraint is not an RL
+precaution; it is what the measurement requires.**
+
+### 53.3 What a tuning file is worth, and the band the baseline comes from
+
+321 distinct tunings evaluated, 132 holding the constraints on the set mean, 70 also holding both loads at every
+wind speed on the design set. Four members of that band say what there is to say (design set; the first three
+await the per-wind measurement off the design winds):
+
+| tuning | regulation | power MSE | tower DEL | blade DEL | travel | what it is |
+|---|---|---|---|---|---|---|
+| corner 3.000 alone, shipped gains | +22.62 | +16.90 | +7.83 | +4.26 | **1.004x** | one line of the tuning file, no duty, nothing traded |
+| omega 0.650 zeta 0.700 corner 3.100 | +33.34 | +26.30 | +2.63 | +3.66 | 1.118x | the most regulation available at near-shipped duty |
+| omega 0.600 zeta 0.850 corner 5.000 | +36.96 | +29.60 | +4.37 | +4.46 | 1.475x | the most regulation that passes the design-set screen |
+| stage 1, damper 0.0331 | +28.30 | +24.50 | **+22.77** | +3.46 | 2.013x | the load-optimal end, verified held out and fresh |
+
+Reading the band: the speed-filter corner buys regulation nearly free to about 3.1 rad/s, the loop bandwidth
+buys more regulation for duty, and the fore-aft damper is the only quantity that buys tower-base fatigue, at the
+cost of regulation and duty. The band is 14 points of regulation wide and 20 points of tower-base fatigue deep,
+and every member is a file the shipped controller can take.
+
+### 53.4 What this does to the manuscript
+
+1. The tuned-baseline row of v6 is void twice over: not a tuning file, and selected under the composite. Replace
+   it with a band and name the member used for each comparison.
+2. The s23 tower-damper statement is replaced by its opposite (section 52).
+3. **The duty argument against the model-based controller is gone.** A PI tuning reaches +33 points of
+   regulation at 1.12 times the shipped pitch travel; the scheduled model-based controller sits at 2.14 times.
+   Whatever the comparison now shows, it cannot be carried by actuator duty.
+4. The single claim of the paper is unchanged and much better supported: the baseline is a design choice worth
+   more than the advanced controller is usually credited with, and the cheapest point in it costs one line.
+
+### 53.5 Process conclusions, for the next search of any kind
+
+- The incumbent must be in the candidate pool. Without it one run reported as its winner a controller 21 points
+  worse in regulation than the one already in the field (section 52.1).
+- A candidate the plant cannot run and a machine that is broken must be separated before any count is believed:
+  37 divergences here, zero infrastructure failures, and the table says so explicitly.
+- A per-wind screen on two episodes per wind speed is noise: it rejected a tuning at -1.1 that measures -0.24
+  and -0.34 where there are four episodes per wind. Screen on the design set, measure off the design winds.
+- Open, about one hour of simulation: the per-wind measurement of the three unverified band members above, after
+  which the baseline row is fixed by the stated rule (largest regulation whose per-wind load terms hold off the
+  design winds). Stage 1 holds that rule already and stands until something beats it.
