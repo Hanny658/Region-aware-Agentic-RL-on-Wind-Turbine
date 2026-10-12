@@ -1,0 +1,11 @@
+adc,design_regulation,design_tower,design_worst_per_wind,fa_hpf,fa_ki,fresh_at,fresh_blade,fresh_energy,fresh_holds,fresh_ok,fresh_regulation,fresh_set_feasible,fresh_tower,fresh_which,fresh_worst,from,heldout_at,heldout_blade,heldout_energy,heldout_holds,heldout_ok,heldout_regulation,heldout_set_feasible,heldout_tower,heldout_which,heldout_worst,holds_per_wind,lpf_corner,omega_pc,travel_ratio,zeta_pc
+0.0695,36.96,4.37,-0.6,0.172,0.0,24,1.93,0.16,False,True,37.74,True,7.59,tower,-1.17,llm_r1#12,24,3.5,0.15,True,True,36.98,True,5.09,tower,1.06,False,5.0,0.6,1.475,0.85
+0.0543,34.59,3.66,-0.6,0.186836,0.00116998,24,1.02,0.11,False,True,37.43,True,5.2,tower,-2.04,bayes_r1#7,24,3.15,0.1,True,True,35.07,True,3.37,tower,-0.47,False,3.40791,0.664492,1.152,0.686708
+0.0526,33.6,2.45,-0.7,0.172,0.0,24,0.95,0.09,False,True,34.83,True,3.72,tower,-3.4,llm_r2#24,24,2.61,0.08,False,True,32.66,True,2.07,tower,-1.94,False,3.1,0.66,1.117,0.68
+0.0527,33.34,2.63,-0.4,0.172,0.0,24,1.06,0.1,False,True,34.46,True,4.01,tower,-2.98,llm_r2#21,24,2.39,0.08,False,True,32.52,True,2.08,tower,-1.55,False,3.1,0.65,1.118,0.7
+0.0521,32.14,1.91,-0.5,0.172,0.0,24,0.87,0.09,False,True,33.28,True,3.14,tower,-3.04,llm_r2#19,24,2.32,0.09,False,True,31.17,True,1.5,tower,-1.76,False,2.9,0.65,1.105,0.7
+0.0516,30.69,1.05,-0.9,0.172,0.0,24,0.75,0.08,False,True,31.8,True,2.2,tower,-3.0,llm_r2#18,16,1.89,0.06,False,True,29.81,True,0.55,tower,-2.25,False,2.7,0.65,1.094,0.7
+0.0741,28.6,13.58,0.5,0.172,0.0,16,2.48,0.18,True,True,28.35,True,16.25,blade,0.82,llm_r1#11,16,4.27,0.16,True,True,27.56,True,14.3,blade,1.64,True,6.5,0.6,1.572,0.7
+0.0473,22.62,7.83,0.7,0.172,0.0,24,2.02,0.1,True,True,22.98,True,8.66,tower,-0.98,llm_r1#9,24,3.42,0.1,True,True,21.6,True,7.53,tower,0.26,True,3.0,0.6,1.004,0.7
+0.046,10.69,15.91,0.4,0.131137,0.00175536,24,2.73,0.16,True,True,11.42,True,17.0,blade,1.02,local_r0#22,16,4.23,0.15,True,True,10.57,True,16.38,blade,1.68,True,4.14578,0.561516,0.976,0.663278
+0.0415,1.73,11.31,0.2,0.172,0.0,18,1.82,0.07,True,True,0.73,True,12.11,blade,-0.11,local_r0#18,24,1.83,0.07,True,True,-0.12,True,11.91,blade,-0.18,True,2.59455,0.582084,0.88,0.590484

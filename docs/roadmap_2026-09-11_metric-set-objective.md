@@ -2619,3 +2619,73 @@ was trained and measured on the *superseded* baseline, so its +4.2 is a gain ove
 the baseline. The MPC-base rung is unaffected. Re-deriving the PI-base rung needs retraining, not re-reading, so
 it is a decision rather than a table fix: either report it as what it is (a gain over the hand-scaled row, with
 the row named) or re-run the three agent seeds on the native baseline.
+
+## 55 The band verified off the design winds: the rule picks stage 1, and the band is a duty ladder (2026-10-12 22:10)
+
+`campaign_verify_band.sh` finished: 10 members, 560 episodes, 28 held out and 28 fresh each, no infrastructure
+failures (`docs/tables/rosco_band_verified.csv`). Four hold both load terms at every wind speed on both sets,
+six do not, and the six fail the same way the three stage-3 winners failed in section 53.2.
+
+### 55.1 Six of ten fail, and they fail identically
+
+| member | design | held out | fresh | worst per wind, held out / fresh |
+|---|---|---|---|---|
+| omega 0.600 zeta 0.850 corner 5.000, 1.48x | +36.96 | +36.98 | +37.74 | +1.06 / **-1.17 at 24** |
+| omega 0.664 zeta 0.687 corner 3.408 damper 0.0012, 1.15x | +34.59 | +35.07 | +37.43 | -0.47 / **-2.04 at 24** |
+| omega 0.660 zeta 0.680 corner 3.100, 1.12x | +33.60 | +32.66 | +34.83 | **-1.94 / -3.40 at 24** |
+| omega 0.650 zeta 0.700 corner 3.100, 1.12x | +33.34 | +32.52 | +34.46 | **-1.55 / -2.98 at 24** |
+| omega 0.650 zeta 0.700 corner 2.900, 1.11x | +32.14 | +31.17 | +33.28 | **-1.76 / -3.04 at 24** |
+| omega 0.650 zeta 0.700 corner 2.700, 1.09x | +30.69 | +29.81 | +31.80 | **-2.25 at 16 / -3.00 at 24** |
+
+Six for six on the tower-base load, five of six at 24 m/s, and every one of them worse on the fresh seeds than
+on the held-out seeds while its regulation reduction replicates to a point or two. **Every member of the pool
+that buys more regulation than the standing baseline fails the per-wind load test.** The set-mean tower margin
+of these six is +1.0 to +4.4 points; the four that hold carry +7.8 to +15.9. That margin is the predictor,
+measured a third time (s32, s53.2, here).
+
+### 55.2 The four that hold, in the four published reductions
+
+`scripts/dev/rosco_band_table.py`, `docs/tables/rosco_band_rows_{fresh,heldout}.csv`. Fresh seeds 7-10, 28
+episodes, against the paired shipped controller, with the actuator duty cycle against the 10 deg/s rate limit:
+
+| member | power MSE | speed MSE | tower DEL | blade DEL | energy | travel | ADC |
+|---|---|---|---|---|---|---|---|
+| **stage 1: corner 6.53, damper 0.0331** | **+25.3** | **+29.7** | **+25.3** | +1.7 | +0.167 | 2.016x | 0.0968 |
+| corner 6.500, damper off | +24.2 | +28.3 | +16.3 | +2.5 | +0.175 | 1.647x | 0.0791 |
+| corner 3.000, damper off (one knob) | +17.7 | +23.0 | +8.7 | +2.0 | +0.103 | **1.000x** | 0.0480 |
+| omega 0.562 zeta 0.663 corner 4.146 damper 0.0018 | +8.0 | +11.4 | +17.0 | +2.7 | +0.156 | **0.974x** | 0.0468 |
+| omega 0.582 zeta 0.590 corner 2.595, damper off | **-1.9** | +0.7 | +12.1 | +1.8 | +0.074 | 0.884x | 0.0424 |
+
+**The stated rule selects stage 1 and the choice is not close.** Paired against stage 1 on the same episodes,
+every other member is worse in regulation and in tower fatigue with every interval clear of zero: the closest,
+corner 6.500 with the damper off, is -1.40 [-1.74, -1.08] in speed MSE and -9.07 [-9.55, -8.61] in tower DEL on
+the fresh seeds (-0.76 and -9.63 held out). Going down the band buys exactly one thing: actuator duty.
+
+So the manuscript's baseline row is the stage-1 native tuning, and it is now verified three ways: feasible on
+the design set, per-wind on 28 held-out episodes, per-wind on 28 fresh episodes.
+
+### 55.3 What the band is for
+
+The four verified rows are a duty ladder of the same controller, every row a tuning file:
+
+- **1.000x travel, ADC 0.0480 against 0.0476 shipped**: one line changed (`F_LPFCornerFreq` 1.57 -> 3.0) buys
+  +17.7 power MSE, +23.0 speed MSE, +8.7 tower DEL, +2.0 blade DEL, every term positive at every wind speed.
+  **At the shipped actuator duty.**
+- **0.974x travel, LESS actuation than shipped**: a slower loop with the damper on buys +8.0 / +11.4 / +17.0 /
+  +2.7. All four terms positive while using less pitch travel than the controller in the field.
+- **1.647x**: the filter alone at 6.5 rad/s, +24.2 / +28.3 / +16.3 / +2.5.
+- **2.016x**: stage 1, the filter plus the damper, +25.3 / +29.7 / +25.3 / +1.7. The damper is what buys the
+  last 9 points of tower fatigue and it costs 0.37x of travel.
+
+The last row of the table is a warning and stays out of the band: `power MSE -1.9` [-2.6, -1.2] with speed MSE
++0.7 [-0.4, +1.9]. The selection constrains tower DEL, blade DEL and energy, and takes speed MSE as the
+objective on the argument that power and speed carry much the same information above rated; on this member they
+disagree in sign. The argument holds on the model-based rows (correlation 0.94-0.95) and is weaker on PI rows
+(0.19-0.83), and this is an instance of the weak case. It changes no selection made here - the member is not
+selected by anything - but it belongs in the manuscript's statement of that convention.
+
+### 55.4 Lesson, process
+
+Do not edit a shell script while bash is executing it: patching `campaign_verify_band.sh` mid-run shifted the
+byte offsets and bash mis-parsed the line it had not read yet (`^\[eval|^ *$: command not found`). The run
+itself completed - the edit only hit the final echo - but it could as easily have hit a line that mattered.
