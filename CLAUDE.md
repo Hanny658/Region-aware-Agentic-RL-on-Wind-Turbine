@@ -125,19 +125,34 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   **1.004x** (ADC 0.0473 vs 0.0471); then 3.8 (3P) +25.91, 5.0 +27.39, 6.5 +28.60 at 1.06 / 1.18 / 1.57x. Nothing
   is traded - it is a default left unexamined, and every comparison that uses the shipped ROSCO as its baseline
   starts this far below the same controller with one number changed.
+- **The verified band is a DUTY LADDER of the same controller (s55.2-55.3), four rows, every one a tuning file,
+  each holding both loads at every wind speed on 28 held-out AND 28 fresh episodes** (fresh seeds; power / speed
+  / tower / blade reduction vs shipped, travel, ADC): stage 1 (corner 6.53 + damper 0.0331)
+  +25.3 / +29.7 / +25.3 / +1.7 at 2.016x, ADC 0.0968; corner 6.500 damper off +24.2 / +28.3 / +16.3 / +2.5 at
+  1.647x; **one knob (corner 3.000) +17.7 / +23.0 / +8.7 / +2.0 at 1.000x travel, ADC 0.0480 vs 0.0476 shipped**;
+  a slower loop with the damper on (omega 0.562 zeta 0.663 corner 4.146 damper 0.0018) +8.0 / +11.4 / +17.0 /
+  +2.7 at **0.974x - all four terms positive on LESS pitch travel than the shipped controller**. The damper buys
+  the last 9 points of tower fatigue for 0.37x of travel. A fifth row is excluded and is a warning: omega 0.582
+  zeta 0.590 corner 2.595 reads **power MSE -1.9 [-2.6, -1.2] with speed MSE +0.7 [-0.4, +1.9]** - the
+  power/speed redundancy argument behind using speed alone as the objective holds on the model-based rows
+  (0.94-0.95) and is weak on PI rows (0.19-0.83), and this is the weak case; say so where that convention is
+  stated.
 - **The baseline is a BAND, not a row (s52.3):** 245 distinct tunings evaluated, 52 hold both loads at every wind
   speed; the band runs +22.6 to +36.9 of regulation and +4.4 to +22.8 of tower DEL at 1.00x to 2.72x travel. The
   damper buys tower fatigue and costs regulation and duty; the filter corner buys regulation nearly free to about
   3.4 rad/s. **The per-wind screen is a SCREEN on the design set, not the decision:** with two episodes per wind
   it rejects the stage-1 tuning at -1.1 (blade, 22 m/s) although the same tuning reads -0.24 / -0.34 off the
   design winds where there are four. Screen on design, measure per wind off the design winds (stage 3 does this).
-  Finalists verified off the design winds (s53.6, `campaign_verify_band.sh`, PAUSED after 4 of 10 at 18:30 on
-  2026-10-12, ~90 min left, resume with `campaign_ctl.sh resume campaign_verify_band`): **4 of 4 fail the
-  per-wind rule, every one on the tower-base load at 24 m/s and worse on fresh seeds than held out** (+36.96 ->
-  -1.17 fresh, +34.59 -> -2.04, +33.60 -> -3.40 / -1.94 held out, +33.34 -> -2.98 / -1.55), while their
-  regulation replicates exactly (+36.96 design -> +36.98 held out -> +37.74 fresh). The set-mean tower margin of
-  the four is +1.9 to +5.1 against the standing baseline's +22.8, and all four switch the damper off - which is
-  what carries the tower load at 24 m/s. **The stage-1 baseline still stands.**
+  **BAND VERIFICATION FINISHED (s55, 2026-10-12 22:10; `campaign_verify_band.sh`, 10 members, 560 episodes,
+  `docs/tables/rosco_band_verified.csv`, `rosco_band_rows_{fresh,heldout}.csv`): 6 of 10 fail the per-wind rule,
+  and EVERY member that buys more regulation than the standing baseline is one of the six.** All six fail on the
+  tower-base load, five of six at 24 m/s, each worse on fresh seeds than held out while its regulation
+  replicates (+36.96 design -> +36.98 held out -> +37.74 fresh, worst per wind -1.17; +34.59 -> -2.04;
+  +33.60 -> -3.40; +33.34 -> -2.98; +32.14 -> -3.04; +30.69 -> -3.00). Set-mean tower margin of the six: +1.0 to
+  +4.4; of the four that hold: +7.8 to +15.9 - the margin is the predictor, third instance after s32 and s53.2.
+  **THE RULE SELECTS STAGE 1 AND IT IS NOT CLOSE:** paired on the same episodes, the closest verified member
+  (corner 6.500, damper off, 1.647x travel) is -1.40 [-1.74, -1.08] in speed MSE and -9.07 [-9.55, -8.61] in
+  tower DEL on fresh seeds. The baseline row is verified three ways (design, 28 held out, 28 fresh).
 - **Residual line closed from the learning side (s30):** the residual trained over Cp/Ct in [0.85, 1.15] repairs
   only the underestimate side, nothing at +15 %, and costs 3-6 J at the exact model; the estimator is 10-40 J above
   every residual at every error. The tower weight is not the lever for the compensated MPC's negative high-wind
