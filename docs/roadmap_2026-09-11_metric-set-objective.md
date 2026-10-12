@@ -2371,3 +2371,70 @@ reduction whose per-wind load terms hold off the design winds.** Two further not
   within the space of controllers the shipped tuning file can express, the baseline is a design choice worth
   33 points of regulation or 23 points of tower fatigue, and where the author puts it decides what the advanced
   controller appears to be worth.
+
+### 52.3 The same 245 tunings re-ranked per wind speed, at no simulation cost (2026-10-12)
+
+`eval/selection.py` now carries the per-wind rule (`per_wind_rank_key`, tolerance 1.0 point, the one s33 states)
+and `scripts/dev/rosco_perwind_select.py` applies it to every tuning the campaign has ever evaluated, read off
+the history files: 245 distinct tunings, 30 the plant could not run, 101 holding the constraints on the set
+mean, **52 also holding both load terms at every single wind speed**. Table `docs/tables/rosco_perwind.csv`.
+
+Three things came out of it, one of which corrects the recommendation of section 52.2.
+
+**1. The per-wind screen cannot be the decision on the design set.** It rejects the stage-1 tuning, whose worst
+per-wind term on the design set is -1.1 (blade at 22 m/s) against a tolerance of 1.0 - and that same tuning
+measures -0.24 held out and -0.34 fresh, where there are four episodes per wind speed instead of two. The
+design-set per-wind number is noise at that sample size, so the procedure has to be: **screen on the design set
+at a generous tolerance, then measure per wind off the design winds for the finalists**, which is what stage 3
+already does. Taking the screen as the decision would have thrown away a tuning that holds comfortably where it
+can be measured, and selected +6.38 points of regulation instead of +28.30 from that run.
+
+**2. There is a free one-knob fix in the shipped tuning file, and the duty axis of the front collapses.** The llm
+arm of repeat 1 ran a deliberate one-factor sweep of the speed-filter corner at the shipped PI gains (its own
+stated reasons: *isolating low-pass sensitivity at shipped PI settings*, then *probe whether further increasing
+filter bandwidth beyond the 3.8 rad/s result improves regulation without exciting tower or blade loads*), which
+produced a ladder nothing else in the campaign produced. All four rows hold every load term at every wind speed:
+
+| F_LPFCornerFreq | gen-speed MSE | power MSE | tower DEL | blade DEL | energy | travel | worst per wind |
+|---|---|---|---|---|---|---|---|
+| 1.5708 (shipped) | 0.00 | 0.00 | 0.00 | 0.00 | 0.000 | 1.000x | 0.0 |
+| 3.000 | **+22.62** | +16.90 | +7.83 | +4.26 | +0.084 | **1.004x** | +0.7 at 22 |
+| 3.800 (3P at rated) | +25.91 | +19.77 | +9.69 | +4.75 | +0.107 | 1.059x | +0.5 at 22 |
+| 5.000 | +27.39 | +22.21 | +11.53 | +5.03 | +0.138 | 1.182x | +0.8 at 22 |
+| 6.500 | +28.60 | +23.55 | +13.58 | +5.16 | +0.144 | 1.572x | +0.5 at 22 |
+
+One line of the tuning file, nothing else touched, and the shipped controller gives up a fifth of its regulation
+error, a sixth of its power-MSE and 8 % of its tower-base fatigue **at the same pitch travel** (1.004x, ADC
+0.0473 against 0.0471) with no term negative anywhere. Nothing is traded; it is not a design choice, it is a
+default left unexamined. Every comparison in the literature that uses the shipped ROSCO as its baseline is
+starting from a point this far below what the same controller does with one number changed.
+
+**3. The front under the per-wind screen, with duty as the third axis** (all per-wind feasible on the design set,
+to be confirmed off the design winds):
+
+| tuning | regulation | tower DEL | blade DEL | travel | ADC | where from |
+|---|---|---|---|---|---|---|
+| omega 0.600 zeta 0.850 corner 5.000, damper off | **+36.96** | +4.37 | +4.46 | 1.475x | 0.0695 | llm r1 #12 |
+| omega 0.664 zeta 0.687 corner 3.408, damper 0.0012 | +34.59 | +3.66 | +3.53 | **1.152x** | 0.0543 | bayes r1 #7 |
+| omega 0.600 zeta 0.700 corner 6.500, damper off | +28.60 | +13.58 | +5.16 | 1.572x | 0.0741 | llm r1 #11 |
+| omega 0.605 zeta 0.738 corner 6.529, damper 0.0331 (stage 1) | +28.30 | **+22.77** | +3.46 | 2.013x | 0.0948 | tune r0 #30 |
+| omega 0.600 zeta 0.700 corner 3.000, damper off | +22.62 | +7.83 | +4.26 | 1.004x | 0.0473 | llm r1 #9 |
+| omega 0.613 zeta 0.607 corner 8.747, damper off | +14.30 | +17.78 | +4.03 | 2.719x | 0.1281 | local r0 #21 |
+
+The set-mean rule would select +47.79 (llm r0 #18, -5.9 of tower-base load at 18 m/s); the per-wind screen costs
+10.8 points of regulation against that. Reading down the table, the damper is what buys tower-base fatigue and it
+costs both regulation and duty, while the filter corner buys regulation nearly free up to about 3.4 rad/s and
+then starts costing duty.
+
+**What this does to the manuscript.** The baseline is not a row, it is a band, and the band is wide: between
++22.6 and +36.9 of regulation and between +4.4 and +22.8 of tower-base fatigue, every member a tuning file the
+shipped controller can take. The ladder figure needs the band drawn on it, and the claim that reporting choices
+decide the apparent benefit of advanced control now has its sharpest form: the advanced controller is compared
+against a baseline the author chooses from a 14-point interval, and the cheapest member of that band costs one
+line and no actuator duty.
+
+**Next, after the campaign finishes (no new decisions needed):** verify the three finalists off the design winds
+(seeds 3-6 and 7-10, four episodes per wind speed, about 20 minutes each) - the +36.96, the +34.59 at 1.15x duty
+and the one-knob +22.62 - and take as the tuned baseline the largest regulation reduction whose per-wind load
+terms hold where they can be measured. Stage 1 is already verified on both sets and stands as the load-optimal
+member of the band.

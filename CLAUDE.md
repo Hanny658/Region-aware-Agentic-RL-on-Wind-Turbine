@@ -88,9 +88,23 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   +28.30 / +22.77 at 2.01x; local r0 +14.30 / +17.78 at 2.72x. The regulation objective walks up the front and
   switches the damper off. Rule recommended BEFORE stage 3 is read, following s32 (set-mean load constraints are
   gamed across wind speeds): **the tuned baseline is the largest regulation reduction whose PER-WIND load terms
-  hold off the design winds**, which keeps the stage-1 tuning. Re-ranking all ~200 evaluated candidates per wind
-  costs no simulations (every history record carries its per-wind terms). Proposers so far: a shippable gain in
-  0/3 random, 1/2 local, 1/2 bayes, 2/2 llm runs, median 8 simulations.
+  hold off the design winds**. Proposers so far: a shippable gain in 0/3 random, 1/2 local, 1/2 bayes, 2/2 llm
+  runs, median 8 simulations.
+- **ONE LINE of the shipped tuning file is worth a fifth of its regulation error at the SAME pitch travel
+  (roadmap s52.3; `scripts/dev/rosco_perwind_select.py`, `docs/tables/rosco_perwind.csv`).** Only
+  `F_LPFCornerFreq`, shipped gains untouched, every load term positive at every wind speed: 3.0 rad/s gives
+  gen-speed MSE **+22.62**, power MSE +16.90, tower DEL +7.83, blade DEL +4.26, energy +0.084 at travel
+  **1.004x** (ADC 0.0473 vs 0.0471); then 3.8 (3P) +25.91, 5.0 +27.39, 6.5 +28.60 at 1.06 / 1.18 / 1.57x. Nothing
+  is traded - it is a default left unexamined, and every comparison that uses the shipped ROSCO as its baseline
+  starts this far below the same controller with one number changed.
+- **The baseline is a BAND, not a row (s52.3):** 245 distinct tunings evaluated, 52 hold both loads at every wind
+  speed; the band runs +22.6 to +36.9 of regulation and +4.4 to +22.8 of tower DEL at 1.00x to 2.72x travel. The
+  damper buys tower fatigue and costs regulation and duty; the filter corner buys regulation nearly free to about
+  3.4 rad/s. **The per-wind screen is a SCREEN on the design set, not the decision:** with two episodes per wind
+  it rejects the stage-1 tuning at -1.1 (blade, 22 m/s) although the same tuning reads -0.24 / -0.34 off the
+  design winds where there are four. Screen on design, measure per wind off the design winds (stage 3 does this).
+  Finalists to verify when the campaign ends: +36.96 (omega 0.600 zeta 0.850 corner 5.000, 1.48x), +34.59
+  (omega 0.664 zeta 0.687 corner 3.408 damper 0.0012, **1.15x**), the one-knob +22.62; stage 1 is already verified.
 - **Residual line closed from the learning side (s30):** the residual trained over Cp/Ct in [0.85, 1.15] repairs
   only the underestimate side, nothing at +15 %, and costs 3-6 J at the exact model; the estimator is 10-40 J above
   every residual at every error. The tower weight is not the lever for the compensated MPC's negative high-wind

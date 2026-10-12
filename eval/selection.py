@@ -123,6 +123,38 @@ def best_of(records: list[dict]) -> dict | None:
     return max(records, key=rank_key) if records else None
 
 
+# ------------------------------------------------------------------- the same constraints, at every wind speed
+# A constraint on the set mean is gamed across wind speeds: roadmap s32 measured exactly that, and s52.2 saw it
+# again, a tuning holding the mean tower-base load at -0.6 points while losing 5.9 of it at 18 m/s. A tuning that
+# is to be reported as a baseline has to hold its loads where they are produced, so the load constraints are also
+# required at every single mean wind speed. The tolerance is the one roadmap s33 already states for the
+# manuscript, one point, not a new convention: the design set carries two episodes per wind speed, too few for a
+# per-wind bootstrap, so per wind this is a screen on the design set and a measurement off the design winds,
+# where there are four.
+PER_WIND_TOL = 1.0
+
+
+def worst_per_wind(rec: dict, keys=("tower", "blade")) -> tuple[float, str, str]:
+    """The worst load reduction at any single mean wind speed of a history record, and where it happens."""
+    worst, at, which = float("inf"), "", ""
+    for u, d in (rec.get("per_wind") or {}).items():
+        for k in keys:
+            v = d.get(k)
+            if v is not None and v == v and float(v) < worst:
+                worst, at, which = float(v), u, k
+    return (worst, at, which) if at else (float("nan"), "", "")
+
+
+def per_wind_rank_key(rec: dict, tol: float = PER_WIND_TOL) -> tuple[int, float]:
+    """Constraint domination with the load constraints required per wind speed as well as over the set."""
+    a = rec.get("assess", rec)
+    w = worst_per_wind(rec)[0]
+    over = max(0.0, -tol - w) if w == w else FAILED_SHORTFALL
+    ok = bool(a.get("feasible")) and over == 0.0
+    return (1 if ok else 0,
+            a.get("objective", -FAILED_SHORTFALL) if ok else -(a.get("shortfall", FAILED_SHORTFALL) + over))
+
+
 def describe(a: dict) -> str:
     """One line: what this candidate does and whether it may be shipped."""
     if not a.get("constraints"):
