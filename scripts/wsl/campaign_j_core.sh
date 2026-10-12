@@ -102,6 +102,10 @@ arm_args() {  # prefix -> train.py arguments
     mrwCwG3t)  echo "--supervisor llm_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --residual_gate 15 17 --base mpc --base_mpc_json @configs/mpc_sched_s33.json" ;;
     mgCwG3t)   echo "--supervisor guard      --reward v3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --residual_gate 15 17 --base mpc --base_mpc_json @configs/mpc_sched_s33.json" ;;
     trwCwG3t)  echo "--supervisor llm_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --residual_gate 15 17" ;;
+    # same arm on the NATIVE tuned baseline (campaign_gate_native.sh, roadmap s55): identical arguments, the base is
+    # chosen by WTRL_TEMPLATE, and the paired rollouts in WTRL_HOME=~/wtrl_rtn_range are that base's own, so Cw still
+    # reads "on top of the base, loads held per wind". Separate name so the superseded runs are not overwritten.
+    tnrwCwG3t) echo "--supervisor llm_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --residual_gate 15 17" ;;
     # low gate (campaign_gate13.sh): 13-15 m/s instead of 15-17, to reach the near-rated bins that carry most of the
     # weight of a site wind distribution (roadmap s42) without the 12-14 m/s damage of the ungated layer (s39)
     mrwCwGLt)  echo "--supervisor llm_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --residual_gate 13 15 --base mpc --base_mpc_json @configs/mpc_sched_s33.json" ;;
