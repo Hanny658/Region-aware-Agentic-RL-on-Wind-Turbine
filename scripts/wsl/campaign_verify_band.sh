@@ -20,5 +20,5 @@ export WTRL_HOME=$HOME/wtrl600 WTRL_WIND=$HOME/wtrl/wind600
 echo "=== the band off the design winds, start $(date)"
 $HOME/wtrl/run.sh python scripts/dev/rosco_verify_band.py \
     --workers "${WORKERS:-14}" --port0 "${PORT0:-7700}" \
-    --csv docs/tables/rosco_band_verified.csv 2>&1 | grep -vE "^\[eval|^ *$"
+    --csv docs/tables/rosco_band_verified.csv 2>&1 | grep --line-buffered -vE "^\[eval|^ *$"
 echo "=== the band off the design winds, done $(date) ==="

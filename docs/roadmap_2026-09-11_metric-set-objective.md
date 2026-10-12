@@ -2537,3 +2537,36 @@ and every member is a file the shipped controller can take.
 - Open, about one hour of simulation: the per-wind measurement of the three unverified band members above, after
   which the baseline row is fixed by the stated rule (largest regulation whose per-wind load terms hold off the
   design winds). Stage 1 holds that rule already and stands until something beats it.
+
+### 53.6 The band off the design winds, paused after 4 of 10 members (2026-10-12 18:30)
+
+`campaign_verify_band.sh` (session 395, `scripts/dev/rosco_verify_band.py`) measures the ten band members that
+either buy more regulation than the standing baseline or cost no actuator duty, 28 held-out and 28 fresh
+episodes each, and applies the stated rule. Paused at the user's request with four members measured on both
+sets; eleven evaluations remain, about 90 minutes at 14 workers. Resume with
+`campaign_ctl.sh resume campaign_verify_band`; nothing repeats, every evaluation is cached by parameter hash.
+
+What the first four say, and they say it with one voice:
+
+| tuning | design | held out | fresh | worst per wind, held out | fresh | verdict |
+|---|---|---|---|---|---|---|
+| omega 0.600 zeta 0.850 corner 5.000, 1.475x | +36.96 | +36.98, tower +5.09 | +37.74, tower +7.59 | +1.06 | **-1.17 at 24, tower** | fails |
+| omega 0.664 zeta 0.687 corner 3.408 damper 0.0012, 1.152x | +34.59 | +35.07, tower +3.37 | +37.43, tower +5.20 | -0.47 | **-2.04 at 24, tower** | fails |
+| omega 0.660 zeta 0.680 corner 3.100, 1.117x | +33.60 | +32.66, tower +2.07 | +34.83, tower +3.72 | **-1.94 at 24** | **-3.40 at 24** | fails |
+| omega 0.650 zeta 0.700 corner 3.100, 1.118x | +33.34 | +32.52, tower +2.08 | +34.46, tower +4.01 | **-1.55 at 24** | **-2.98 at 24** | fails |
+
+Four for four, always the tower-base load, always at 24 m/s, and always worse where there are more unseen
+episodes. The regulation reductions themselves replicate almost exactly (+36.96 design -> +36.98 held out ->
++37.74 fresh), so this is not optimism in the objective: it is the load constraint being satisfied on the set
+mean while it is violated at the top of the wind range, which is section 53.2 measured a second time on members
+no run selected. The set-mean tower margin of these four is +1.9 to +5.1 points, and that margin is what the
+per-wind failure tracks; the standing baseline carries +22.8.
+
+The pattern has a mechanism, not just a correlation: every one of these four raises `omega_pc` or the filter
+corner and switches the damper off, which is where the regulation comes from, and the tower-base load at 24 m/s
+is exactly where the damper earns its keep. Nothing in the list above +28.3 has the damper on except the
+bayes member, whose damper gain is 0.0012 against the 0.0331 of the standing baseline.
+
+So the rule is already pointing somewhere: of the four measured, none holds, and the standing baseline
+(+28.30 design, +28.32 held out, +29.75 fresh, tower +22.77, worst per wind -0.24) still stands. Six members
+remain, all of them below +32 of regulation, three of them at or under the shipped pitch travel.

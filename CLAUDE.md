@@ -117,8 +117,13 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   3.4 rad/s. **The per-wind screen is a SCREEN on the design set, not the decision:** with two episodes per wind
   it rejects the stage-1 tuning at -1.1 (blade, 22 m/s) although the same tuning reads -0.24 / -0.34 off the
   design winds where there are four. Screen on design, measure per wind off the design winds (stage 3 does this).
-  Finalists to verify when the campaign ends: +36.96 (omega 0.600 zeta 0.850 corner 5.000, 1.48x), +34.59
-  (omega 0.664 zeta 0.687 corner 3.408 damper 0.0012, **1.15x**), the one-knob +22.62; stage 1 is already verified.
+  Finalists verified off the design winds (s53.6, `campaign_verify_band.sh`, PAUSED after 4 of 10 at 18:30 on
+  2026-10-12, ~90 min left, resume with `campaign_ctl.sh resume campaign_verify_band`): **4 of 4 fail the
+  per-wind rule, every one on the tower-base load at 24 m/s and worse on fresh seeds than held out** (+36.96 ->
+  -1.17 fresh, +34.59 -> -2.04, +33.60 -> -3.40 / -1.94 held out, +33.34 -> -2.98 / -1.55), while their
+  regulation replicates exactly (+36.96 design -> +36.98 held out -> +37.74 fresh). The set-mean tower margin of
+  the four is +1.9 to +5.1 against the standing baseline's +22.8, and all four switch the damper off - which is
+  what carries the tower load at 24 m/s. **The stage-1 baseline still stands.**
 - **Residual line closed from the learning side (s30):** the residual trained over Cp/Ct in [0.85, 1.15] repairs
   only the underestimate side, nothing at +15 %, and costs 3-6 J at the exact model; the estimator is 10-40 J above
   every residual at every error. The tower weight is not the lever for the compensated MPC's negative high-wind
