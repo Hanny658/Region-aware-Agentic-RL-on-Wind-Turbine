@@ -79,8 +79,11 @@ with the reward *structure* proposed by the agent. Evidence: roadmap s34, s37, s
 
 - **On the baseline that is a tuning file (s56, the current row):** paired against its own base on the same 28
   fresh episodes, three agent seeds - power MSE **+5.80 to +6.44**, speed MSE **+5.91 to +6.78**, tower DEL
-  +0.01 to +0.64 (never negative), blade DEL +0.47 to +1.48; per-wind violation **0.00 %** in all six
-  evaluations; 1.22-1.29x the base's pitch travel. 3/3 seeds, both seed sets.
+  +0.01 to +0.64 (never negative), blade DEL +0.47 to +1.48; 1.22-1.29x the base pitch travel. **Under the rule
+  that decides the proposer question** - the worst single-wind load term against its own base, tolerance -1
+  point, as in s49 and not the weaker per-wind Cw against the shipped controller that s56 quoted - the arm is
+  **3/3 on both seed sets** (s58.2, `docs/tables/gate_proposer_control.csv`), but seed 1 holds by **0.02
+  points** (tower DEL at 18 m/s, fresh seeds), so a count a re-run could flip; say so wherever 3/3 appears.
 - **On the scheduled MPC (s41, s54):** +2.41 power, +2.59 speed, +1.44 tower, +1.87 blade on fresh seeds, at
   2.076x -> 2.899x travel.
 - **Who writes the reward: settled at n = 8 (s49), and it is the sharpest statement of the whole claim.** On the

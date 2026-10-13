@@ -189,7 +189,10 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   2.460x (seed 1 of 3; the three seeds span 2.46-2.61x, ADC 0.118-0.131). Paired against its own base the layer
   adds power MSE **+5.80 to +6.44** and speed MSE **+5.91 to +6.78** on fresh seeds (+5.40 to +6.24 and +5.54 to
   +6.58 held out), every interval clear of zero, tower DEL +0.01 to +0.64 (**never negative**, one seed
-  unresolved), blade DEL +0.47 to +1.48, per-wind violation 0.00 % in all six evaluations. 150 s training side:
+  unresolved), blade DEL +0.47 to +1.48, and under the rule that DECIDES the proposer question (the worst single-wind load term
+  against its own base, tolerance -1 point, as in s49 - not the weaker per-wind Cw against the shipped
+  controller that s56 quoted) the arm holds 3/3 on both seed sets, seed 1 by only 0.02 points at 18 m/s
+  (s58.2, `scripts/dev/gate_proposer_control.py`). 150 s training side:
   3/3 strict, all four terms positive in every seed, within half a point of each other (the old runs spanned six
   points). **The layer is about three quarters of what it was on the hand-scaled row and cleaner** - two of the
   three superseded-base seeds lost tower DEL (-0.31 [-0.62, -0.05], -0.46 [-0.77, -0.15]), none of the native

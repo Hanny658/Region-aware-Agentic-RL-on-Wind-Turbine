@@ -2931,3 +2931,29 @@ is 3/3 by that rule, with a per-wind violation of 0.00 % in all six of its evalu
   the native tuned baseline on the same episodes, as in s56). s49 found the two searched arms **identical** in
   level, so a level difference here would be a new finding and would need its own replication before being
   written anywhere.
+
+### 58.2 The deciding rule applied to the agent arm, before the control finished
+
+`scripts/dev/gate_proposer_control.py`, `docs/tables/gate_proposer_control.csv`. The measurement was fixed while
+the control was still training, which is the point of doing it in this order.
+
+**The rule is not the number s56 quoted.** s56 reported a per-wind violation of 0.00 %, which is the evaluator
+per-wind Cw and is measured against the **shipped** controller; the rule that decides this question (s49,
+implemented in `proposer_test.py` as `range600_worst_{tower,blade}_diff`) is the worst single-wind load term
+against the run **own base**, tolerance -1 point, bin mean before the difference. Applying that rule unchanged,
+with the s52 native tuning as the base:
+
+| arm | fresh 7-10, worst tower / blade | held out 3-6, worst tower / blade | holds |
+|---|---|---|---|
+| agent-written reward, seed 0 | -0.08 / -0.08 | -0.10 / +0.00 | yes |
+| agent-written reward, seed 1 | **-0.98** / +0.00 | -0.50 / +0.00 | yes |
+| agent-written reward, seed 2 | -0.03 / -0.22 | -0.18 / -0.40 | yes |
+
+So the agent arm is **3/3 on both seed sets** under the rule that decides, not only under the weaker per-wind Cw
+of s56. One thing goes beside that count: **seed 1 holds by 0.02 points** (tower DEL at 18 m/s on fresh seeds),
+and it is also the seed whose set-mean tower difference is the one unresolved interval of s56
+(+0.01 [-0.24, +0.25]). A count of 3/3 whose worst member sits two hundredths of a point inside the tolerance is
+a count a re-run could flip, and the paper says so wherever it says 3/3.
+
+The level, paired against the same base on the same episodes, is the s56 row unchanged: power MSE +5.80 to
++6.44, speed MSE +5.91 to +6.78 on fresh seeds, at 1.22 to 1.29x the base pitch travel.
