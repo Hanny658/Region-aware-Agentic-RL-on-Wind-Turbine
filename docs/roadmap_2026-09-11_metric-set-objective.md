@@ -3014,3 +3014,72 @@ about 3 h. If the fixed reward also holds, the structure search buys nothing und
 collapses to the gate; if it does not, the search is still load-bearing and only the proposer is not. s41 has
 the fixed reward under the gate on the MPC base losing 5.9 points of tower fatigue at 20 m/s, which points to
 the second reading, but the native base has never had that arm.
+
+## 59 Leg 1 at n = 6: the one proposer claim s58 did not touch, endpoints fixed first (2026-10-13, 23:11)
+
+s58 removed the only configuration in which the language model was measurably better than a random draw out of
+the same space, and it did so on leg 3. That leaves exactly one proposer statement standing anywhere in the
+study, leg 1: in the ROSCO-native search of s53 the llm arm bought a shippable gain in 3 of 3 runs against
+2 of 3 for constrained Bayesian optimisation, 1 of 3 for the local search and 0 of 3 for random draws, and it
+reached its first gain in a median of 8 simulations against 14 and 18. **Nothing in that sentence is a test:**
+3 of 3 against 2 of 3 is Fisher two-sided p = 1.0, and a median over two or three runs is a number with no
+spread. The claim the manuscript would make - the same loop reaches the level of the best dedicated search in
+each space and gets there in fewer simulations - rests on this leg, so this doubles it.
+
+Nine runs: `llm`, `bayes`, `local`, repeats 3, 4, 5, through `campaign_rosco_native_n6.sh`, which sets `ARMS`,
+`REPEATS` and `STAGES` and then execs `campaign_rosco_native.sh` unchanged - same box read off the plant, same
+shipped start, same budget of 24 candidates, same constrained selection, same 14-episode design protocol, same
+cache by parameter hash, same stage 3. About 1 h 45 min per run from the s53 log, so about 16 h, then stage 3
+re-scores only the new selections on held-out seeds 3-6 and fresh seeds 7-10 because `_verify` caches by
+parameter hash as well (about 12 min per new row). Pausable: `campaign_ctl.sh {pause|resume|stop|status}
+campaign_rosco_native`. `random` deliberately stays at three runs: all three of its runs selected the shipped
+tuning itself, its job is only to show the space is not trivially searchable, and 0 of 3 against 6 of 6 is
+already p = 0.012.
+
+### 59.1 The endpoints, the power and the outcome branches, written before any of the nine runs exists
+
+s55 is the reason this section exists. The number the search maximises is not the number that survives: every
+band member that bought more regulation than the standing baseline failed the per-wind load rule off the design
+winds, and **all three llm selections of s53 are in that set** - their worst single-wind load term on fresh
+seeds is -2.87, -2.07 and -3.73 points (tower, 24 or 12 m/s) against +0.25 for the bayes selection that holds
+and +0.33 for the local one. So the arm that looks strongest under the set-mean selection rule is the arm whose
+selections do not ship, and an endpoint had to be chosen before the new runs land rather than after.
+
+**Primary: simulations to the first feasible gain** (`sims_to_first_feasible_gain`, already a column of
+`docs/tables/rosco_search.csv`), Mann-Whitney one-sided, llm against bayes, the strongest classical arm. A run
+that never finds a feasible gain within its 24 candidates is censored and enters the test tied at 25, ranked
+last. Power: the smallest one-sided p available at 6 against 6 is 1/C(12,6) = 0.0011; if s53 replicates
+(llm near 8-12, bayes spread 7-21 with two censored) the test reads about p = 0.031, and a weaker replication
+reads about 0.054. **This endpoint is the claim**: it is sample efficiency, which is what the main line says
+agentic search buys, and it is the only endpoint n = 6 can resolve.
+
+**Secondary A: how many runs per arm deliver a shippable gain** (`selected_feasible` and not
+`selected_shipped`). Underpowered and stated as such in advance: 6 of 6 against 4 of 6 is Fisher two-sided
+p = 0.45, against 3 of 6 p = 0.18, and only 2 of 6 or fewer reaches 0.06 two-sided / 0.03 one-sided. A
+direction, not a result, unless bayes collapses.
+
+**Secondary B: the per-wind restatement, which is the honest version of leg 1.** For each of the 21 runs, apply
+the per-wind screen to that run's own candidates as `rosco_perwind_select.py` did for the band in s52.3 -
+screen on the design set, then verify off the design winds - and count the runs that deliver a tuning holding
+both load terms at every wind speed with a real regulation gain, plus the simulations spent before the first
+such candidate. This is the quantity a user of the tool actually gets, and it is where the llm arm currently
+reads 0 of 3 on its selections while its *candidates* hold twice (`llm_r1#9` and `#11`, the corner ladder of
+s52.3). It needs two evaluations per newly selected tuning off the design winds, which is cheap, and it is
+reported beside the primary, never instead of it.
+
+**Validity check, not an endpoint:** `propose_llm` fills the budget from the box when a reply is malformed and
+records `filled randomly` in the history, so each llm run is audited for how many of its 24 candidates were
+actually the model. A run diluted that way is reported, not quietly averaged in.
+
+Outcome branches, so the reading is fixed in advance:
+
+1. **Primary separates and secondary B puts llm no worse than the classical arms:** the leg-1 claim stands as
+   written, it is the paper's one proposer claim, and s58 scopes the leg-3 one.
+2. **Primary separates and secondary B does not:** the claim becomes narrower and must be written that way -
+   the model finds the largest *set-mean* number fastest, and that number does not ship. The proposer then
+   buys search efficiency against a defective objective, which is a finding about the objective (a fourth
+   instance after s32, s53.2 and s55) and not about the controller.
+3. **Primary does not separate:** leg 1 joins s58, and then **no leg of this study has a proposer claim left**.
+   What survives is the search *space* (a searched reward structure buys the level, leg 3; a wind schedule
+   repairs a per-wind violation, leg 2; one filter corner is worth a fifth of the regulation error, s52.3) and
+   the measurement discipline. The manuscript would say so, and the agentic part of the title would have to go.

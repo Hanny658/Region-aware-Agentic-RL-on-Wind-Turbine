@@ -42,6 +42,19 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
 
 ### Leg 1 - the shipped GSPI, tuned by the agent (`docs/MAIN_LINE.md` leg 1)
 
+- **RUNNING since 2026-10-13 23:11, leg 1 at n = 6 (roadmap s59; `scripts/wsl/campaign_rosco_native_n6.sh`,
+  nine runs - llm / bayes / local, repeats 3-5 - about 16 h and then 2 h of stage 3; drive it with
+  `campaign_ctl.sh {pause|resume|stop|status} campaign_rosco_native`, log `~/wtrl/exp/rosco_native_n6.log`).**
+  s58 took the proposer claim off leg 3, so leg 1 carries it alone, and leg 1 was n = 3 per arm where 3 of 3
+  against 2 of 3 is Fisher p = 1.0. Endpoints and power pre-registered in s59.1 BEFORE the runs exist:
+  **primary** the simulations to the first feasible gain (Mann-Whitney one-sided llm against bayes, about
+  p = 0.03 if s53 replicates, 0.0011 at best; a run that never finds one is censored and enters at 25);
+  **secondary** the count of runs delivering a shippable gain (underpowered and said so in advance: 6 of 6
+  against 4 of 6 is p = 0.45) and the per-wind restatement of both, where the llm SELECTIONS read 0 of 3 off
+  the design winds (worst single-wind load term -2.87 / -2.07 / -3.73 fresh) while the bayes r2 (+0.25) and
+  local r0 (+0.33) selections hold and two llm CANDIDATES hold (the corner ladder, s52.3). s59.1 fixes what
+  each outcome means, including that a null primary leaves **no proposer claim in any leg**. Do not launch it
+  again and do not start a watcher for it.
 - **Parameter-search audit and redesign (2026-10-11, `docs/design_2026-10-11_rosco-native-search.md`,
   `scripts/rosco_native.py`, `eval/selection.py`, `campaign_rosco_native.sh`):** the s29/s31 tuned baseline was
   **not a ROSCO tuning**. It scaled `PC_GS_KP` / `PC_GS_KI` by two scalars, and because ROSCO builds the schedule as

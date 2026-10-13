@@ -152,12 +152,20 @@ discussion, not in its title.
 
 ## Open, in order
 
-1. **The fixed-reward arm under the gate on the native base** - three runs, about 3 h, not started. s58 showed
+1. **Leg 1 at n = 6 - RUNNING since 2026-10-13 23:11** (`scripts/wsl/campaign_rosco_native_n6.sh`: nine runs,
+   llm / bayes / local, repeats 3-5, about 16 h and then 2 h of verification; roadmap s59). s58 took the
+   proposer claim off leg 3, so leg 1 carries it alone - and leg 1 is three runs per arm, where 3 of 3 against
+   2 of 3 is Fisher p = 1.0. The endpoints and their power are pre-registered in s59.1, before any of the nine
+   runs exists. **Primary:** simulations to the first feasible gain, Mann-Whitney one-sided, llm against the
+   strongest classical arm - about p = 0.03 if s53 replicates, 0.0011 at best, and it is sample efficiency,
+   which is what this page claims. **Secondary:** the count of runs delivering a shippable gain (6 of 6 against
+   4 of 6 is p = 0.45, a direction only), and the per-wind restatement of both, where the llm *selections*
+   currently read 0 of 3 off the design winds while two of its *candidates* hold. **If the primary does not
+   separate, no leg of this study has a proposer claim left** and s59.1 says in advance how that gets written.
+2. **The fixed-reward arm under the gate on the native base** - three runs, about 3 h, not started. s58 showed
    that *who* proposes the reward structure does not matter under the gate; this says whether **searching** the
    structure matters there at all. If a fixed reward also holds the loads, leg 3 collapses to the gate; if it
    does not, the structure search is load-bearing and only the proposer is not. s41 has the fixed reward under
    the gate on the MPC base losing 5.9 points of tower fatigue at 20 m/s, which points to the second reading,
-   but the native base has never had that arm. It is the last question that can still move this page.
-2. Leg 1's agent-vs-random comparison is n = 3 per arm and was counted under the as-stated objective; restated
-   under the per-wind rule it is 2 verified rows of 7 proposals against none proposed.
+   but the native base has never had that arm.
 3. The manuscript rewrite, `docs/plan_2026-10-12_manuscript-rewrite.md` - all of its gates are now open.
