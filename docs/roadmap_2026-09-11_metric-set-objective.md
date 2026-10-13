@@ -2780,3 +2780,81 @@ the row disagreed with `evaluate.py`'s own per-wind print for the same run (+25.
 two bases' seed rows were identical to four digits. Rows are now keyed by path. Any table that joins several
 evaluations has to key on something unique to the evaluation, and the cheapest check is that a re-derived number
 matches the evaluator's own output for one row.
+
+## 57. The main line, stated, and the documents reorganised around it (2026-10-13)
+
+The user asked the question the record could not answer in one place: *is the main line not what agentic tuning
+delivers on the shipped GSPI and on an untuned MPC, in regulation and load reduction?* It is, and the evidence
+for it was spread over fifteen documents and fifty-six roadmap sections, with the top of `CLAUDE.md` still
+carrying a reporting-methodology claim as the headline. Three things came out of checking it.
+
+### 57.1 The main line is the shape of three legs, and the shape is the result
+
+**Agentic search buys feasibility and sample efficiency on real controllers; it does not buy peak level.** The
+same loop is applied to three objects and all three come out the same shape. Written up in full, with every
+number sourced, in `docs/MAIN_LINE.md`; the three legs are the shipped ROSCO pitch loop (s51-s55), an untuned
+offset-free LPV-MPC (s33, s38), and a residual layer's reward structure (s32-s41, s49, s56).
+
+Two things were found while checking the claim, both of which change how leg 1 can be written:
+
+- **The baseline row was not found by the agent.** Stage 1 came from `--proposer tune`, the fixed s29 recipe,
+  which `scripts/rosco_search.py` marks in its own docstring as "used to re-derive the paper's tuned baseline
+  in the native parameterisation, **not as an arm of the comparison**". So the strongest verified tuning in the
+  study is a classical recipe's, not an agent's, and the paper has to say so.
+- **The per-arm census under the per-wind rule is complete and it was free.** The design screen leaves 11
+  tunings with positive regulation and s55 measured all 11 off the design winds, so: llm proposed 6 and **2
+  hold** (`llm_r1#9`, the one-knob row at 1.000x travel, and `llm_r1#11` at 1.647x), local proposed 2 and 2
+  hold, bayes proposed 1 and 0 hold, random proposed none. The s53 count (llm 3/3, random 0/3) was under the
+  objective as stated; this is the count under the rule that now decides, and both belong in the paper.
+
+Leg 3 needed no re-reading: **s49 already settled it at n = 8** - agent-written reward 4/5 runs holding the
+per-wind load rule against random reward structures 1/8 (Fisher two-sided p = 0.032) and fixed rewards 0/8
+(p = 0.007), with the *level* of the two searched arms identical. "More search found the level; it did not find
+the constraint" is the main line's sharpest sentence and it was already measured.
+
+### 57.2 Leg 2 measured in published terms, which it never had been
+
+s38 established that the llm and es proposers both discover the wind-scheduled tower weight in 24 simulations
+while random search finds nothing in 48, but it reported the discovery in composite points. In the four
+published reductions, held-out seeds 3-6, 28 episodes, paired on the same wind file (no simulations - both rows
+were already on disk):
+
+| row | power MSE | speed MSE | tower DEL | blade DEL | travel |
+|---|---|---|---|---|---|
+| offset-free LPV-MPC, **unscheduled** | +47.3 | +52.4 | +15.0 | +3.4 | 1.981x |
+| offset-free LPV-MPC, agent-found schedule | +45.7 | +50.7 | +16.5 | +2.9 | 2.140x |
+
+Paired difference: -1.59 power, -1.63 speed, **+1.49 tower**, -0.50 blade, every interval resolved. The set
+means understate what the schedule does, and the per-wind tower-base term is where it shows:
+
+| U | unscheduled | agent-found schedule |
+|---|---|---|
+| 20 | +0.38 | +1.56 |
+| 22 | **-2.46** | +0.24 |
+| 24 | **-6.27** | +0.08 |
+
+**The agent converts a controller that loses tower-base fatigue at high wind into one that does not, for 1.6
+points of regulation.** That is a feasibility repair, the same thing it does on the other two legs, and it is
+the honest way to report a search that does not beat the hand design.
+
+The unscheduled reference had never been run on the fresh seeds 7-10 while every other rung of the ladder is
+reported there, so `campaign_mpc_unsched_fresh.sh` adds that one evaluation (identical arguments to the
+scheduled row of `campaign_gate.sh` except `qt_sched`).
+
+### 57.3 What was reorganised, and the rule that keeps it from happening again
+
+- `docs/MAIN_LINE.md`, new and the only place the claim lives: the claim, the three legs with current numbers,
+  **what cannot be claimed** (six items), the measurement discipline, and the open items in order.
+- `docs/README.md` rewritten as an index **by leg** rather than by date, with a section map of this file so a
+  2800-line log does not have to be read through to find which section serves which leg.
+- `CLAUDE.md`: the flat list of 27 findings is grouped under the three legs, the discipline, the manuscript and
+  the history, and its head points at `MAIN_LINE.md` first. Nothing was deleted - the regrouping was done with
+  an assertion that every non-blank line survives, which caught the two intended exceptions (the old section
+  heading and the manuscript entry promoted out of a nested bullet).
+- The manuscript plan carries the consequence: v6's claim keeps all its evidence and becomes the paper's
+  measurement discipline in the setup and discussion, and section 5 is reorganised by leg.
+
+**The rule, now in `docs/README.md`:** a new experiment document opens with the leg it serves and one sentence
+on which number in `MAIN_LINE.md` it changes; if it changes none it is a roadmap note, not a document; and when
+a result does change a main-line number, `MAIN_LINE.md` is updated in the same commit. A stale claim in a short
+file is worse than a long log.

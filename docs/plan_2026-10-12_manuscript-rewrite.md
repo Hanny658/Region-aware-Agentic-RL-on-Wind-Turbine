@@ -69,3 +69,33 @@ controller the split is 51 / 44 / 5 %, of 51.5 power MSE it is 49 / 46 / 5 %, an
 tuning +25.3, model-based **-7.9**, learning +1.4. The old single decomposition existed only because the
 composite averaged terms that disagree in sign. Write the three rows, say that no single set of shares
 describes the ladder, and make that the point of the paragraph rather than a caveat under it.
+
+## Update 2026-10-13 (second): the claim itself changes, which reorders the whole plan
+
+The user's decision: the main line is **what the agentic loop delivers on the shipped GSPI and on an untuned
+MPC** - regulation and load reduction - which is `docs/MAIN_LINE.md`: three legs, one shape, *agentic search
+buys feasibility and sample efficiency, not peak level*. This is larger than reasons (A)-(D) above, because
+those were site edits under a claim that is itself being replaced.
+
+What happens to v6's claim. *Baseline tuning, aggregation convention and wind weighting decide the apparent
+benefit of advanced pitch control* keeps every number and every experiment behind it, and becomes the paper's
+**measurement discipline**: section 3 states it as the protocol the results are measured under, the discussion
+says what it implies for reading other people's numbers. It stops being the title, the abstract and the
+organising principle of section 5. Nothing is thrown away and nothing has to be re-measured for this.
+
+Consequences for the structure, to be settled before the pass:
+
+- **Section 5 is reorganised by leg, not by reporting choice.** 5.1 the shipped loop tuned by the agent (the
+  verified band, the one-knob row at shipped duty, the per-arm census, and the fixed recipe that beats it on
+  level); 5.2 the untuned MPC repaired by the agent (the schedule discovered in 24 simulations, the per-wind
+  tower term at 22 and 24 m/s, random 0/48); 5.3 the learned layer and who writes its reward (s49 at n = 8:
+  the level is the search, the constraint is the proposer; s56 on the correct baseline). The present 5.1-5.6
+  become the discipline section plus the ablations that each leg needs.
+- **The inert controls stay where they are** (5.3 Wohler exponent, 5.6 actuation): they are what makes a leg
+  believable, so they attach to the legs they serve rather than forming their own argument.
+- **The limitations must now carry the two scope statements of s40 and s49 verbatim:** the proposer effect is
+  established on the ungated PI base only, and the gated configuration - including the retrained one of s56 -
+  has never been run with a matched random-structure control.
+- **Nothing in (A)-(D) is wasted:** the composite still leaves the reporting, the baseline row still becomes a
+  named band member, the two false statements still go, and the PI-base rung still comes from s56. The order is
+  unchanged; only what the sections are arguing for changes.

@@ -5,8 +5,13 @@ PPO residual agents (R2/R3 split by an oracle rule), with an LLM supervisor tuni
 knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TSTE 2026 (`RelatedWorks/`, not in git).
 
 ## Read these first
-- `docs/REPORT_2026-09-01.md` — consolidated, verified findings F1–F7 + final disposition (**start here**).
-- `docs/roadmap_2026-08-30.md` — day-by-day experiment log, all intermediate tables (sections 1–22).
+- `docs/MAIN_LINE.md` — the claim, the three legs of evidence, what cannot be claimed (**start here**, one page).
+- `docs/README.md` — which document is evidence for which leg, and a section map of the 2800-line roadmap.
+- `docs/roadmap_2026-09-11_metric-set-objective.md` — the current experiment log, §1–§57. Use the section map; it
+  is not meant to be read through.
+- `docs/RESULTS_2026-09-10_data-and-caveats.md` — provenance and caveats C1–C12, before quoting any number.
+- `docs/REPORT_2026-09-01.md` + `docs/roadmap_2026-08-30.md` — F-era history; its objective, baseline and
+  aggregation are all superseded, so read them for mechanism, not numbers.
 - Design decisions history: the user's explicit answers are recorded in the report; do not re-ask them.
 
 ## Scope
@@ -17,46 +22,26 @@ because it bounds the supervision claim. **Do not describe research directions b
 in this repo's docs, commits or manuscripts. The IPC/torque code paths stay in the tree (inert at
 `--ipc_max 0` / `--dtau_max 0`) because run configs reference them.
 
-## Final state (2026-09-15; manuscript v4, MPC + agent-supervised residual main line)
+## The main line (2026-10-13) - read `docs/MAIN_LINE.md` first, it is one page
+
+**Agentic search buys feasibility and sample efficiency on real controllers; it does not buy peak level.** The
+same agentic loop is put on three objects - the shipped ROSCO pitch loop (leg 1), an untuned LPV-MPC (leg 2),
+and a residual layer's reward structure (leg 3) - and all three come out that shape: it turns a design that is
+not deliverable into one that is, in few simulations, where random search finds nothing, and in none of the
+three does it beat a careful human or a fixed classical recipe on the level. `docs/MAIN_LINE.md` holds the
+claim, the three legs with their current numbers, **what cannot be claimed**, and the open items;
+`docs/README.md` says which file is evidence for which leg. Keep `MAIN_LINE.md` current in the same commit as
+any result that changes one of its numbers - the bullets below are the detail, not the claim.
+
+The composite the campaigns selected and trained on (it is method, never a reported result):
+
 Objective: **J** = mean of the baseline paper's four % reductions vs paired GSPI (power MSE,
 gen-speed MSE, tower DEL, blade DEL; per-episode clipped ±100), −20 per % energy loss over 1 %, no
 tiers, wind-labelled R3 subsets (`docs/roadmap_2026-09-11_metric-set-objective.md`, decisions D1–D6).
 F (tower-DEL priority with constraint tiers) stays computable for the historical tables.
-- **The model-based reference is the strongest controller on J, and it must be evaluated as the
-  base controller** (roadmap v2 s18): the 3-state LPV-MPC with its cost re-scaled so the tower term
-  works (`--scale v2`, qt = 3) scores **16.3 / 17.2** on the two held-out sets as the environment's
-  base with a zero residual (`evaluate.py --gspi --run <mpc-base run>`), every term positive; with
-  Cp/Ct x0.95 in its model 8.5 / 3.6, +-15 % -> -24. Pushing the MPC through the RL's action channel
-  (`mpc_baseline.py`, the old 12.4 / 14.1 and 12.0 / 11.6 rows) handicaps it: the channel's R2
-  non-negativity rule chops its negative offsets at region transitions. The F-era "MPC loses tower
-  DEL -17.6 %" was a cost-scaling artefact (speed term O(1e-5) vs tower term O(1)).
-- **Offset-free / adaptive MPC is now the strongest controller on J** (roadmap v2 s19, `adapt` in
-  `controllers/mpc.py`, tau 5 s): 20.5 / 21.7 exact, 21.7 / 21.9 (offset) and 20.4 / 21.6 (RLS) with Cp/Ct x0.95,
-  RLS flat 20.4-20.7 over +-15 %. It beats every residual run and refutes manuscript v4's main line
-  ("residual adds to the MPC and repairs its model"); x0.95-trained residuals do not transfer to x0.9 / x1.05.
-  TCST campaign gate STOPPED before extra seeds; the next direction is the user's decision.
-- **Control direction (2026-09-16/17, roadmap s22-s26):** every MPC row buys its J with ~7.6x the GSPI pitch
-  travel (s22); the travel is broadband, not 3P (a 3P notch removes the line, cuts travel 2-3 %, costs 1.5-2.4 J,
-  s25); the J-vs-actuator-duty front from the 600 s search cache has its knee at ~3x GSPI travel, and that knee
-  holds held-out: same J as the J-selected point at 38-41 % of its actuation, blade DEL 3 -> 5-6 % (s26). On a
-  compensated base the residual has nothing of size left to learn (5 of 6 mismatched runs never beat episode 0,
-  s24) and residuals do not transfer across model error while the estimator holds +-15 % (s23). ROSCO's tower
-  damper is worth ~0 J at 600 s (s23). Literature scan: `docs/literature_2026-09-16.md`.
-- **Wind-range protocol (2026-09-18, roadmap s27-s28; the main evaluation set from here on):** 12-24 m/s in 2 m/s
-  steps, IEC turbulence class B, 600 s, TurbSim seeds 1-6 (42 held-out episodes; `campaign_must1_range.sh`,
-  `scripts/dev/range_table.py`, `docs/tables/range_*.csv`). Several s19-s26 statements are specific to the
-  low-turbulence 8 / 12.5 / 15 m/s set: over the range the MPC rows travel 1.7-2.2x the GSPI (not 7.6x), Cp/Ct x0.95
-  costs the nominal MPC 0.7 J (not half), offset-free compensation is +1.0 J but a trade (+5.6 power, +5.9 speed,
-  -6.6 tower, all intervals exclude 0) and every compensated MPC has a negative tower term from 20 m/s up while the
-  nominal MPC never does. Report per-wind-speed terms; differences between deterministic controllers are paired
-  bootstraps over episodes (`scripts/dev/paired_bootstrap.py`).
-- **Tuned ROSCO baseline (roadmap s29, s31; `scripts/rosco_tune.py`, template `~/wtrl/runs/template_5mw_rosco_tuned`):**
-  the shipped speed-filter corner (1.57 rad/s) is the untuned part of the GSPI; 3.42 rad/s with kp x1.13 scores
-  16.2 / 17.1 on the low-turbulence held-out sets and 15.4 on the range set at 1.1x pitch travel. Against it the
-  MPC rows keep 4.5-5.4 J at low turbulence (tower fatigue near rated only) and ~14 J at class B over the range
-  (23-24 points of regulation plus 9 of tower). **SUPERSEDED on 2026-10-11** by the re-derived baseline below: this
-  row is a hand-scaled gain table no tuning file can produce, selected and reported under the composite that is now
-  gone, so its number is not comparable and every table carrying it must be re-measured.
+
+### Leg 1 - the shipped GSPI, tuned by the agent (`docs/MAIN_LINE.md` leg 1)
+
 - **Parameter-search audit and redesign (2026-10-11, `docs/design_2026-10-11_rosco-native-search.md`,
   `scripts/rosco_native.py`, `eval/selection.py`, `campaign_rosco_native.sh`):** the s29/s31 tuned baseline was
   **not a ROSCO tuning**. It scaled `PC_GS_KP` / `PC_GS_KI` by two scalars, and because ROSCO builds the schedule as
@@ -95,38 +80,6 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   has a second instance with no learning involved. **The duty argument against the MPC is gone: a PI tuning
   reaches +33 regulation at 1.12x travel, the scheduled MPC sits at 2.14x.** Open, ~1 h: the per-wind measurement
   of the three unverified band members; stage 1 holds the stated rule and stands until something beats it.
-- **THE LADDER IN THE FOUR PUBLISHED REDUCTIONS (roadmap s54, 2026-10-12; `scripts/dev/ladder_published.py`,
-  `docs/tables/ladder_published_{fresh,heldout}.csv`, no simulations - the rungs are joined on the wind file so
-  all rows are the same 28 episodes).** Fresh seeds 7-10, each term against the paired shipped controller:
-  superseded tuned baseline +24.5 / +30.7 / **+7.1** / +1.4 at 1.120x travel; native tuned baseline +25.3 /
-  +29.7 / **+25.3** / +1.7 at 2.016x; scheduled offset-free LPV-MPC +49.1 / +55.4 / **+17.4** / -0.0 at 2.076x;
-  MPC + gated layer +51.5 / +58.0 / +18.9 / +1.8 at 2.899x. **The model-based controller's tower-fatigue
-  advantage was an artefact of the baseline not being a tuning file:** +10.3 against the superseded row,
-  -7.91 [8.85, 6.97] fresh and -7.43 [8.37, 6.44] held out against the native one, paired intervals clear of
-  zero; the learned layer recovers +1.4 to +2.0 of it, not enough. The two baselines are indistinguishable in
-  regulation (speed MSE -0.91 [-1.94, +0.10]), so the native tuning buys +18.2 of tower DEL for no regulation -
-  it buys it with pitch travel, 1.12x -> 2.02x, which is also where the MPC sits (2.08x), so **at equal duty the
-  second rung is a TRADE: +23.7 power and +25.6 speed for -7.9 tower.** The composite hid it by averaging the
-  four terms. The PI-base learned rung was retrained on the native baseline (s56), which is the row below.
-- **THE LEARNED LAYER RE-TRAINED ON THE BASELINE THAT IS A TUNING FILE (roadmap s56, 2026-10-13;
-  `campaign_gate_native.sh` arm `tnrwCwG3t`, three agent seeds, 4 h 32 min, identity check of the new paired
-  tree exactly 0.000; `scripts/dev/gated_native_table.py`, `docs/tables/gated_native.csv`).** The manuscript's
-  PI-base rung (s34/s37/s41) was trained against the superseded baseline's own rollouts, so it could not be
-  re-read onto the baseline s55 fixed. Fresh seeds 7-10, against the paired shipped controller: native tuned
-  baseline +25.3 / +29.7 / +25.3 / +1.7 at 2.016x travel -> + gated layer +31.1 / +35.9 / +25.3 / +3.2 at
-  2.460x (seed 1 of 3; the three seeds span 2.46-2.61x, ADC 0.118-0.131). Paired against its own base the layer
-  adds power MSE **+5.80 to +6.44** and speed MSE **+5.91 to +6.78** on fresh seeds (+5.40 to +6.24 and +5.54 to
-  +6.58 held out), every interval clear of zero, tower DEL +0.01 to +0.64 (**never negative**, one seed
-  unresolved), blade DEL +0.47 to +1.48, per-wind violation 0.00 % in all six evaluations. 150 s training side:
-  3/3 strict, all four terms positive in every seed, within half a point of each other (the old runs spanned six
-  points). **The layer is about three quarters of what it was on the hand-scaled row and cleaner** - two of the
-  three superseded-base seeds lost tower DEL (-0.31 [-0.62, -0.05], -0.46 [-0.77, -0.15]), none of the native
-  ones does. **The headline decomposition must be written per term:** of 58.0 points of speed MSE, tuning +29.7
-  (51 %), model-based +25.7 (44 %), learning +2.6 (5 %); of 51.5 power MSE, 49 / 46 / 5 %; but of 18.9 tower
-  DEL, tuning +25.3, model-based **-7.9**, learning +1.4 - so the old "49 / 45 / 6 %" was an average over terms
-  that disagree in sign, and no single set of shares describes the ladder. **Duty does not explain the gap
-  between the two routes:** the learned PI route sits at 2.46x shipped travel and the MPC alone at 2.08x, yet
-  the MPC has +19.5 [18.3, 20.7] more speed MSE at less actuation while giving up -7.9 of tower DEL.
 - **The legitimate tuning space is a FRONT, not a point (roadmap s52.2, s53.3; band: +22.6 to +37.0 regulation,
   +2.5 to +22.8 tower DEL, 1.00x to 2.72x travel).** Same box, same protocol, every row a
   tuning file the controller can take: llm r0 regulation **+47.79** with tower DEL -0.61 (set mean inside the
@@ -171,17 +124,68 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   **THE RULE SELECTS STAGE 1 AND IT IS NOT CLOSE:** paired on the same episodes, the closest verified member
   (corner 6.500, damper off, 1.647x travel) is -1.40 [-1.74, -1.08] in speed MSE and -9.07 [-9.55, -8.61] in
   tower DEL on fresh seeds. The baseline row is verified three ways (design, 28 held out, 28 fresh).
-- **Residual line closed from the learning side (s30):** the residual trained over Cp/Ct in [0.85, 1.15] repairs
-  only the underestimate side, nothing at +15 %, and costs 3-6 J at the exact model; the estimator is 10-40 J above
-  every residual at every error. The tower weight is not the lever for the compensated MPC's negative high-wind
-  tower term (s31): qt 6 makes it non-negative at -2.2 J and +20 % travel, larger weights destabilise 12 m/s;
-  under a per-wind load constraint the nominal MPC (28.5) beats the constrained compensated MPC (27.3).
+- **Tuned ROSCO baseline (roadmap s29, s31; `scripts/rosco_tune.py`, template `~/wtrl/runs/template_5mw_rosco_tuned`):**
+  the shipped speed-filter corner (1.57 rad/s) is the untuned part of the GSPI; 3.42 rad/s with kp x1.13 scores
+  16.2 / 17.1 on the low-turbulence held-out sets and 15.4 on the range set at 1.1x pitch travel. Against it the
+  MPC rows keep 4.5-5.4 J at low turbulence (tower fatigue near rated only) and ~14 J at class B over the range
+  (23-24 points of regulation plus 9 of tower). **SUPERSEDED on 2026-10-11** by the re-derived baseline below: this
+  row is a hand-scaled gain table no tuning file can produce, selected and reported under the composite that is now
+  gone, so its number is not comparable and every table carrying it must be re-measured.
+
+### Leg 2 - the untuned MPC, designed by the agent (leg 2)
+
+- **The model-based reference is the strongest controller on J, and it must be evaluated as the
+  base controller** (roadmap v2 s18): the 3-state LPV-MPC with its cost re-scaled so the tower term
+  works (`--scale v2`, qt = 3) scores **16.3 / 17.2** on the two held-out sets as the environment's
+  base with a zero residual (`evaluate.py --gspi --run <mpc-base run>`), every term positive; with
+  Cp/Ct x0.95 in its model 8.5 / 3.6, +-15 % -> -24. Pushing the MPC through the RL's action channel
+  (`mpc_baseline.py`, the old 12.4 / 14.1 and 12.0 / 11.6 rows) handicaps it: the channel's R2
+  non-negativity rule chops its negative offsets at region transitions. The F-era "MPC loses tower
+  DEL -17.6 %" was a cost-scaling artefact (speed term O(1e-5) vs tower term O(1)).
+- **Offset-free / adaptive MPC is now the strongest controller on J** (roadmap v2 s19, `adapt` in
+  `controllers/mpc.py`, tau 5 s): 20.5 / 21.7 exact, 21.7 / 21.9 (offset) and 20.4 / 21.6 (RLS) with Cp/Ct x0.95,
+  RLS flat 20.4-20.7 over +-15 %. It beats every residual run and refutes manuscript v4's main line
+  ("residual adds to the MPC and repairs its model"); x0.95-trained residuals do not transfer to x0.9 / x1.05.
+  TCST campaign gate STOPPED before extra seeds; the next direction is the user's decision.
 - **Main-claim controller (roadmap s33): offset-free LPV-MPC with a wind-scheduled tower weight** (`qt_sched=[6, 18, 22]`
   via `--base_mpc_json`, qt 3 below 18 m/s): selected on range seeds 1-2, on held-out seeds 3-6 (28 episodes) J 28.95 at
   2.14x travel with NO term below -1 % at any wind speed (tower +1.6 / +0.2 / +0.1 % at 20 / 22 / 24 m/s vs +0.4 / -2.5 /
   -6.3 % unscheduled), -0.56 J for the schedule, +13.7 J [13.0, 14.4] over the tuned ROSCO. Model error on the same
   episodes (s36): scheduled 28.81 / 29.00 / 28.95 / 28.44 at Cp/Ct x0.85 / 0.95 / 1 / 1.15 (worst per-wind term -2.1 % at
   x0.85), nominal MPC 21.38 / 28.17 / 28.49 / 23.07 (-7.1 and -5.4 J at +-15 %).
+- **Verified design loop for the MPC (roadmap s38; `scripts/mpc_design_search.py`, `docs/tables/design_search.csv`):** from the
+  hand-set UNSCHEDULED reference, llm and es proposers both discover the wind schedule in 24 simulations and repair the
+  per-wind violation on held-out winds (S = J - 4 V: 25.66 -> 26.8-28.2); random search 0/48. They do NOT beat the hand design
+  of s33 (28.95) and llm = es in the result; llm proposals beat the reference more often (25/48 vs 15/48, p = 0.03). Selection on
+  8 episodes cannot rank schedules (rank correlation selection vs held-out -0.9 over the scheduled designs). Do not claim
+  "the agent designs a better controller" or "the LLM beats other search".
+- **Residual line closed from the learning side (s30):** the residual trained over Cp/Ct in [0.85, 1.15] repairs
+  only the underestimate side, nothing at +15 %, and costs 3-6 J at the exact model; the estimator is 10-40 J above
+  every residual at every error. The tower weight is not the lever for the compensated MPC's negative high-wind
+  tower term (s31): qt 6 makes it non-negative at -2.2 J and +20 % travel, larger weights destabilise 12 m/s;
+  under a per-wind load constraint the nominal MPC (28.5) beats the constrained compensated MPC (27.3).
+
+### Leg 3 - the learned layer, and who writes its reward (leg 3)
+
+- **THE LEARNED LAYER RE-TRAINED ON THE BASELINE THAT IS A TUNING FILE (roadmap s56, 2026-10-13;
+  `campaign_gate_native.sh` arm `tnrwCwG3t`, three agent seeds, 4 h 32 min, identity check of the new paired
+  tree exactly 0.000; `scripts/dev/gated_native_table.py`, `docs/tables/gated_native.csv`).** The manuscript's
+  PI-base rung (s34/s37/s41) was trained against the superseded baseline's own rollouts, so it could not be
+  re-read onto the baseline s55 fixed. Fresh seeds 7-10, against the paired shipped controller: native tuned
+  baseline +25.3 / +29.7 / +25.3 / +1.7 at 2.016x travel -> + gated layer +31.1 / +35.9 / +25.3 / +3.2 at
+  2.460x (seed 1 of 3; the three seeds span 2.46-2.61x, ADC 0.118-0.131). Paired against its own base the layer
+  adds power MSE **+5.80 to +6.44** and speed MSE **+5.91 to +6.78** on fresh seeds (+5.40 to +6.24 and +5.54 to
+  +6.58 held out), every interval clear of zero, tower DEL +0.01 to +0.64 (**never negative**, one seed
+  unresolved), blade DEL +0.47 to +1.48, per-wind violation 0.00 % in all six evaluations. 150 s training side:
+  3/3 strict, all four terms positive in every seed, within half a point of each other (the old runs spanned six
+  points). **The layer is about three quarters of what it was on the hand-scaled row and cleaner** - two of the
+  three superseded-base seeds lost tower DEL (-0.31 [-0.62, -0.05], -0.46 [-0.77, -0.15]), none of the native
+  ones does. **The headline decomposition must be written per term:** of 58.0 points of speed MSE, tuning +29.7
+  (51 %), model-based +25.7 (44 %), learning +2.6 (5 %); of 51.5 power MSE, 49 / 46 / 5 %; but of 18.9 tower
+  DEL, tuning +25.3, model-based **-7.9**, learning +1.4 - so the old "49 / 45 / 6 %" was an average over terms
+  that disagree in sign, and no single set of shares describes the ladder. **Duty does not explain the gap
+  between the two routes:** the learned PI route sits at 2.46x shipped travel and the MPC alone at 2.08x, yet
+  the MPC has +19.5 [18.3, 20.7] more speed MSE at less actuation while giving up -7.9 of tower DEL.
 - **WIND-GATED residual (roadmap s41; `EnvConfig.residual_gate`, `--residual_gate 15 17`, `docs/tables/gated_residual.csv`):
   the current best configuration.** The layer acts only above 15-17 m/s, where the base leaves room. All 16 rows (two
   bases x seeds x two seed sets) improve their base with the paired interval above zero, ON FRESH TurbSim seeds 7-10 that
@@ -190,8 +194,6 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   GSPI on those fresh winds: power MSE -51.5 %, speed MSE -58.0 %, tower DEL -18.9 % at 2.9x travel; vs the TUNED ROSCO
   -36 % / -39 % / -13 %. The fixed reward also learns with the gate on the MPC base but loses 5.9 points of tower
   fatigue at 20 m/s where the agent seeds stay within 2.0.
-- **After any interruption (VM restart, full disk) run `scripts/dev/integrity_check.py --since <time> [--delete]` FIRST:**
-  a full disk left 7 zero-byte TurbSim fields (the generator skips existing names) and 9 unreadable baseline .npz.
 - **Agent layer STACKED ON the scheduled MPC (roadmap s39; `campaign_probe_mpc.sh`, GO / NO-GO rule committed before the
   results):** paired baselines = the MPC's own rollouts (`~/wtrl_mpc_range`), per-wind Cw. Agent-written reward: held-out Cw
   positive 3/3, 600 s J 29.72 / 29.25 / 30.62 against the MPC alone 28.95 (+0.76 / +0.30 / +1.67, every paired interval above
@@ -201,12 +203,6 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   a random structure on this base (it is on the PI base, s37). Headline stack on the same 28 held-out episodes: tuned
   ROSCO 15.24 -> scheduled MPC 28.95 -> MPC + residual 29.6-30.7. Next: the wind-gated residual (`--residual_gate 15 17`,
   `campaign_gate.sh`, report on fresh wind seeds 7-10).
-- **Verified design loop for the MPC (roadmap s38; `scripts/mpc_design_search.py`, `docs/tables/design_search.csv`):** from the
-  hand-set UNSCHEDULED reference, llm and es proposers both discover the wind schedule in 24 simulations and repair the
-  per-wind violation on held-out winds (S = J - 4 V: 25.66 -> 26.8-28.2); random search 0/48. They do NOT beat the hand design
-  of s33 (28.95) and llm = es in the result; llm proposals beat the reference more often (25/48 vs 15/48, p = 0.03). Selection on
-  8 episodes cannot rank schedules (rank correlation selection vs held-out -0.9 over the scheduled designs). Do not claim
-  "the agent designs a better controller" or "the LLM beats other search".
 - **Agent layer on the tuned ROSCO (roadmap s34; first campaign after the three defects of s32 were fixed):** residual
   trained on the above-rated range winds under per-wind Cw. Held-out Cw (150 s, 28 episodes, vs the tuned ROSCO): agent
   reward +1.1 / +6.2 / +7.1 (3/3 positive, per-wind violation <= 0.16 %), fixed reward with tower weight 10 -27.9 / -7.9 /
@@ -235,9 +231,54 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   (saturated speed term, centred bounded load terms — a change of reward shape the weight search
   cannot reach). Final n = 5: fixed 4.86 / 5.50, llm_reward 5.30 / 6.04 (+0.4 / +0.5, 3/5 balanced),
   told-F 7.00 / 8.33, combo 6.37 / 8.65 (0/5 balanced), random reward structure (n = 3) 6.13 / 7.06.
-  **Manuscript (docs/manuscript/main.tex, v6, restructured 2026-09-24; target venue Wind Energy Science).**
-  ONE claim: *baseline tuning, aggregation convention and wind weighting decide the apparent benefit of advanced pitch
-  control*. The controllers are INSTRUMENTS, not the claim. Structure: 1 intro, 2 related work, 3 setup, 4 the ladder,
+- **Objective decides the lever** (roadmap v2 §9 vs 08-30 §21): on F the reward-weight *proposer*
+  mattered (llm_fork > random_fork 7/7); on J the untuned default collapsed into a rollback loop
+  (12.5 m/s speed-MSE), hyper-parameter search repaired it (+6…+8, proposer-agnostic), and once the
+  default is fixed the effect shrinks. Mechanism chain: critic scale (`--value_norm`), credit window
+  (γλ), reward gating by the objective's own subset.
+
+### Where the legs meet, and the measurement discipline
+
+- **THE LADDER IN THE FOUR PUBLISHED REDUCTIONS (roadmap s54, 2026-10-12; `scripts/dev/ladder_published.py`,
+  `docs/tables/ladder_published_{fresh,heldout}.csv`, no simulations - the rungs are joined on the wind file so
+  all rows are the same 28 episodes).** Fresh seeds 7-10, each term against the paired shipped controller:
+  superseded tuned baseline +24.5 / +30.7 / **+7.1** / +1.4 at 1.120x travel; native tuned baseline +25.3 /
+  +29.7 / **+25.3** / +1.7 at 2.016x; scheduled offset-free LPV-MPC +49.1 / +55.4 / **+17.4** / -0.0 at 2.076x;
+  MPC + gated layer +51.5 / +58.0 / +18.9 / +1.8 at 2.899x. **The model-based controller's tower-fatigue
+  advantage was an artefact of the baseline not being a tuning file:** +10.3 against the superseded row,
+  -7.91 [8.85, 6.97] fresh and -7.43 [8.37, 6.44] held out against the native one, paired intervals clear of
+  zero; the learned layer recovers +1.4 to +2.0 of it, not enough. The two baselines are indistinguishable in
+  regulation (speed MSE -0.91 [-1.94, +0.10]), so the native tuning buys +18.2 of tower DEL for no regulation -
+  it buys it with pitch travel, 1.12x -> 2.02x, which is also where the MPC sits (2.08x), so **at equal duty the
+  second rung is a TRADE: +23.7 power and +25.6 speed for -7.9 tower.** The composite hid it by averaging the
+  four terms. The PI-base learned rung was retrained on the native baseline (s56), which is the row below.
+- **Control direction (2026-09-16/17, roadmap s22-s26):** every MPC row buys its J with ~7.6x the GSPI pitch
+  travel (s22); the travel is broadband, not 3P (a 3P notch removes the line, cuts travel 2-3 %, costs 1.5-2.4 J,
+  s25); the J-vs-actuator-duty front from the 600 s search cache has its knee at ~3x GSPI travel, and that knee
+  holds held-out: same J as the J-selected point at 38-41 % of its actuation, blade DEL 3 -> 5-6 % (s26). On a
+  compensated base the residual has nothing of size left to learn (5 of 6 mismatched runs never beat episode 0,
+  s24) and residuals do not transfer across model error while the estimator holds +-15 % (s23). ROSCO's tower
+  damper is worth ~0 J at 600 s (s23). Literature scan: `docs/literature_2026-09-16.md`.
+- **Wind-range protocol (2026-09-18, roadmap s27-s28; the main evaluation set from here on):** 12-24 m/s in 2 m/s
+  steps, IEC turbulence class B, 600 s, TurbSim seeds 1-6 (42 held-out episodes; `campaign_must1_range.sh`,
+  `scripts/dev/range_table.py`, `docs/tables/range_*.csv`). Several s19-s26 statements are specific to the
+  low-turbulence 8 / 12.5 / 15 m/s set: over the range the MPC rows travel 1.7-2.2x the GSPI (not 7.6x), Cp/Ct x0.95
+  costs the nominal MPC 0.7 J (not half), offset-free compensation is +1.0 J but a trade (+5.6 power, +5.9 speed,
+  -6.6 tower, all intervals exclude 0) and every compensated MPC has a negative tower term from 20 m/s up while the
+  nominal MPC never does. Report per-wind-speed terms; differences between deterministic controllers are paired
+  bootstraps over episodes (`scripts/dev/paired_bootstrap.py`).
+
+### Manuscript
+
+- **THE CLAIM CHANGED ON 2026-10-13 (user's decision): the paper is about what the agentic loop delivers on the
+  shipped GSPI and on an untuned MPC, i.e. the three legs of `docs/MAIN_LINE.md`.** v6's single claim - *baseline
+  tuning, aggregation convention and wind weighting decide the apparent benefit of advanced pitch control* -
+  becomes the paper's **measurement discipline**: it keeps its evidence and its sections, but it moves to the
+  setup and the discussion and stops being the headline. `docs/plan_2026-10-12_manuscript-rewrite.md` carries
+  the site-by-site pass; the structure below is v6's and is the substrate, not the target.
+- **Manuscript (docs/manuscript/main.tex, v6, restructured 2026-09-24; target venue Wind Energy Science).**
+  v6's claim, now demoted as above: *baseline tuning, aggregation convention and wind weighting decide the
+  apparent benefit of advanced pitch control*. The controllers were INSTRUMENTS under it. Structure: 1 intro, 2 related work, 3 setup, 4 the ladder,
   5 what the reporting choices are worth (5.1 baseline, 5.2 aggregation + weighting, 5.3 the Wohler exponent as the
   INERT control, 5.4 where the layer may act, 5.5 who proposes the reward, 5.6 actuation), 6 discussion, 7 conclusion,
   references, appendices A-G. Headline numbers: of 32.54 points over the shipped controller (fresh seeds), tuning
@@ -258,19 +299,19 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   Engage Anand & Bottasso WES 2026 (same turbine/simulator, offline model repair) directly. Report 600 s simulated /
   20 s discarded / 580 s scored, and ADC against the 10 deg/s rate limit alongside the travel ratio.
   arXiv style `docs/manuscript/arxiv.sty`. No development shorthand.
-- **Objective decides the lever** (roadmap v2 §9 vs 08-30 §21): on F the reward-weight *proposer*
-  mattered (llm_fork > random_fork 7/7); on J the untuned default collapsed into a rollback loop
-  (12.5 m/s speed-MSE), hyper-parameter search repaired it (+6…+8, proposer-agnostic), and once the
-  default is fixed the effect shrinks. Mechanism chain: critic scale (`--value_norm`), credit window
-  (γλ), reward gating by the objective's own subset.
-- F-era headline, kept as history (08-30 roadmap §21–§23, REPORT_2026-09-01): llm_fork 17.89 ± 2.02
-  (7 seeds) > random_fork 12.36 ± 5.30 in 7/7 seeds (exact p = 0.0156); fork verification adds nothing
-  on top of the LLM proposer; every paired comparison replicates on S7–S10; F1 = mono runs at +0.05
-  speed-std ratio in 10/10 seeds. All of it is one wind bank (caveat C1); never regenerate it.
+
+### Infrastructure, data, and F-era history
+
+- **After any interruption (VM restart, full disk) run `scripts/dev/integrity_check.py --since <time> [--delete]` FIRST:**
+  a full disk left 7 zero-byte TurbSim fields (the generator skips existing names) and 9 unreadable baseline .npz.
 - Data: WSL `~/wtrl/{exp,wind,baselines/openfast}`, copy at `../wtrl-data/`; J tables via
   `scripts/dev/j_table.py [--csv]`, F-era tables in `docs/tables/` (`scripts/dev/build_tables.py`);
   provenance and caveats C1–C12 in `docs/RESULTS_2026-09-10_data-and-caveats.md`.
 
+- F-era headline, kept as history (08-30 roadmap §21–§23, REPORT_2026-09-01): llm_fork 17.89 ± 2.02
+  (7 seeds) > random_fork 12.36 ± 5.30 in 7/7 seeds (exact p = 0.0156); fork verification adds nothing
+  on top of the LLM proposer; every paired comparison replicates on S7–S10; F1 = mono runs at +0.05
+  speed-std ratio in 10/10 seeds. All of it is one wind bank (caveat C1); never regenerate it.
 ## Environment / how to run
 - Linux/WSL: `WTRL_SKIP_WIND=1 bash scripts/wsl/bootstrap.sh` from the repo root inside WSL
   Ubuntu-24.04 (the flag skips wind/baseline generation when a canonical bank is being migrated) — builds the
