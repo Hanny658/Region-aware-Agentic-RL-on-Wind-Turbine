@@ -106,6 +106,12 @@ arm_args() {  # prefix -> train.py arguments
     # chosen by WTRL_TEMPLATE, and the paired rollouts in WTRL_HOME=~/wtrl_rtn_range are that base's own, so Cw still
     # reads "on top of the base, loads held per wind". Separate name so the superseded runs are not overwritten.
     tnrwCwG3t) echo "--supervisor llm_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --residual_gate 15 17" ;;
+    # the matched RANDOM-STRUCTURE control for the arm above (campaign_gate_native_rand.sh, roadmap s58): reward
+    # expressions drawn from the fixed grammar, the same fork verification, the same three training seeds - the only
+    # difference from tnrwCwG3t is who writes the reward. s49 settled that question on the UNGATED PI base (agent 4/5
+    # against random structure 1/8 under the per-wind load rule); the GATED configuration is the one the manuscript
+    # headlines and has never had this control on either base, which s40 and s49 both record as a limitation.
+    tnrrCwG3t) echo "--supervisor random_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --residual_gate 15 17" ;;
     # low gate (campaign_gate13.sh): 13-15 m/s instead of 15-17, to reach the near-rated bins that carry most of the
     # weight of a site wind distribution (roadmap s42) without the 12-14 m/s damage of the ungated layer (s39)
     mrwCwGLt)  echo "--supervisor llm_reward --reward v3 --n_candidates 3 --knobs_json $KNOBS --objective Cw --means 12 14 16 18 20 22 24 --ti B --residual_gate 13 15 --base mpc --base_mpc_json @configs/mpc_sched_s33.json" ;;

@@ -92,7 +92,10 @@ with the reward *structure* proposed by the agent. Evidence: roadmap s34, s37, s
   did not find the constraint.** Any statement crediting the language model with the level would be wrong.
 - **Where that does not hold:** on the scheduled MPC base the two arms are indistinguishable on both level and
   the load rule (s40), and the **gated** configuration - including the retrained one of s56 - has never been run
-  with a matched random-structure control. The claim is scoped to the ungated PI base until it is.
+  with a matched random-structure control. The claim is scoped to the ungated PI base until it is. **That
+  control is running now** on the native gated base (s58, arm `tnrrCwG3t`, three seeds matched to the agent
+  runs, decision rule registered before the result; at three against three it can refute the extension of s49
+  but not establish it).
 
 ## What cannot be claimed
 
@@ -130,10 +133,14 @@ discussion, not in its title.
 
 ## Open, in order
 
-1. **The matched random-structure control for the gated layer on the native baseline** (manuscript section 5.5):
-   about 6 h, 5 runs. This is not bookkeeping - s49 settled the claim on the *ungated* PI base, and the
-   configuration the paper headlines is the gated one, which has never had this control on either baseline. It
-   is the one experiment that could move the claim rather than confirm it.
+1. **RUNNING since 2026-10-13 11:36: the matched random-structure control for the gated layer on the native
+   baseline** (manuscript section 5.5; `scripts/wsl/campaign_gate_native_rand.sh`, arm `tnrrCwG3t`, three seeds
+   matched to the agent runs seed by seed, rule pre-registered in roadmap s58 before any result). This is not
+   bookkeeping - s49 settled the claim on the *ungated* PI base, and the configuration the paper headlines is the
+   gated one, which has never had this control on either baseline. It is the one open experiment that could
+   **move** this page rather than confirm it. At three against three the best possible Fisher outcome is
+   p = 0.1, so it can refute the extension of s49 to the gated configuration but cannot establish it; the
+   informative branch is the cheap one, and s58.1 says what each outcome is allowed to say.
 2. Leg 1's agent-vs-random comparison is n = 3 per arm and was counted under the as-stated objective; restated
    under the per-wind rule it is 2 verified rows of 7 proposals against none proposed.
 3. The manuscript rewrite, `docs/plan_2026-10-12_manuscript-rewrite.md` - all of its gates are now open.

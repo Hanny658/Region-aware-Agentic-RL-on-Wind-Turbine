@@ -15,7 +15,7 @@ same commit - that file is the only place the project's claim lives, and a stale
 |---|---|---|
 | **1. The shipped GSPI, tuned by the agent** | what agentic search is worth on a classical pitch loop, in tuning files the controller can take | roadmap v2 §51-§55; `design_2026-10-11_rosco-native-search.md`; `tables/rosco_{band_verified,tuned_baseline,perwind}.csv`, `tables/rosco_band_rows_*.csv` |
 | **2. The untuned MPC, designed by the agent** | whether the agent can repair a model-based controller it did not design | roadmap v2 §33, §36, §38, §57; `tables/design_search.csv`, `tables/range_*.csv` |
-| **3. The learned layer, and who writes its reward** | whether the level or the constraint is what the agent buys | roadmap v2 §32, §34, §35, §37, §39-§41, §47, **§49**, §56; `tables/{gated_native,gated_residual,range_residual,mpc_residual}.csv` |
+| **3. The learned layer, and who writes its reward** | whether the level or the constraint is what the agent buys | roadmap v2 §32, §34, §35, §37, §39-§41, §47, **§49**, §56, §58; `tables/{gated_native,gated_residual,range_residual,mpc_residual}.csv` |
 | **discipline** | why the three legs are believable | roadmap v2 §22, §25-§28, §42, §52.3, §54, §55; `RESULTS_2026-09-10_data-and-caveats.md`; `tables/ladder_published_*.csv`, `tables/{lifetime_del,wohler,verification_probe}.csv` |
 
 ## By file
@@ -52,7 +52,8 @@ Numbers are sections of `roadmap_2026-09-11_metric-set-objective.md`.
 - **Leg 3:** §32 constrained objectives and two defects of the formulation - §34 the agent-written reward holds
   the loads, the fixed one does not - §35 where the layer does *not* pay - §37 n = 5 and two controls - §39-§40
   the layer on the MPC base - §41 the wind gate - §47 the gate-threshold sweep - **§49 the proposer question
-  settled at n = 8** - §56 retrained on the baseline that is a tuning file.
+  settled at n = 8** - §56 retrained on the baseline that is a tuning file - §58 the matched random-structure
+  control for the gated layer, decision rule pre-registered before the result.
 - **Discipline:** §22 actuator cost - §25-§26 where the actuation goes, the duty knee - §27 paired statistics -
   §28 the wind-range protocol - §42 site weighting - §54 the ladder in the four published reductions - §55.2
   the duty ladder.

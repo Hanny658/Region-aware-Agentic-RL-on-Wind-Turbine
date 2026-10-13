@@ -2886,3 +2886,48 @@ of s54 and s56: the model-based rung buys regulation and spends tower fatigue.
 on which number in `MAIN_LINE.md` it changes; if it changes none it is a roadmap note, not a document; and when
 a result does change a main-line number, `MAIN_LINE.md` is updated in the same commit. A stale claim in a short
 file is worse than a long log.
+
+## 58 The matched random-structure control for the gated layer, pre-registered (2026-10-13, launched 11:36)
+
+Leg 3. This is open item 1 of `docs/MAIN_LINE.md`, and the reason it was run before the manuscript rewrite is
+that it is the only queued experiment that can **move** the claim instead of confirming it. s49 settled "who
+writes the reward" at n = 8 on the **ungated** tuned-PI base: under the per-wind load rule the agent-written
+reward holds 4/5, a random structure drawn from the same grammar with the same fork verification holds 1/8, a
+fixed reward 0/8, Fisher two-sided p = 0.032 against the random structures. The configuration the paper
+headlines is the **wind-gated** one, and it has never been run against that control on either base - s40 and
+s41 both record this as a limitation, and s56 re-trained only the agent arm on the baseline that is a real
+tuning file. If random structures also hold the loads under the gate, the sharpest sentence in leg 3 has to be
+scoped to the ungated base.
+
+Arm `tnrrCwG3t` is `tnrwCwG3t` with `--supervisor random_reward` and nothing else changed; the two lines of the
+arm table were diffed word by word before launch and differ in exactly that one token. Same base template
+(`template_5mw_rosco_tuned_native`), same paired rollouts (`~/wtrl_rtn_range`, the 42 files whose identity check
+read exactly 0.000 in s56), same winds, same knob file, same objective Cw, same gate 15-17 m/s, same 300
+episodes of 150 s, and the same three training seeds 0 1 2 - so each control run pairs with an agent run seed by
+seed, and the random draw is reproducible from the seed. `scripts/wsl/campaign_gate_native_rand.sh`, resumable,
+pausable with `campaign_ctl.sh {pause|resume|stop|status} campaign_gate_native_rand`. Three training runs over
+two lanes plus six 600 s evaluations; the reference rows of the base already exist from s56.
+
+### 58.1 The decision rule, stated before any result
+
+**Power first, because it decides what the outcomes are allowed to say.** With three control seeds against three
+agent seeds the best possible Fisher outcome, 3/3 against 0/3, is two-sided **p = 0.1**. So this run cannot
+establish the agent under the gate. It can refute the extension of s49 to the gated configuration, and that
+asymmetry - the informative branch is the cheap one - is why three seeds run before any decision about five.
+
+"Holds" means exactly what it means in s49 and s56: at 600 s, against the paired shipped controller, **no load
+term below -1 % at any mean wind speed**, measured on held-out seeds 3-6 and on fresh seeds 7-10. The agent arm
+is 3/3 by that rule, with a per-wind violation of 0.00 % in all six of its evaluations.
+
+- **2 or 3 of 3 control seeds hold** - the proposer claim does not extend to the gated configuration. Leg 3 is
+  scoped to the ungated PI base in `MAIN_LINE.md` and in manuscript section 5.5, which says so in the text
+  rather than in a limitation sentence.
+- **1 of 3 holds** - nothing is established in either direction (3/3 against 1/3 is p = 0.4). Decide by the
+  per-wind load margin and by the level, and only then on whether to spend the 5-against-5 extension.
+- **0 of 3 hold** - the direction agrees with s49, but at p = 0.1 it is not a result. The claim stays scoped
+  until the extension is run: two more agent seeds and two more control seeds, about 6 h, which makes 5/5
+  against 0/5 worth p = 0.008.
+- **The level is secondary and is reported paired against the same base** (power MSE and gen-speed MSE against
+  the native tuned baseline on the same episodes, as in s56). s49 found the two searched arms **identical** in
+  level, so a level difference here would be a new finding and would need its own replication before being
+  written anywhere.
