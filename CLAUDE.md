@@ -50,11 +50,24 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   **primary** the simulations to the first feasible gain (Mann-Whitney one-sided llm against bayes, about
   p = 0.03 if s53 replicates, 0.0011 at best; a run that never finds one is censored and enters at 25);
   **secondary** the count of runs delivering a shippable gain (underpowered and said so in advance: 6 of 6
-  against 4 of 6 is p = 0.45) and the per-wind restatement of both, where the llm SELECTIONS read 0 of 3 off
-  the design winds (worst single-wind load term -2.87 / -2.07 / -3.73 fresh) while the bayes r2 (+0.25) and
-  local r0 (+0.33) selections hold and two llm CANDIDATES hold (the corner ladder, s52.3). s59.1 fixes what
-  each outcome means, including that a null primary leaves **no proposer claim in any leg**. Do not launch it
-  again and do not start a watcher for it.
+  against 4 of 6 is p = 0.45) and the per-wind restatement of both. s59.1 fixes what each outcome means,
+  including that a null primary leaves **no proposer claim in any leg**. Do not launch it again and do not
+  start a watcher for it.
+- **THE RESTATEMENT IS ALREADY IN, AND IT IS NOT FLATTERING (roadmap s59.2, no simulations;
+  `scripts/dev/rosco_proposer_test.py`, `docs/tables/rosco_proposer_test.csv`).** The twelve runs of s53
+  read three ways. Under the rule the search used: llm 3/3 runs with a shippable gain, median 8 sims,
+  +42.18 regulation; bayes 2/3, 21; local 1/3; random 0/3 - but against bayes that is one-sided exact
+  p = 0.30 on the simulations and Fisher p = 1.0 on the counts, so **at n = 3 nothing separates the model
+  from Bayesian optimisation**. Under the same rule with the loads required at every wind speed and
+  MEASURED off the design winds - what a user gets - **llm 0/3, bayes 1/3 (+16.57), local 1/3 (+11.62),
+  random 0/3**: the llm selections miss the tolerance by 0.17 points (llm r1 #12: design -0.60, held out
+  +1.06, fresh -1.17) and by 2.40 (llm r2 #24), on the tower load, worse fresh than held out every time.
+  **The mechanism is the screen, not the search:** llm r1 visited two tunings that DO hold off the design
+  winds (#9 and #11, the corner ladder of s52.3, one of them the +22.6-at-1.004x row in the verified band)
+  and its own rule took #12 instead, because on 14 design episodes #12 reads +36.96 of regulation with a
+  worst single wind of -0.60 and two episodes per wind cannot tell -0.60 from -1.20. Separate cheap
+  question, not this campaign: screen with a margin (s55: the set-mean margin predicts holding) or spend
+  episodes at the winds where the constraint binds.
 - **Parameter-search audit and redesign (2026-10-11, `docs/design_2026-10-11_rosco-native-search.md`,
   `scripts/rosco_native.py`, `eval/selection.py`, `campaign_rosco_native.sh`):** the s29/s31 tuned baseline was
   **not a ROSCO tuning**. It scaled `PC_GS_KP` / `PC_GS_KI` by two scalars, and because ROSCO builds the schedule as

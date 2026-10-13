@@ -1,0 +1,13 @@
+proposer,repeat,budget,n_filled_randomly,n_diverged,setmean_gain,setmean_sims_to_first,setmean_regulation,setmean_worst_per_wind_design,setmean_heldout_worst_per_wind,setmean_fresh_worst_per_wind,setmean_fresh_regulation,perwind_gain,perwind_sims_to_first,perwind_regulation,perwind_worst_per_wind_design,perwind_candidate,perwind_params,perwind_key,perwind_travel,perwind_heldout_regulation,perwind_heldout_worst,perwind_fresh_regulation,perwind_fresh_worst,delivers_off_design,delivered_sims_to_first,delivered_regulation
+random,0,24,0,7,False,,0.0,0.0,0.0,0.0,0.0,False,,0.0,,,,,,,,,,False,,0.0
+random,1,24,0,3,False,,0.0,0.0,0.0,0.0,0.0,False,,0.0,,,,,,,,,,False,,0.0
+random,2,24,0,6,False,,0.0,0.0,0.0,0.0,0.0,False,,0.0,,,,,,,,,,False,,0.0
+local,0,24,0,3,True,18,14.3,-0.0,1.12,0.33,11.62,True,18,14.3,-0.0,local_r0#21,omega 0.613 zeta 0.607 corner 8.747 damper 0.0000 (off),72f0dee8e539,2.719,14.2,1.12,11.62,0.33,True,18,11.62
+local,1,24,0,2,False,,0.0,0.0,0.0,0.0,0.0,False,,0.0,,,,,,,,,,False,,0.0
+local,2,24,0,4,False,,0.0,0.0,0.0,0.0,0.0,False,,0.0,,,,,,,,,,False,,0.0
+bayes,0,24,0,3,False,,0.0,0.0,0.0,0.0,0.0,False,,0.0,,,,,,,,,,False,,0.0
+bayes,1,24,0,1,True,7,46.76,-2.3,-0.71,-1.24,48.62,True,7,34.59,-0.6,bayes_r1#7,omega 0.664 zeta 0.687 corner 3.408 damper 0.0012 hpf 0.187,22a5f4bd34ca,1.152,35.07,-0.47,37.43,-2.04,False,,0.0
+bayes,2,24,0,1,True,21,15.37,-0.7,2.37,0.25,16.57,True,21,15.37,-0.7,bayes_r2#21,omega 0.480 zeta 1.115 corner 3.905 damper 0.0006 hpf 0.099,21851d5955fb,1.302,18.58,2.37,16.57,0.25,True,21,16.57
+llm,0,24,0,0,True,8,47.79,-5.9,-4.64,-2.87,49.55,False,,0.0,,,,,,,,,,False,,0.0
+llm,1,24,0,0,True,8,41.27,-6.6,-7.61,-2.07,42.49,True,8,36.96,-0.6,llm_r1#12,omega 0.600 zeta 0.850 corner 5.000 damper 0.0000 (off),a0cfdc6c10a7,1.475,36.98,1.06,37.74,-1.17,False,,0.0
+llm,2,24,0,0,True,12,37.47,-2.2,-2.72,-3.73,38.9,True,12,33.6,-0.7,llm_r2#24,omega 0.660 zeta 0.680 corner 3.100 damper 0.0000 (off),f4f6fe6f6b11,1.117,32.66,-1.94,34.83,-3.4,False,,0.0

@@ -3083,3 +3083,54 @@ Outcome branches, so the reading is fixed in advance:
    What survives is the search *space* (a searched reward structure buys the level, leg 3; a wind schedule
    repairs a per-wind violation, leg 2; one filter corner is worth a fifth of the regulation error, s52.3) and
    the measurement discipline. The manuscript would say so, and the agentic part of the title would have to go.
+
+### 59.2 The restatement, done before the new runs land: under the rule the project ships by, no arm delivers
+
+No simulations - `scripts/dev/rosco_proposer_test.py`, `docs/tables/rosco_proposer_test.csv`. The twelve runs of
+s53 are read three ways from the files on disk, and the five tunings the per-wind rule re-selects were all
+verified already as band members of s55, so the third reading costs nothing either.
+
+            run |  set-mean rule: sims  regulation  design w/w  fresh w/w |  per-wind: sims  regulation  design w/w  heldout w/w  fresh w/w  ships
+      random r0 |                    -        0.00        0.00       0.00 |                -        0.00
+      random r1 |                    -        0.00        0.00       0.00 |                -        0.00
+      random r2 |                    -        0.00        0.00       0.00 |                -        0.00
+       local r0 |                   18       14.30       -0.00      +0.33 |               18       14.30       -0.00        +1.12      +0.33    yes
+       local r1 |                    -        0.00        0.00       0.00 |                -        0.00
+       local r2 |                    -        0.00        0.00       0.00 |                -        0.00
+       bayes r0 |                    -        0.00        0.00       0.00 |                -        0.00
+       bayes r1 |                    7       46.76       -2.30      -1.24 |                7       34.59       -0.60        -0.47      -2.04     NO
+       bayes r2 |                   21       15.37       -0.70      +0.25 |               21       15.37       -0.70        +2.37      +0.25    yes
+         llm r0 |                    8       47.79       -5.90      -2.87 |                -        0.00
+         llm r1 |                    8       41.27       -6.60      -2.07 |                8       36.96       -0.60        +1.06      -1.17     NO
+         llm r2 |                   12       37.47       -2.20      -3.73 |               12       33.60       -0.70        -1.94      -3.40     NO
+
+Three readings of the same twelve runs, and they do not agree:
+
+1. **The rule the search used** (the three constraints on the set mean): llm 3 of 3 runs with a shippable gain,
+   median 8 simulations to it, regulation of the selections +42.18 (5.22); bayes 2 of 3, median 21, +31.06
+   (22.20); local 1 of 3, 18, +14.30; random 0 of 3. Against bayes the simulations read one-sided exact
+   p = 0.30 and the counts Fisher p = 1.0. **At n = 3 nothing separates the model from Bayesian optimisation**,
+   which is exactly what s59 was queued to settle.
+2. **The same rule with the load constraints required at every wind speed, screened on the design set:** llm
+   2 of 3 (llm r0 has no per-wind-holding candidate at all), bayes 2 of 3, local 1 of 3, random 0 of 3, and the
+   holding selections are llm +35.28 (2.38) against bayes +24.98 (13.59).
+3. **That rule measured off the design winds - what a user of the tool actually gets: llm 0 of 3, bayes 1 of 3
+   (+16.57 fresh), local 1 of 3 (+11.62), random 0 of 3.** The llm selections miss the tolerance by 0.17 points
+   (llm r1 #12: design -0.60, held out +1.06, fresh -1.17) and by 2.40 (llm r2 #24: -0.70, -1.94, -3.40), and
+   the bayes r1 selection misses as well (-0.47, -2.04). Every miss is on the tower-base load and every one is
+   worse on fresh seeds than held out, the fourth instance of that pattern after s32, s53.2 and s55.
+
+**And the mechanism is not the proposer.** llm r1 visited two tunings that do hold off the design winds - #9 and
+#11, the filter-corner ladder of s52.3, one of them the +22.6-regulation row at 1.004x pitch travel that sits in
+the verified band of s55 - and its own rule selected #12 instead, because on 14 design episodes #12 reads
++36.96 of regulation against +22.6 with a worst single wind of -0.60. **The screen is what fails, not the
+search:** two episodes per wind cannot tell -0.60 from -1.20, so the regulation-maximising candidate wins the
+tie and the shippable one is left in the cache. s52.3 said the per-wind screen is a screen and not the decision;
+this is what that sentence costs, measured.
+
+What it does to s59: the primary endpoint is untouched, because it asks how fast the search finds a gain under
+the rule the search was given. Secondary B now has this third form, and at n = 6 it is counted for all 21 runs,
+each new per-wind selection costing two evaluations of 28 episodes. What n = 6 cannot do is repair a selection
+rule that resolves nothing at 14 episodes - screening with a margin (s55 found the set-mean margin predicts
+holding), or spending episodes at the winds where the constraint binds, is a separate and cheap question, and
+it is not this campaign.
