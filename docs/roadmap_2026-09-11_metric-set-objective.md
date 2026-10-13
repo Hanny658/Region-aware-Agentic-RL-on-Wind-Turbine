@@ -2801,11 +2801,14 @@ Two things were found while checking the claim, both of which change how leg 1 c
   which `scripts/rosco_search.py` marks in its own docstring as "used to re-derive the paper's tuned baseline
   in the native parameterisation, **not as an arm of the comparison**". So the strongest verified tuning in the
   study is a classical recipe's, not an agent's, and the paper has to say so.
-- **The per-arm census under the per-wind rule is complete and it was free.** The design screen leaves 11
-  tunings with positive regulation and s55 measured all 11 off the design winds, so: llm proposed 6 and **2
-  hold** (`llm_r1#9`, the one-knob row at 1.000x travel, and `llm_r1#11` at 1.647x), local proposed 2 and 2
-  hold, bayes proposed 1 and 0 hold, random proposed none. The s53 count (llm 3/3, random 0/3) was under the
-  objective as stated; this is the count under the rule that now decides, and both belong in the paper.
+- **The per-arm census under the per-wind rule is complete and it was free.** The design screen leaves exactly
+  10 tunings with positive regulation - an eleventh is the shipped tuning itself at 0.00 by construction - and
+  s55 measured all 10 off the design winds, so the census needs no further simulation: llm proposed 7 and **2
+  hold** (`llm_r1#9`, the one-knob row at 1.000x travel, and `llm_r1#11` at 1.647x), local proposed 2 and both
+  hold (but at 0.976x and 0.880x travel, buying +10.69 and +1.73 of regulation - the cheap end of the duty
+  ladder, not a competitor for the baseline row), bayes proposed 1 and 0 hold, random proposed none. The s53
+  count (llm 3/3 runs, random 0/3) was taken under the objective as stated; this is the count under the rule
+  that now decides, and both belong in the paper.
 
 Leg 3 needed no re-reading: **s49 already settled it at n = 8** - agent-written reward 4/5 runs holding the
 per-wind load rule against random reward structures 1/8 (Fisher two-sided p = 0.032) and fixed rewards 0/8

@@ -33,9 +33,12 @@ Agent-found rows that hold both load terms at **every** wind speed on 28 held-ou
 
 - **Search efficiency (s53, 12 runs, 321 tunings):** runs that bought a shippable gain - llm **3/3**, bayes 2/3,
   local 1/3, **random 0/3**; median 8 simulations to the first gain for the llm arm.
-- **Per-arm census under the per-wind rule.** The design-set screen leaves 11 tunings with positive regulation
-  and the verification measured all of them, so this census is complete: llm proposed 6 and **2 hold**, local
-  proposed 2 and **2 hold**, bayes proposed 1 and 0 hold, random proposed none.
+- **Per-arm census under the per-wind rule.** The design-set screen leaves exactly 10 tunings with positive
+  regulation (an eleventh is the shipped tuning itself, at 0.00 by construction) and s55 measured all 10 off
+  the design winds, so this census is complete: **llm proposed 7 and 2 hold** (`llm_r1#9` and `llm_r1#11`),
+  **local proposed 2 and both hold** (both at *sub*-shipped duty, 0.976x and 0.880x, buying little regulation),
+  bayes proposed 1 and 0 hold, random proposed none. The s53 count (llm 3/3 runs, random 0/3) was taken under
+  the objective as stated; this is the count under the rule that now decides. Both belong in the paper.
 - **Against the agent: it does not win the level.** The selected baseline came from `--proposer tune`, the fixed
   s29 recipe, which the source marks "not as an arm of the comparison". And the agent's most-regulating
   proposals (+47.79, +41.27 and four more) all lose 2.2 to 6.6 points of tower-base fatigue at a *single* wind
