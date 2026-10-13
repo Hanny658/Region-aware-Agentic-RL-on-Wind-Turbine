@@ -42,9 +42,14 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
 
 ### Leg 1 - the shipped GSPI, tuned by the agent (`docs/MAIN_LINE.md` leg 1)
 
-- **RUNNING since 2026-10-13 23:11, leg 1 at n = 6 (roadmap s59; `scripts/wsl/campaign_rosco_native_n6.sh`,
-  nine runs - llm / bayes / local, repeats 3-5 - about 16 h and then 2 h of stage 3; drive it with
-  `campaign_ctl.sh {pause|resume|stop|status} campaign_rosco_native`, log `~/wtrl/exp/rosco_native_n6.log`).**
+- **PAUSED on request 2026-10-14 07:31 at 4 of 9 runs: leg 1 at n = 6 (roadmap s59, state in s59.3;
+  `scripts/wsl/campaign_rosco_native_n6.sh`, nine runs - llm / bayes / local, repeats 3-5; log
+  `~/wtrl/exp/rosco_native_n6.log`). Finished: llm r3, bayes r3, local r3, llm r4. In flight: bayes r4 at
+  16 of 24 candidates. Not started: local r4, llm r5, bayes r5, local r5, then stage 3 - about 9 h 40 min
+  left. **RESUME with `bash scripts/wsl/campaign_ctl.sh resume campaign_rosco_native`** (36 processes are
+  SIGSTOPped, nothing is lost); if the WSL VM was shut down meanwhile, relaunch the campaign script
+  instead - finished runs are skipped on their best.json and bayes r4 re-walks its own cached candidates.
+  **Do not compute the s59.1 tests on the partial data:** they are pre-registered at n = 6 per arm.**
   s58 took the proposer claim off leg 3, so leg 1 carries it alone, and leg 1 was n = 3 per arm where 3 of 3
   against 2 of 3 is Fisher p = 1.0. Endpoints and power pre-registered in s59.1 BEFORE the runs exist:
   **primary** the simulations to the first feasible gain (Mann-Whitney one-sided llm against bayes, about

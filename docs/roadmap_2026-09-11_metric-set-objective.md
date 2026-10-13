@@ -3134,3 +3134,22 @@ each new per-wind selection costing two evaluations of 28 episodes. What n = 6 c
 rule that resolves nothing at 14 episodes - screening with a margin (s55 found the set-mean margin predicts
 holding), or spending episodes at the winds where the constraint binds, is a separate and cheap question, and
 it is not this campaign.
+
+### 59.3 Paused at 4 of 9 runs (2026-10-14 07:31, on request)
+
+`campaign_ctl.sh pause campaign_rosco_native` SIGSTOPped all 36 processes of session 400; the machine is idle
+and nothing is lost. On disk with a `best.json`: llm r3 (started 23:11), bayes r3 (00:59), local r3 (02:43),
+llm r4 (04:26), each 25 history records, each about 1 h 45 min. In flight: bayes r4, 17 records of 25, started
+06:12, with two 600 s evaluations frozen mid-OpenFAST. Not started: local r4, llm r5, bayes r5, local r5, and
+then stage 3. About 9 h 40 min of work left.
+
+Resume with `bash scripts/wsl/campaign_ctl.sh resume campaign_rosco_native`. If the WSL VM is shut down while
+the session is stopped, the frozen processes die with it; relaunching `campaign_rosco_native_n6.sh` then
+continues correctly, because a finished run is skipped on its `best.json` and bayes r4 is a deterministic
+proposer whose re-walked candidates all hit its own parameter-hash cache. An interrupted run of the llm arm
+would instead start its budget over, so a stop during an llm run costs that run.
+
+**The tests of s59.1 are not to be computed on this partial set.** They are pre-registered at n = 6 per arm,
+four finished runs is two arms at n = 4 and one at n = 4 in part, and reading them now is exactly the peeking
+the pre-registration exists to prevent. `rosco_proposer_test.py` will be run when the ninth run and stage 3
+are done.
