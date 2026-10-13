@@ -47,7 +47,8 @@ Agent-found rows that hold both load terms at **every** wind speed on 28 held-ou
 ## Leg 2 - the untuned MPC, designed by the agent
 
 Object: the cost structure of the offset-free LPV-MPC - the tower weight and its wind schedule. Evidence:
-roadmap s33, s38, s57, `scripts/mpc_design_search.py`, `docs/tables/design_search.csv`.
+roadmap s33, s38, s57, `scripts/mpc_design_search.py`, `scripts/dev/mpc_leg_table.py`,
+`docs/tables/design_search.csv`, `docs/tables/mpc_leg_{heldout,fresh}.csv`.
 
 - **s38:** from the hand-set **unscheduled** reference, the llm and es proposers both discover the wind schedule
   in 24 simulations and repair the per-wind violation on held-out winds; **random search 0/48**. llm proposals
@@ -60,6 +61,11 @@ roadmap s33, s38, s57, `scripts/mpc_design_search.py`, `docs/tables/design_searc
   -6.27** (unscheduled) to **+0.24 and +0.08** (scheduled). The agent converts a controller that *loses* tower
   fatigue at high wind into one that does not, for 1.6 points of regulation. A feasibility repair, not a level
   gain.
+- **The repair does not make the model-based route the load-optimal one.** On the same episodes the tuned PI
+  loop beats *both* MPC rows on tower-base fatigue at every wind speed from 16 m/s up: +21.9 / +17.6 / +15.4 /
+  +15.4 / +15.4 against the scheduled MPC's +13.5 / +3.9 / +1.6 / +0.2 / +0.1. This is the per-wind form of the
+  s54 and s56 finding - the model-based rung buys regulation and spends tower fatigue - and it is why no single
+  decomposition of the headline exists.
 - Open: the fresh-seed (7-10) row of the unscheduled reference, `scripts/wsl/campaign_mpc_unsched_fresh.sh`.
 
 ## Leg 3 - the learned layer, and who writes its reward
