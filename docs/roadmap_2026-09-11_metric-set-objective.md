@@ -2841,8 +2841,33 @@ points of regulation.** That is a feasibility repair, the same thing it does on 
 the honest way to report a search that does not beat the hand design.
 
 The unscheduled reference had never been run on the fresh seeds 7-10 while every other rung of the ladder is
-reported there, so `campaign_mpc_unsched_fresh.sh` adds that one evaluation (identical arguments to the
-scheduled row of `campaign_gate.sh` except `qt_sched`).
+reported there. `campaign_mpc_unsched_fresh.sh` added that one evaluation (identical arguments to the scheduled
+row of `campaign_gate.sh` except `qt_sched`; 28 episodes, 13 min). On the fresh seeds the leg is sharper, and
+it is the fresh-seed version that the manuscript should carry (`scripts/dev/mpc_leg_table.py`,
+`docs/tables/mpc_leg_fresh.csv`):
+
+| row | power MSE | speed MSE | tower DEL | blade DEL | travel | ADC |
+|---|---|---|---|---|---|---|
+| tuned baseline, native (s52) | +25.3 | +29.7 | +25.3 | +1.7 | 2.016x | 0.0968 |
+| offset-free LPV-MPC, **unscheduled** | +50.7 | +57.1 | +15.6 | +0.5 | 1.912x | 0.0918 |
+| offset-free LPV-MPC, agent-found schedule | +49.1 | +55.4 | +17.4 | -0.0 | 2.076x | 0.0997 |
+
+Paired on the same 28 episodes the schedule is **-1.65 power, -1.74 speed, +1.83 tower [+1.29, +2.72], -0.53
+blade**. Per wind, tower-base DEL reduction:
+
+| U | unscheduled | agent-found schedule | tuned PI baseline |
+|---|---|---|---|
+| 20 | +4.22 | +5.42 | +18.70 |
+| 22 | +0.55 | +3.44 | +16.94 |
+| 24 | **-8.76** | **-0.33** | +15.30 |
+
+So the statement that leg 2 can carry, on winds nothing has seen: **the per-wind load rule of s28 is "no term
+below -1 % at any wind speed"; the unscheduled controller fails it by 8.8 points at 24 m/s, and the agent-found
+schedule brings it inside the tolerance for 1.7 points of regulation.** Two honest qualifications go with it.
+At -0.33 the repaired term is *inside* the tolerance and not positive - the repair replicates on fresh seeds
+but with no margin to spare (held out it was +0.08). And the tuned PI loop beats both MPC rows on tower fatigue
+at **every** wind speed from 16 m/s up, at comparable duty (2.016x against 2.076x), which is the per-wind form
+of s54 and s56: the model-based rung buys regulation and spends tower fatigue.
 
 ### 57.3 What was reorganised, and the rule that keeps it from happening again
 

@@ -134,6 +134,19 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
 
 ### Leg 2 - the untuned MPC, designed by the agent (leg 2)
 
+- **WHAT THE AGENTIC DESIGN SEARCH IS WORTH ON AN UNTUNED MPC, in the four published reductions (roadmap s57.2,
+  2026-10-13; `scripts/dev/mpc_leg_table.py`, `docs/tables/mpc_leg_{fresh,heldout}.csv`,
+  `campaign_mpc_unsched_fresh.sh`).** s38 reported the discovery of the wind schedule in composite points; this
+  is the same thing in published terms. Fresh seeds 7-10, 28 episodes, vs the paired shipped controller:
+  unscheduled offset-free LPV-MPC +50.7 / +57.1 / **+15.6** / +0.5 at 1.912x travel; agent-found schedule
+  +49.1 / +55.4 / **+17.4** / -0.0 at 2.076x. Paired: -1.65 power, -1.74 speed, **+1.83 tower** [+1.29, +2.72],
+  -0.53 blade. **The set mean hides the whole repair:** tower DEL at 24 m/s goes **-8.76 -> -0.33** (held out
+  -6.27 -> +0.08), so against the s28 rule (no term below -1 % at any wind speed) **the unscheduled controller
+  fails by 8.8 points on winds nothing has seen and the schedule brings it inside the tolerance for 1.7 points
+  of regulation** - a feasibility repair, which is leg 2 of `docs/MAIN_LINE.md`. Two qualifications: at -0.33
+  it is inside the tolerance, not positive; and the tuned PI loop beats both MPC rows on tower fatigue at every
+  wind speed from 16 m/s up (+26.9 / +20.5 / +18.7 / +16.9 / +15.3 against +17.7 / +6.5 / +5.4 / +3.4 / -0.3)
+  at comparable duty, the per-wind form of s54 and s56.
 - **The model-based reference is the strongest controller on J, and it must be evaluated as the
   base controller** (roadmap v2 s18): the 3-state LPV-MPC with its cost re-scaled so the tower term
   works (`--scale v2`, qt = 3) scores **16.3 / 17.2** on the two held-out sets as the environment's

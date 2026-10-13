@@ -54,19 +54,22 @@ roadmap s33, s38, s57, `scripts/mpc_design_search.py`, `scripts/dev/mpc_leg_tabl
   in 24 simulations and repair the per-wind violation on held-out winds; **random search 0/48**. llm proposals
   beat the reference more often than es (25/48 vs 15/48, p = 0.03) but the two are equal in the result, and
   neither beats the hand design of s33.
-- **What it is worth in published terms** (held-out seeds 3-6, 28 episodes, paired on the same wind file):
-  unscheduled +47.3 / +52.4 / +15.0 / +3.4 at 1.981x travel; agent-found schedule +45.7 / +50.7 / +16.5 / +2.9
-  at 2.140x. Paired difference **-1.59 power, -1.63 speed, +1.49 tower, -0.50 blade**, every interval resolved.
-- **Per wind speed is where the repair is:** tower-base DEL reduction at 22 and 24 m/s goes from **-2.46 and
-  -6.27** (unscheduled) to **+0.24 and +0.08** (scheduled). The agent converts a controller that *loses* tower
-  fatigue at high wind into one that does not, for 1.6 points of regulation. A feasibility repair, not a level
-  gain.
-- **The repair does not make the model-based route the load-optimal one.** On the same episodes the tuned PI
-  loop beats *both* MPC rows on tower-base fatigue at every wind speed from 16 m/s up: +21.9 / +17.6 / +15.4 /
-  +15.4 / +15.4 against the scheduled MPC's +13.5 / +3.9 / +1.6 / +0.2 / +0.1. This is the per-wind form of the
-  s54 and s56 finding - the model-based rung buys regulation and spends tower fatigue - and it is why no single
-  decomposition of the headline exists.
-- Open: the fresh-seed (7-10) row of the unscheduled reference, `scripts/wsl/campaign_mpc_unsched_fresh.sh`.
+- **What it is worth in published terms** (fresh seeds 7-10, 28 episodes, paired on the same wind file):
+  unscheduled +50.7 / +57.1 / +15.6 / +0.5 at 1.912x travel; agent-found schedule +49.1 / +55.4 / +17.4 / -0.0
+  at 2.076x. Paired difference **-1.65 power, -1.74 speed, +1.83 tower [+1.29, +2.72], -0.53 blade**, every
+  interval resolved. Held-out seeds 3-6 give the same thing: -1.59 / -1.63 / +1.49 / -0.50.
+- **Per wind speed is where the repair is, and the set mean hides all of it.** Tower-base DEL reduction at
+  24 m/s, fresh seeds: **-8.76 unscheduled -> -0.33 scheduled**; at 22 m/s +0.55 -> +3.44 (held out: -6.27 ->
+  +0.08 and -2.46 -> +0.24). The per-wind load rule of s28 is *no term below -1 % at any wind speed*: **the
+  unscheduled controller fails it by 8.8 points on winds nothing has seen, and the agent-found schedule is
+  inside the tolerance** - though at -0.33 it is inside it, not positive. That is the whole of leg 2: the agent
+  buys 8.4 points of the worst single-wind load term for 1.7 points of regulation. A feasibility repair, not a
+  level gain.
+- **The repair does not make the model-based route the load-optimal one.** On the same fresh episodes the tuned
+  PI loop beats *both* MPC rows on tower-base fatigue at every wind speed from 16 m/s up: +26.9 / +20.5 / +18.7
+  / +16.9 / +15.3 against the scheduled MPC's +17.7 / +6.5 / +5.4 / +3.4 / -0.3, and it does so at comparable
+  duty (2.016x against 2.076x). This is the per-wind form of the s54 and s56 finding - the model-based rung
+  buys regulation and spends tower fatigue - and it is why no single decomposition of the headline exists.
 
 ## Leg 3 - the learned layer, and who writes its reward
 
@@ -127,11 +130,10 @@ discussion, not in its title.
 
 ## Open, in order
 
-1. Leg 2's fresh-seed row - running, `campaign_mpc_unsched_fresh.sh`, about 1 h.
-2. **The matched random-structure control for the gated layer on the native baseline** (manuscript section 5.5):
+1. **The matched random-structure control for the gated layer on the native baseline** (manuscript section 5.5):
    about 6 h, 5 runs. This is not bookkeeping - s49 settled the claim on the *ungated* PI base, and the
    configuration the paper headlines is the gated one, which has never had this control on either baseline. It
-   is the one experiment that could move the claim rather than confirm it. Decide after 1.
-3. Leg 1's agent-vs-random comparison is n = 3 per arm and was counted under the as-stated objective; restated
-   under the per-wind rule it is 2 verified rows of 6 proposals against 0 of 0.
-4. The manuscript rewrite, `docs/plan_2026-10-12_manuscript-rewrite.md` - all of its gates are now open.
+   is the one experiment that could move the claim rather than confirm it.
+2. Leg 1's agent-vs-random comparison is n = 3 per arm and was counted under the as-stated objective; restated
+   under the per-wind rule it is 2 verified rows of 7 proposals against none proposed.
+3. The manuscript rewrite, `docs/plan_2026-10-12_manuscript-rewrite.md` - all of its gates are now open.
