@@ -52,8 +52,8 @@ Numbers are sections of `roadmap_2026-09-11_metric-set-objective.md`.
 - **Leg 3:** §32 constrained objectives and two defects of the formulation - §34 the agent-written reward holds
   the loads, the fixed one does not - §35 where the layer does *not* pay - §37 n = 5 and two controls - §39-§40
   the layer on the MPC base - §41 the wind gate - §47 the gate-threshold sweep - **§49 the proposer question
-  settled at n = 8** - §56 retrained on the baseline that is a tuning file - §58 the matched random-structure
-  control for the gated layer, decision rule pre-registered before the result.
+  settled at n = 8** - §56 retrained on the baseline that is a tuning file - §58 the matched control: under the
+  gate the proposer is not distinguishable, and the gate is why.
 - **Discipline:** §22 actuator cost - §25-§26 where the actuation goes, the duty knee - §27 paired statistics -
   §28 the wind-range protocol - §42 site weighting - §54 the ladder in the four published reductions - §55.2
   the duty ladder.

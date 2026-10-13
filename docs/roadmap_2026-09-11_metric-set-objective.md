@@ -2957,3 +2957,60 @@ a count a re-run could flip, and the paper says so wherever it says 3/3.
 
 The level, paired against the same base on the same episodes, is the s56 row unchanged: power MSE +5.80 to
 +6.44, speed MSE +5.91 to +6.78 on fresh seeds, at 1.22 to 1.29x the base pitch travel.
+
+### 58.3 The result: under the gate the proposer is not distinguishable, and the gate is why
+
+Finished 2026-10-13 15:46, 4 h 10 min, three control seeds and six 600 s evaluations, no infrastructure
+failures. `docs/tables/gate_proposer_control.csv`. **This is the branch of 58.1 that moves the claim.**
+
+Per-wind load rule, worst single-wind load term against the native base (tolerance -1 point):
+
+| seed | agent, fresh twr / bld | random, fresh twr / bld | agent, held out | random, held out |
+|---|---|---|---|---|
+| 0 | -0.08 / -0.08 | -0.06 / -0.02 | -0.10 / +0.00 | **+0.00 / +0.00** |
+| 1 | **-0.98** / +0.00 | -0.07 / +0.00 | -0.50 / +0.00 | **+0.00 / +0.00** |
+| 2 | -0.03 / -0.22 | -0.02 / -0.16 | -0.18 / -0.40 | **+0.00 / +0.00** |
+
+**Agent 3/3, random reward structure 3/3, on both seed sets, Fisher two-sided p = 1.0** - and the control holds
+with **more** margin than the agent: no random seed is negative at any wind speed on the held-out set, while the
+agent arm has its -0.98 at 18 m/s on fresh seeds. The control is a real control: both arms adopted a proposal at
+6 of their 7 supervision points, and the kept expressions are structurally comparable draws from the same
+grammar (the control seeds kept, for instance, `86.5*tanh(6*(p_ratio-1))*(region==0) - 27.1*tanh((d_wg/0.005)**2)*(region_w==1) - ...`).
+
+Level, paired against the same base on the same episodes (power MSE / speed MSE added, fresh seeds): agent
++5.80 / +5.91, +5.80 / +6.16, +6.44 / +6.78; random **+7.89 / +8.20, +6.13 / +6.37, +6.74 / +6.98**. Held out
+the ordering repeats (+7.44, +5.80, +6.34 against +5.40, +5.72, +6.24). The direction is consistent on both
+seed sets but **it is not a result**: n = 3 per arm, the arm means are within each other spread, and the control
+spends more actuation (1.23 to 1.49x the base pitch travel against 1.22 to 1.31x). The one duty-matched pair
+makes the point without the duty confound - random seed 1 at 1.226x against agent seed 1 at 1.220x is
++6.13 / +6.37 against +5.80 / +6.16 with tower DEL +0.62 against +0.01. **No agent advantage is visible under
+the gate in either the level or the constraint.**
+
+**Why, and it is in the per-wind block.** Both arms are exactly +0.00 at 12 m/s by construction (the gate is
+shut) and the worst cell of any of the six runs at 14 m/s is -0.09. The ungated failures of s34 and s49 were
+exactly there: the fixed reward lost 3 to 7 points of tower fatigue at 12-16 m/s, and that is the damage the
+agent-written reward had to avoid by writing the load terms itself. **The gate removes the bins where the
+constraint was hard, so the configuration supplies the feasibility that the proposer used to supply.** Stated
+as a mechanism it is consistent with every number we have: searching the structure buys the level (s49, +4.02
+against +4.01); the proposer buys the constraint only where the constraint is actually binding (s49 ungated,
+4/5 against 1/8, p = 0.032); under the gate it is not binding and the arms are identical (here, 3/3 against
+3/3). It also explains s40, where the two arms were indistinguishable on the scheduled MPC base - a base that
+already holds its own loads.
+
+**What changes.**
+1. Leg 3 of `docs/MAIN_LINE.md` is **scoped in the text, not in a limitation**: the proposer effect is a
+   property of the ungated tuned-PI base. In the configuration the paper headlines, a random draw from the same
+   grammar holds the loads just as well, with more margin.
+2. The honest form of the agentic claim for leg 3 is about the **search space**, not the proposer: a searched
+   reward *structure* is what buys both the level and, where it binds, the constraint. The language model is
+   distinguishable from a random draw out of its own vocabulary in exactly one configuration of this study.
+3. The gate is prior art (Kim arXiv:2609.21307, Abbas IET CTA 2026; `docs/literature_2026-09-23.md`), so the
+   device that supplies the feasibility is not ours either. Say so where the gate is introduced.
+4. Legs 1 and 2 are untouched: their controls are random *search* in the design space (0/3 runs on leg 1,
+   0/48 on leg 2), not a random draw from a reward grammar, and both still separate.
+
+**The cheapest next question, not run:** a fixed-reward arm under the gate on the native base, three runs,
+about 3 h. If the fixed reward also holds, the structure search buys nothing under the gate either and leg 3
+collapses to the gate; if it does not, the search is still load-bearing and only the proposer is not. s41 has
+the fixed reward under the gate on the MPC base losing 5.9 points of tower fatigue at 20 m/s, which points to
+the second reading, but the native base has never had that arm.

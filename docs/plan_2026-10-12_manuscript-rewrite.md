@@ -89,13 +89,20 @@ Consequences for the structure, to be settled before the pass:
   verified band, the one-knob row at shipped duty, the per-arm census, and the fixed recipe that beats it on
   level); 5.2 the untuned MPC repaired by the agent (the schedule discovered in 24 simulations, the per-wind
   tower term at 22 and 24 m/s, random 0/48); 5.3 the learned layer and who writes its reward (s49 at n = 8:
-  the level is the search, the constraint is the proposer; s56 on the correct baseline). The present 5.1-5.6
+  the level is the search; the constraint is the proposer only where it binds, which is the ungated base - under
+  the gate the matched control ties at 3/3 against 3/3, s58; s56 on the correct baseline). The present 5.1-5.6
   become the discipline section plus the ablations that each leg needs.
 - **The inert controls stay where they are** (5.3 Wohler exponent, 5.6 actuation): they are what makes a leg
   believable, so they attach to the legs they serve rather than forming their own argument.
-- **The limitations must now carry the two scope statements of s40 and s49 verbatim:** the proposer effect is
-  established on the ungated PI base only, and the gated configuration - including the retrained one of s56 -
-  has never been run with a matched random-structure control.
+- **The proposer scope is now a measured RESULT and belongs in the text of 5.3, not in the limitations (s58,
+  2026-10-13).** The matched random-structure control was run on the gated layer on the native baseline with its
+  rule pre-registered, and it came out **3/3 against 3/3 on both seed sets, Fisher p = 1.0**, with the control
+  holding by more margin and not behind on the level. So 5.3 states, in its own text: searching the reward
+  structure buys the level and - where the constraint binds - the feasibility; *who* proposes the structure is
+  distinguishable on the ungated PI base (s49, 4/5 against 1/8, p = 0.032) and is **not** distinguishable under
+  the gate, because the gate removes the wind bins where the constraint binds. What stays in the limitations is
+  the n of each count (5, 8, 3, 3) and the 0.02-point margin of the agent seed that holds most narrowly, not the
+  scope - the scope has been measured. The gate is prior art and is attributed where it is introduced.
 - **Nothing in (A)-(D) is wasted:** the composite still leaves the reporting, the baseline row still becomes a
   named band member, the two false statements still go, and the PI-base rung still comes from s56. The order is
   unchanged; only what the sections are arguing for changes.

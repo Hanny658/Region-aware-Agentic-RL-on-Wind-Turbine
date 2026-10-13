@@ -13,6 +13,11 @@ LPV-MPC, and a residual layer's reward structure - and all three come out the sa
 design that is not deliverable into one that is, in few simulations, where random search finds nothing; and in
 all three it fails to beat a careful human or a fixed classical recipe on the level of the result.
 
+One scope in that sentence is now measured instead of assumed. The contrast against *random search in the
+design space* is what legs 1 and 2 carry (0 of 3 runs, 0 of 48 simulations). In leg 3 the contrast is against a
+random draw from a reward grammar, and it holds only **without** the wind gate (s49 against s58): with the gate,
+the configuration supplies the feasibility and the proposer is not distinguishable.
+
 That shape is the result. It is also why the alternative claim is not available: see *what cannot be claimed*.
 
 ## Leg 1 - the shipped GSPI, tuned by the agent
@@ -75,7 +80,8 @@ roadmap s33, s38, s57, `scripts/mpc_design_search.py`, `scripts/dev/mpc_leg_tabl
 
 Object: a wind-gated residual pitch layer on top of either base, trained under a per-wind constrained objective,
 with the reward *structure* proposed by the agent. Evidence: roadmap s34, s37, s39, s40, s41, **s49**, s56,
-`docs/tables/gated_native.csv`, `gated_residual.csv`, `mpc_residual.csv`, `range_residual.csv`.
+**s58**; `docs/tables/gate_proposer_control.csv`, `gated_native.csv`, `gated_residual.csv`, `mpc_residual.csv`,
+`range_residual.csv`.
 
 - **On the baseline that is a tuning file (s56, the current row):** paired against its own base on the same 28
   fresh episodes, three agent seeds - power MSE **+5.80 to +6.44**, speed MSE **+5.91 to +6.78**, tower DEL
@@ -86,25 +92,35 @@ with the reward *structure* proposed by the agent. Evidence: roadmap s34, s37, s
   points** (tower DEL at 18 m/s, fresh seeds), so a count a re-run could flip; say so wherever 3/3 appears.
 - **On the scheduled MPC (s41, s54):** +2.41 power, +2.59 speed, +1.44 tower, +1.87 blade on fresh seeds, at
   2.076x -> 2.899x travel.
-- **Who writes the reward: settled at n = 8 (s49), and it is the sharpest statement of the whole claim.** On the
-  ungated PI base, runs whose loads hold under the per-wind rule at 600 s: agent-written reward **4/5**, random
-  reward structure with the same fork verification **1/8**, fixed reward 0/8. Fisher exact: agent against the
-  random structures two-sided **p = 0.032**, against the fixed rewards p = 0.007, against the pooled controls
-  1/16 p = 0.004. The *level* of the two searched arms is identical (going from 3 to 8 control seeds raised the
-  random structures' level but their load-rule count only from 0/3 to 1/8). **More search found the level; it
-  did not find the constraint.** Any statement crediting the language model with the level would be wrong.
-- **Where that does not hold:** on the scheduled MPC base the two arms are indistinguishable on both level and
-  the load rule (s40), and the **gated** configuration - including the retrained one of s56 - has never been run
-  with a matched random-structure control. The claim is scoped to the ungated PI base until it is. **That
-  control is running now** on the native gated base (s58, arm `tnrrCwG3t`, three seeds matched to the agent
-  runs, decision rule registered before the result; at three against three it can refute the extension of s49
-  but not establish it).
+- **Who writes the reward: it depends on the configuration, and the honest statement is narrower than it was.**
+  On the **ungated** PI base, settled at n = 8 (s49): runs whose loads hold under the per-wind rule at 600 s are
+  agent-written reward **4/5**, random reward structure with the same fork verification **1/8**, fixed reward
+  0/8; Fisher two-sided **p = 0.032** against the random structures, p = 0.007 against the fixed rewards. The
+  *level* of the two searched arms is identical (+4.02 against +4.01). **More search found the level; it did not
+  find the constraint.**
+- **Under the GATE, on the baseline the paper headlines, that difference is gone (s58, 2026-10-13, the matched
+  control, rule pre-registered).** Agent **3/3**, random reward structure **3/3**, both seed sets, Fisher
+  two-sided **p = 1.0** - and the control holds with *more* margin: no control seed is negative at any wind
+  speed on the held-out set, against the agent arm worst cell of -0.98. The control is also not behind in level
+  (power MSE added +6.13 to +7.89 against the agent +5.80 to +6.44 on fresh seeds; consistent on both seed sets,
+  n = 3 per arm, so a direction and not a result, and the control spends more actuation).
+- **Why, and it is the reading that matters:** both arms are +0.00 at 12 m/s by construction and no worse than
+  -0.09 at 14 m/s, which is exactly where the ungated failures of s34 and s49 were (3 to 7 points of tower
+  fatigue lost at 12-16 m/s). **The gate removes the bins where the constraint binds, so the configuration
+  supplies the feasibility the proposer used to supply.** Same reading covers s40, where the arms were
+  indistinguishable on a scheduled MPC base that already holds its own loads. So leg 3 credits the **search
+  space** - a searched reward *structure* buys the level, and the constraint where it binds - and credits the
+  *proposer* in exactly one configuration of this study, which is not the headline one. The gate itself is prior
+  art (Kim arXiv:2609.21307, Abbas IET CTA 2026) and must be attributed where it is introduced.
 
 ## What cannot be claimed
 
 1. **"The agent designs a better controller."** It loses the level to a fixed recipe on leg 1 and to a hand
    design on leg 2 (s53.2 and s38 state this explicitly).
-2. **"The LLM beats other search."** es equals it on leg 2; local search found two verified rows on leg 1.
+2. **"The LLM beats other search."** es equals it on leg 2; local search found two verified rows on leg 1; and
+   under the gate on the native baseline a random draw from its own reward grammar equals it on the load rule
+   and is not behind on the level (3/3 against 3/3, s58). It separates in exactly one configuration of this
+   study, the **ungated** PI base (s49).
 3. **A composite score.** Report the four published reductions, each on its own. The symbol *J* is the MPC cost
    function. The composite stays as the *selection and training* objective of the campaigns, under its own name.
 4. **"ROSCO's tower damper is worth about nothing"** (withdrawn in s52: its gain had been capped at 0.004, worth
@@ -136,14 +152,12 @@ discussion, not in its title.
 
 ## Open, in order
 
-1. **RUNNING since 2026-10-13 11:36: the matched random-structure control for the gated layer on the native
-   baseline** (manuscript section 5.5; `scripts/wsl/campaign_gate_native_rand.sh`, arm `tnrrCwG3t`, three seeds
-   matched to the agent runs seed by seed, rule pre-registered in roadmap s58 before any result). This is not
-   bookkeeping - s49 settled the claim on the *ungated* PI base, and the configuration the paper headlines is the
-   gated one, which has never had this control on either baseline. It is the one open experiment that could
-   **move** this page rather than confirm it. At three against three the best possible Fisher outcome is
-   p = 0.1, so it can refute the extension of s49 to the gated configuration but cannot establish it; the
-   informative branch is the cheap one, and s58.1 says what each outcome is allowed to say.
+1. **The fixed-reward arm under the gate on the native base** - three runs, about 3 h, not started. s58 showed
+   that *who* proposes the reward structure does not matter under the gate; this says whether **searching** the
+   structure matters there at all. If a fixed reward also holds the loads, leg 3 collapses to the gate; if it
+   does not, the structure search is load-bearing and only the proposer is not. s41 has the fixed reward under
+   the gate on the MPC base losing 5.9 points of tower fatigue at 20 m/s, which points to the second reading,
+   but the native base has never had that arm. It is the last question that can still move this page.
 2. Leg 1's agent-vs-random comparison is n = 3 per arm and was counted under the as-stated objective; restated
    under the per-wind rule it is 2 verified rows of 7 proposals against none proposed.
 3. The manuscript rewrite, `docs/plan_2026-10-12_manuscript-rewrite.md` - all of its gates are now open.

@@ -180,6 +180,27 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
 
 ### Leg 3 - the learned layer, and who writes its reward (leg 3)
 
+- **WHO WRITES THE REWARD DOES NOT MATTER UNDER THE GATE (roadmap s58, 2026-10-13;
+  `campaign_gate_native_rand.sh` arm `tnrrCwG3t`, `scripts/dev/gate_proposer_control.py`,
+  `docs/tables/gate_proposer_control.csv`; three control seeds, 4 h 10 min, decision rule and its power
+  pre-registered in s58.1 before any result).** The matched random-structure control for the gated layer on
+  the native tuned baseline, three seeds paired to the agent runs seed by seed. Under the rule that DECIDES
+  this question - the worst single-wind load term against its own base, tolerance -1 point, as in s49, and
+  NOT the per-wind Cw against the shipped controller that s56 quoted - **agent 3/3, random reward structure
+  3/3 on both seed sets, Fisher two-sided p = 1.0**, and the control holds with MORE margin: no control seed
+  is negative at any wind speed held out, against the agent arm worst cell of -0.98 (tower, 18 m/s, fresh).
+  It is not behind in level either (power MSE added over the base +6.13 to +7.89 against the agent +5.80 to
+  +6.44 on fresh seeds, the same ordering held out; n = 3 per arm so a direction and not a result, and it
+  spends 1.23-1.49x the base pitch travel against 1.22-1.31x). **Mechanism, and it is in the per-wind
+  block:** both arms are exactly +0.00 at 12 m/s by construction and no worse than -0.09 at 14 m/s, which is
+  exactly where the ungated failures of s34 and s49 were (3 to 7 points of tower fatigue lost at 12-16 m/s),
+  so **the gate removes the bins where the constraint binds and supplies the feasibility the proposer used
+  to supply** - the same reading covers s40, where the arms tied on a base that already holds its own loads.
+  So s49's "the constraint is the proposer" is scoped **in the text, not in a limitation** to the ungated
+  PI base; leg 3 credits the searched reward STRUCTURE, not the proposer; and the gate itself is prior art
+  (Kim arXiv:2609.21307, Abbas IET CTA 2026) and must be attributed where it is introduced. Open, ~3 h and
+  not started: the fixed-reward arm under the gate on this base, which says whether SEARCHING the structure
+  buys anything there at all.
 - **THE LEARNED LAYER RE-TRAINED ON THE BASELINE THAT IS A TUNING FILE (roadmap s56, 2026-10-13;
   `campaign_gate_native.sh` arm `tnrwCwG3t`, three agent seeds, 4 h 32 min, identity check of the new paired
   tree exactly 0.000; `scripts/dev/gated_native_table.py`, `docs/tables/gated_native.csv`).** The manuscript's
