@@ -47,3 +47,25 @@ argument against the model-based controller is gone (s53.4).
 3. Then (A): the macro, the two table columns, the decomposition line, the two figures, then every sentence
    that quotes a margin in composite points. One pass, no partial state -- the paper must not report two
    different kinds of number.
+
+## Update 2026-10-13: both gates are now open
+
+**(B) is unblocked.** The band verification finished (s55): the baseline row is the stage-1 native tuning, and
+the one-knob member (corner 3.000, 1.000x travel, ADC 0.0480) and the sub-shipped-duty member (0.974x) are
+verified per wind on 28 held-out and 28 fresh episodes, so tab:top can carry two named band rows as planned.
+
+**A fourth reason a line changes, (D): the PI-base learned rung was retrained** (s56). It had been trained
+against the superseded baseline's rollouts, so every sentence that gives the learned layer's gain on the PI base
+carries a number measured over a controller that is no longer the baseline. The replacements, fresh seeds 7-10,
+paired against the native baseline on the same 28 episodes: power MSE +5.80 to +6.44, speed MSE +5.91 to +6.78,
+tower DEL +0.01 to +0.64, blade DEL +0.47 to +1.48 across three agent seeds, per-wind violation 0.00 %. Sites:
+the ladder rows (135--143), the gate ablation (284--288), every "+4.2 / +4.4 points on the tuned baseline"
+sentence, and §5.4 (where the layer may act), which keeps its conclusion -- the gate still holds the loads on
+this base, 3/3 seeds, both seed sets.
+
+**Line 143 and line 442 get a sharper treatment than "restate per term".** The decomposition cannot be restated
+as shares at all without saying which term: of 58.0 points of speed MSE the stack buys over the shipped
+controller the split is 51 / 44 / 5 %, of 51.5 power MSE it is 49 / 46 / 5 %, and of 18.9 tower DEL it is
+tuning +25.3, model-based **-7.9**, learning +1.4. The old single decomposition existed only because the
+composite averaged terms that disagree in sign. Write the three rows, say that no single set of shares
+describes the ladder, and make that the point of the paragraph rather than a caveat under it.

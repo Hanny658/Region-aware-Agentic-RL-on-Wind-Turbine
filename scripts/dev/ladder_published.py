@@ -58,12 +58,14 @@ ROWS = {
     "s78910": [
         ("tuned baseline, superseded (hand-scaled gains)", f"{EXP}/mpcsearch600/fresh/eval_rosco_tuned_s78910.json"),
         ("tuned baseline, native (s52)", native_eval(BASELINE, "s78910")),
+        ("native baseline + gated layer", f"{EXP}/tnrwCwG3t_{a.gate_seed}/eval_range_TIB_s78910.json"),
         ("scheduled offset-free LPV-MPC", f"{EXP}/mpcsearch600/fresh/eval_sched_mpc_s78910.json"),
         ("MPC + wind-gated learned layer", f"{EXP}/mrwCwG3t_{a.gate_seed}/eval_range_TIB_s78910.json"),
         ("superseded baseline + gated layer", f"{EXP}/trwCwG3t_{a.gate_seed}/eval_range_TIB_s78910.json"),
     ],
     "s3456": [
         ("tuned baseline, native (s52)", native_eval(BASELINE, "s3456")),
+        ("native baseline + gated layer", f"{EXP}/tnrwCwG3t_{a.gate_seed}/eval_range_TIB_s3456.json"),
         ("scheduled offset-free LPV-MPC", f"{EXP}/mpcsearch600/qtsched/eval_off_q6_18_22_s3456.json"),
         ("MPC + wind-gated learned layer", f"{EXP}/mrwCwG3t_{a.gate_seed}/eval_range_TIB_s3456.json"),
         ("superseded baseline + gated layer", f"{EXP}/trwCwG3t_{a.gate_seed}/eval_range_TIB_s3456.json"),

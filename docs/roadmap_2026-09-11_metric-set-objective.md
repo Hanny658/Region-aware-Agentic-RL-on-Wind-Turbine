@@ -2689,3 +2689,94 @@ selected by anything - but it belongs in the manuscript's statement of that conv
 Do not edit a shell script while bash is executing it: patching `campaign_verify_band.sh` mid-run shifted the
 byte offsets and bash mis-parsed the line it had not read yet (`^\[eval|^ *$: command not found`). The run
 itself completed - the edit only hit the final echo - but it could as easily have hit a line that mattered.
+
+## 56. The learned layer re-trained on the baseline that is a tuning file (2026-10-13)
+
+`campaign_gate_native.sh`, arm `tnrwCwG3t`, three agent seeds, finished 04:28 after 4 h 32 min. Why it had to be
+re-trained rather than re-read: the manuscript's PI-base learned rung (s34, s37, s41) was trained against the
+*superseded* hand-scaled baseline's own rollouts, so no table arithmetic can move it onto the baseline s55 fixed.
+Everything else is identical to the old runs - same arm arguments (agent-written reward, gate 15-17 m/s,
+objective Cw per wind, 300 episodes of 150 s), same wind protocol, same knob file; the base is chosen by
+`WTRL_TEMPLATE` and the paired reference by `WTRL_HOME`, and the identity check of the new paired tree
+(`identity_rtn_range`) read exactly 0.000 on all four terms and 0/0/0/0 at every wind speed, which is what says
+the rollouts belong to this base.
+
+### 56.1 Training side (150 s, held-out seeds 3-6, 28 episodes, vs the native base)
+
+All three seeds at the strict tier, every one of the four terms positive in every seed:
+
+| seed | power MSE | speed MSE | tower DEL | blade DEL | energy |
+|------|-----------|-----------|-----------|-----------|--------|
+| s0 | +7.49 | +7.64 | +0.81 | +0.96 | -0.00 |
+| s1 | +8.01 | +8.33 | +0.23 | +0.99 | +0.00 |
+| s2 | +8.31 | +8.70 | +0.84 | +0.19 | -0.00 |
+
+The old runs on the superseded base were +1.1 / +6.2 / +7.1 in their per-wind objective, a spread of six points;
+these three are within half a point of each other on every term. 3/3, no rollback loop, no degraded tier.
+
+### 56.2 600 s, the four published reductions (`scripts/dev/gated_native_table.py`, `docs/tables/gated_native.csv`)
+
+Fresh TurbSim seeds 7-10, 28 episodes, each reduction against the paired **shipped** controller on the same wind
+file; the right-hand block is the same quantity paired against the run's **own base** episode by episode:
+
+| row | power MSE | speed MSE | tower DEL | blade DEL | travel | ADC |
+|-----|-----------|-----------|-----------|-----------|--------|-----|
+| native tuned baseline (s52) | +25.3 | +29.7 | +25.3 | +1.7 | 2.016x | 0.0968 |
+| + gated layer, s0 | +31.1 | +35.7 | +25.8 | +2.9 | 2.606x | 0.1251 |
+| + gated layer, s1 | +31.1 | +35.9 | +25.3 | +3.2 | 2.460x | 0.1181 |
+| + gated layer, s2 | +31.8 | +36.5 | +26.0 | +2.2 | 2.501x | 0.1201 |
+
+Paired against the base, fresh / held out, every interval a stratified paired bootstrap over the 28 episodes:
+
+- power MSE **+5.80 to +6.44** fresh (+5.40 to +6.24 held out), all six intervals clear of zero;
+- speed MSE **+5.91 to +6.78** fresh (+5.54 to +6.58 held out), all six clear of zero;
+- tower DEL +0.01 to +0.64 fresh, +0.06 to +0.48 held out - **positive or unresolved, never negative** (s1 is
+  the unresolved one on both sets);
+- blade DEL +0.47 to +1.48 fresh, +0.42 to +1.15 held out;
+- per-wind violation **0.00 %** for Cw and CTw in all six evaluations: both loads hold at every wind speed on
+  28 held-out and 28 fresh episodes.
+
+Duty: the layer costs 1.22-1.29x the base's pitch travel, the same relative cost it had on the superseded base
+(1.25-1.29x), which takes the whole PI route to 2.46-2.61x the shipped travel, ADC 0.118-0.131 against the
+10 deg/s rate limit.
+
+### 56.3 What changes in the ladder
+
+`scripts/dev/ladder_published.py` now carries the rung (`docs/tables/ladder_published_{fresh,heldout}.csv`).
+Fresh seeds, same 28 episodes for every row:
+
+| rung | power MSE | speed MSE | tower DEL | blade DEL | travel |
+|------|-----------|-----------|-----------|-----------|--------|
+| tuned baseline, native (s52) | +25.3 | +29.7 | +25.3 | +1.7 | 2.016x |
+| native baseline + gated layer | +31.1 | +35.9 | +25.3 | +3.2 | 2.460x |
+| scheduled offset-free LPV-MPC | +49.1 | +55.4 | +17.4 | -0.0 | 2.076x |
+| MPC + wind-gated learned layer | +51.5 | +58.0 | +18.9 | +1.8 | 2.899x |
+
+Three readings, each per term rather than on a composite:
+
+1. **The layer is smaller on a real tuning than it was on the hand-scaled row** - about three quarters of it:
+   +5.8 / +6.2 against +8.0 / +8.6 in power and speed MSE for the same seed. The baseline took part of the room.
+   It is also cleaner: on the superseded base two of three seeds lost tower DEL (-0.31 [-0.62, -0.05] and
+   -0.46 [-0.77, -0.15]); on the native base no seed does on either set.
+2. **The decomposition of the headline has to be written per term, and in one term the model-based rung is
+   negative.** Of the 58.0 points of speed MSE the full stack buys over the shipped controller: tuning +29.7
+   (51 %), model-based +25.7 (44 %), learning +2.6 (5 %). Of the 51.5 points of power MSE: +25.3 / +23.8 / +2.4
+   (49 / 46 / 5 %). But of the 18.9 points of tower DEL: tuning **+25.3**, model-based **-7.9**, learning +1.4 -
+   the model-based rung spends tower fatigue to buy regulation, so no single set of shares describes the ladder.
+   The old "15.93 / +14.53 / +2.08, i.e. 49 / 45 / 6 %" was that average.
+3. **Duty does not explain the gap between the two routes.** The PI route with its layer sits at 2.46x the
+   shipped travel and the MPC alone at 2.08x; the MPC still has +19.5 [18.3, 20.7] more speed MSE at *less*
+   actuation, and still gives up -7.9 [-8.9, -7.0] of tower DEL. The duty argument (s53) is gone in both
+   directions: a PI tuning reaches +33 regulation at 1.12x travel, and the learned PI route reaches 2.46x
+   without catching the MPC.
+
+### 56.4 Defect found and fixed in my own table
+
+The first version of `gated_native_table.py` labelled the three seeds of both bases "+ gated layer, seed N" and
+keyed its episode dictionary by that label, so the second base's rows overwrote the first's and the "native base
++ layer" differences were silently computed from the *superseded* base's runs. It printed tower DEL -18.5
+[-20.2, -17.1], which is the difference between the two bases, not what the layer does. It was caught because
+the row disagreed with `evaluate.py`'s own per-wind print for the same run (+25.8 against +6.8) and because the
+two bases' seed rows were identical to four digits. Rows are now keyed by path. Any table that joins several
+evaluations has to key on something unique to the evaluation, and the cheapest check is that a re-derived number
+matches the evaluator's own output for one row.

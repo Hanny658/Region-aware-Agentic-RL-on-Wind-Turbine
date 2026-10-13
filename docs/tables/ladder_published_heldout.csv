@@ -1,5 +1,6 @@
 rung,n_episodes,seeds,energy_change_pct,travel_x_shipped,power_MSE,power_MSE_lo,power_MSE_hi,speed_MSE,speed_MSE_lo,speed_MSE_hi,tower_DEL,tower_DEL_lo,tower_DEL_hi,blade_DEL,blade_DEL_lo,blade_DEL_hi
 "tuned baseline, native (s52)",28,s3456,0.154,2.09,23.7,22.53,24.8,28.32,27.31,29.41,23.93,22.89,24.99,3.2,2.0,4.42
+native baseline + gated layer,28,s3456,0.158,2.581,29.42,28.25,30.54,34.36,33.33,35.47,23.99,22.97,25.03,4.2,3.02,5.43
 scheduled offset-free LPV-MPC,28,s3456,0.243,2.14,45.71,44.31,47.42,50.73,49.54,51.8,16.5,15.11,17.84,2.87,1.67,4.11
 MPC + wind-gated learned layer,28,s3456,0.076,2.942,48.33,47.04,49.91,53.65,52.5,54.7,18.54,16.93,20.12,4.35,3.24,5.5
 superseded baseline + gated layer,28,s3456,0.132,1.449,31.34,30.2,32.56,37.58,36.91,38.26,4.91,4.12,5.72,4.24,3.27,5.24

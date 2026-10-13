@@ -107,8 +107,26 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   regulation (speed MSE -0.91 [-1.94, +0.10]), so the native tuning buys +18.2 of tower DEL for no regulation -
   it buys it with pitch travel, 1.12x -> 2.02x, which is also where the MPC sits (2.08x), so **at equal duty the
   second rung is a TRADE: +23.7 power and +25.6 speed for -7.9 tower.** The composite hid it by averaging the
-  four terms. The PI-base learned rung (s34/s37/s41, +4.2) sits on the SUPERSEDED baseline: re-deriving it needs
-  retraining, so either name the row it is a gain over or re-run those seeds.
+  four terms. The PI-base learned rung was retrained on the native baseline (s56), which is the row below.
+- **THE LEARNED LAYER RE-TRAINED ON THE BASELINE THAT IS A TUNING FILE (roadmap s56, 2026-10-13;
+  `campaign_gate_native.sh` arm `tnrwCwG3t`, three agent seeds, 4 h 32 min, identity check of the new paired
+  tree exactly 0.000; `scripts/dev/gated_native_table.py`, `docs/tables/gated_native.csv`).** The manuscript's
+  PI-base rung (s34/s37/s41) was trained against the superseded baseline's own rollouts, so it could not be
+  re-read onto the baseline s55 fixed. Fresh seeds 7-10, against the paired shipped controller: native tuned
+  baseline +25.3 / +29.7 / +25.3 / +1.7 at 2.016x travel -> + gated layer +31.1 / +35.9 / +25.3 / +3.2 at
+  2.460x (seed 1 of 3; the three seeds span 2.46-2.61x, ADC 0.118-0.131). Paired against its own base the layer
+  adds power MSE **+5.80 to +6.44** and speed MSE **+5.91 to +6.78** on fresh seeds (+5.40 to +6.24 and +5.54 to
+  +6.58 held out), every interval clear of zero, tower DEL +0.01 to +0.64 (**never negative**, one seed
+  unresolved), blade DEL +0.47 to +1.48, per-wind violation 0.00 % in all six evaluations. 150 s training side:
+  3/3 strict, all four terms positive in every seed, within half a point of each other (the old runs spanned six
+  points). **The layer is about three quarters of what it was on the hand-scaled row and cleaner** - two of the
+  three superseded-base seeds lost tower DEL (-0.31 [-0.62, -0.05], -0.46 [-0.77, -0.15]), none of the native
+  ones does. **The headline decomposition must be written per term:** of 58.0 points of speed MSE, tuning +29.7
+  (51 %), model-based +25.7 (44 %), learning +2.6 (5 %); of 51.5 power MSE, 49 / 46 / 5 %; but of 18.9 tower
+  DEL, tuning +25.3, model-based **-7.9**, learning +1.4 - so the old "49 / 45 / 6 %" was an average over terms
+  that disagree in sign, and no single set of shares describes the ladder. **Duty does not explain the gap
+  between the two routes:** the learned PI route sits at 2.46x shipped travel and the MPC alone at 2.08x, yet
+  the MPC has +19.5 [18.3, 20.7] more speed MSE at less actuation while giving up -7.9 of tower DEL.
 - **The legitimate tuning space is a FRONT, not a point (roadmap s52.2, s53.3; band: +22.6 to +37.0 regulation,
   +2.5 to +22.8 tower DEL, 1.00x to 2.72x travel).** Same box, same protocol, every row a
   tuning file the controller can take: llm r0 regulation **+47.79** with tower DEL -0.61 (set mean inside the
