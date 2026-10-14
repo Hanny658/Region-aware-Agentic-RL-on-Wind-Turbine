@@ -3157,3 +3157,72 @@ are done.
 Resumed 2026-10-14 09:57 on request, 2 h 26 min after the pause: all 36 processes continued from SIGSTOP,
 bayes r4 went on from its candidate 17 of 24, and the frozen OpenFAST evaluations finished normally, so the
 pause cost nothing but wall clock. Expect the ninth run and stage 3 around 19:40 today.
+
+### 59.4 The primary endpoint is null: at n = 6 the model is not distinguishable from classical search (2026-10-14)
+
+All nine runs finished - llm r3 23:11, bayes r3 00:59, local r3 02:43, llm r4 04:26, bayes r4 06:12, paused
+07:31 to 09:57 on request, local r4 10:28, llm r5 12:12, bayes r5 13:59, local r5 15:42, stage 3 started 17:26 -
+21 runs and 561 tunings in the space in total, 1 h 44 min per run, no infrastructure failures. Paused again at
+17:45 with stage 3 at 1 of its 18 new evaluations, so **the primary endpoint below is final (it is computed from
+the 21 finished histories and nothing pending can change it) and the delivery count is not.**
+
+                        runs   with a gain   sims to it: median            values     regulation of the gains
+    the rule the search used (the three constraints on the set mean)
+            random         3        0 of 3                 25.0      [25, 25, 25]                           -
+             local         6        4 of 6                 14.0  [8,9,10,18,25,25]              +29.23 (12.14)
+             bayes         6        5 of 6                 18.0  [5,7,15,21,21,25]              +23.79 (14.03)
+               llm         6        5 of 6                 10.0   [6,8,8,12,13,25]               +38.40 (8.47)
+
+**Primary, pre-registered in s59.1: simulations to the first feasible gain, one-sided exact permutation.**
+llm against bayes **p = 0.3117**; llm against local p = 0.1937; llm against random p = 0.0476. Counts, the
+pre-declared underpowered secondary: llm 5 of 6, bayes 5 of 6 (Fisher p = 1.0), local 4 of 6 (p = 1.0), random
+0 of 3 (p = 0.0476). **This is outcome branch 3 of s59.1.** The model separates from random draws and from
+nothing else: at n = 6 it is not distinguishable from constrained Bayesian optimisation or from a (1+lambda)
+local search, on either endpoint. The s53 impression - 3 of 3 and a median of 8 against 14 and 18 - was three
+runs per arm, and it did not survive doubling: llm r3 found nothing at all, the first llm run ever to do so,
+and bayes r4 found its gain in 5 simulations.
+
+The level is the one place the model is still ahead and it is the place where being ahead is worth least:
+the regulation of its selections is +38.40 (8.47) against +29.23 (12.14) for local and +23.79 (14.03) for
+bayes, i.e. it walks further up the front of s52.2 - and the front above about +25 points is where s55 found
+every member fails the per-wind load rule off the design winds. Which is what happens here:
+
+    the same rule with the loads required at every wind speed, MEASURED off the design winds (what a user gets)
+            random         3        0 of 3                                                              -
+             local         6        1 of 6   (3 selections still unverified: r3, r4, r5)           +11.62
+             bayes         6        1 of 6   (2 still unverified: r3, r5)                          +16.57
+               llm         6        0 of 6   FINAL - all six resolved                                   -
+
+The llm column is final because its three per-wind selections are all measured already: llm r1 #12 and llm r5
+#11 are **the same tuning** (design -0.60, held out +1.06, fresh -1.17, missing the tolerance by 0.17 points)
+and llm r2 #24 fails by 2.40, while llm r0, r3 and r4 have no per-wind-holding candidate at all. The five
+pending rows can only raise local and bayes, and their design margins say they probably will: the classical
+selections sit at +0.10, +1.20, +1.30, +0.60 and +1.20 points of worst-single-wind margin, where the model
+selections sit at -0.60 and -0.70, and s55 established that this margin is what predicts holding. So the
+likely final shape is **the classical arms deliver a shippable tuning and the model arm does not**, which is
+the opposite of the s53 reading, and the mechanism is not mysterious: the model is better at maximising the
+objective it was given, and the objective it was given is the one s32, s53.2 and s55 proved gameable. Fourth
+instance, now with the agent on the losing side of it.
+
+**Two things the model does win, both post hoc and neither pre-registered, so they are reported as what they
+are.** First, **it never proposed a candidate the plant could not run: 0 of 144 candidates diverged, against
+13 of 144 for the local search (Fisher p = 0.00018), 9 of 144 for Bayesian optimisation (p = 0.0034) and 16 of
+72 for random draws (p < 1e-5)**, across six independent runs and with every one of its 144 candidates actually
+proposed by the model (the `filled randomly` audit of s59.1 is 0 in all six runs). It reads the five quantities
+as a controller rather than as a box, and it never asked for a gain schedule that destabilises the turbine.
+That is a usability property, not a performance one, and it is the kind of thing a practitioner cares about.
+Second, **its runs repeat each other**: 3 per-wind selections, 2 distinct tunings, against 4 of 4 distinct for
+both classical arms - the search is reproducible across seeds in a way a GP with a random start is not.
+
+What this does to the study: **no leg now has a proposer claim against a dedicated search.** Leg 3 lost it to
+s58 under the gate, leg 2 never had it (llm = es, only random search loses), and leg 1 has now lost it at
+n = 6. What survives is three statements that do not mention who proposes: the search *space* matters (a reward
+structure, a wind schedule, one filter corner), the measurement discipline (set-mean constraints, baseline
+tuning, aggregation and weighting) decides every apparent benefit, and the same loop runs in three different
+design spaces without being rebuilt - at parity with the best dedicated search in each, not above it. s59.1
+said in advance that the agentic part of the title would have to go if the primary came out null. It came out
+null.
+
+Stage 3 has about 1 h 50 min left when resumed (18 evaluations, 1 done): it rebuilds
+`docs/tables/rosco_search.csv` for all 21 runs and verifies the five pending per-wind selections, after which
+`rosco_proposer_test.py` gives the final delivery counts. Nothing else in this section depends on it.

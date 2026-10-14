@@ -6,19 +6,35 @@ number on this page, it belongs under a leg heading in `README.md` and nowhere e
 
 ## The claim
 
-**Agentic search buys feasibility and sample efficiency on real controllers; it does not buy peak level.**
+**One agentic loop, three design spaces, no rebuild: it beats random search in all three, reaches the level of
+the best dedicated search in each without exceeding it, and never buys peak level.**
 
-The project puts the same agentic loop on three different objects - the shipped ROSCO pitch loop, an untuned
-LPV-MPC, and a residual layer's reward structure - and all three come out the same shape: the agent turns a
-design that is not deliverable into one that is, in few simulations, where random search finds nothing; and in
-all three it fails to beat a careful human or a fixed classical recipe on the level of the result.
+The project puts the same loop - the same prompt shape, the same history, no acquisition function and no
+population - on the shipped ROSCO pitch loop, an untuned LPV-MPC and a residual layer's reward structure. Three
+scopes, all measured rather than assumed:
 
-One scope in that sentence is now measured instead of assumed. The contrast against *random search in the
-design space* is what legs 1 and 2 carry (0 of 3 runs, 0 of 48 simulations). In leg 3 the contrast is against a
-random draw from a reward grammar, and it holds only **without** the wind gate (s49 against s58): with the gate,
-the configuration supplies the feasibility and the proposer is not distinguishable.
+- **Against random search it separates in all three legs:** leg 1 llm 5 of 6 runs with a gain against random
+  0 of 3 (p = 0.048, s59.4), leg 2 0 of 48 for random search (s38), leg 3 4 of 5 against 1 of 8 (p = 0.032,
+  ungated, s49).
+- **Against a dedicated search it is at parity in all three:** leg 1 against constrained Bayesian optimisation
+  p = 0.31 and against a local search p = 0.19 at n = 6 on the pre-registered endpoint (s59.4); leg 2 llm = es
+  (s38); leg 3 under the gate 3 of 3 against a random draw from its own reward grammar, which also holds with
+  more margin (s58). **No leg of this study has a proposer claim against a dedicated search.**
+- **It never buys the level:** a fixed recipe wins leg 1, a hand design wins leg 2, and the searched reward
+  *structure* rather than its proposer carries leg 3.
 
-That shape is the result. It is also why the alternative claim is not available: see *what cannot be claimed*.
+**Where feasibility is concerned the legs disagree, and leg 1 now cuts the other way.** On the MPC the loop
+repairs an 8.8-point per-wind violation for 1.7 points of regulation (s57.2), and on the ungated PI base the
+agent arm is what holds the loads (s49). On the shipped PI loop it does the opposite: it optimises the stated
+set-mean objective *better* than the classical searches, walks further up the regulation front than the rule
+can support, and therefore delivers less under the rule that ships - 0 of 6 runs against 1 of 6 for each
+classical arm (s59.4). The fourth instance of a set-mean constraint being gamed (s32, s53.2, s55), with the
+agent on the losing side of it.
+
+What the loop does win on leg 1, post hoc and reported as such: **it never proposed a candidate the plant
+could not run** (0 of 144, against 13 of 144 for the local search, 9 of 144 for Bayesian optimisation and 16 of
+72 for random draws), and its runs repeat each other where a GP with a random start does not. See *what cannot
+be claimed* for the rest.
 
 ## Leg 1 - the shipped GSPI, tuned by the agent
 
@@ -36,8 +52,21 @@ Agent-found rows that hold both load terms at **every** wind speed on 28 held-ou
 | `llm_r1#11` - the same line at 6.5 rad/s | +24.2 | +28.3 | +16.3 | +2.5 | 1.647x | - |
 | stage 1, **the baseline row** - filter + damper (fixed recipe, *not* an agent arm) | +25.3 | +29.7 | +25.3 | +1.7 | 2.016x | 0.0968 |
 
-- **Search efficiency (s53, 12 runs, 321 tunings):** runs that bought a shippable gain - llm **3/3**, bayes 2/3,
-  local 1/3, **random 0/3**; median 8 simulations to the first gain for the llm arm.
+- **Search efficiency, at n = 6 per arm and on a pre-registered endpoint (s59.4, 21 runs, 561 tunings; the
+  s53 numbers below it were n = 3):** simulations to the first feasible gain, one-sided exact permutation -
+  llm against bayes **p = 0.31**, against local p = 0.19, against random p = 0.048. Runs with a gain: llm 5/6,
+  bayes 5/6, local 4/6, random 0/3. Medians 10 / 18 / 14 / censored. The s53 reading (llm 3/3, median 8
+  against 14 and 18) did not survive doubling - llm r3 found nothing, bayes r4 found its gain in 5 simulations.
+  Regulation of the selections is still highest in the llm arm, +38.40 (8.47) against local +29.23 (12.14) and
+  bayes +23.79 (14.03), and that is the part of the front where s55 found everything fails per wind.
+- **What the model arm delivers under the rule that ships: 0 of 6 (final), against 1 of 6 each for local and
+  bayes** with five classical selections still being verified (s59.4). Its two distinct per-wind selections
+  miss the tolerance by 0.17 and 2.40 points off the design winds; the classical selections carry +0.1 to +1.3
+  points of design margin where the model's carry -0.6, and s55 established that this margin is the predictor.
+- **Post hoc, and the one difference that is large: 0 of 144 llm candidates destabilised the plant**, against
+  13 of 144 local (Fisher p = 0.00018), 9 of 144 bayes (p = 0.0034) and 16 of 72 random (p < 1e-5); every one
+  of those 144 was really proposed by the model (the malformed-reply audit reads 0 in all six runs). It also
+  repeats itself across seeds: 2 distinct per-wind selections out of 3, against 4 of 4 in both classical arms.
 - **Per-arm census under the per-wind rule.** The design-set screen leaves exactly 10 tunings with positive
   regulation (an eleventh is the shipped tuning itself, at 0.00 by construction) and s55 measured all 10 off
   the design winds, so this census is complete: **llm proposed 7 and 2 hold** (`llm_r1#9` and `llm_r1#11`),
@@ -117,17 +146,22 @@ with the reward *structure* proposed by the agent. Evidence: roadmap s34, s37, s
 
 1. **"The agent designs a better controller."** It loses the level to a fixed recipe on leg 1 and to a hand
    design on leg 2 (s53.2 and s38 state this explicitly).
-2. **"The LLM beats other search."** es equals it on leg 2; local search found two verified rows on leg 1; and
-   under the gate on the native baseline a random draw from its own reward grammar equals it on the load rule
-   and is not behind on the level (3/3 against 3/3, s58). It separates in exactly one configuration of this
-   study, the **ungated** PI base (s49).
-3. **A composite score.** Report the four published reductions, each on its own. The symbol *J* is the MPC cost
+2. **"The LLM beats other search."** Tested at n = 6 per arm on leg 1 with the endpoint fixed in advance and
+   it does not: p = 0.31 against constrained Bayesian optimisation, p = 0.19 against a local search, 5/6
+   against 5/6 and 4/6 on the counts (s59.4). es equals it on leg 2; under the gate a random draw from its own
+   reward grammar equals it and holds with more margin (3/3 against 3/3, s58). It separates from **random
+   search** in all three legs and from a dedicated search in none. The one remaining proposer separation in
+   the whole study is the **ungated** PI base of leg 3 (4/5 against 1/8, p = 0.032, s49).
+3. **"The agent finds the shippable design."** On leg 1 it is the classical arms that deliver a tuning holding
+   both loads at every wind speed off the design winds (1/6 each, model 0/6, s59.4). The model finds the
+   largest *set-mean* number fastest, and that number does not ship.
+4. **A composite score.** Report the four published reductions, each on its own. The symbol *J* is the MPC cost
    function. The composite stays as the *selection and training* objective of the campaigns, under its own name.
-4. **"ROSCO's tower damper is worth about nothing"** (withdrawn in s52: its gain had been capped at 0.004, worth
+5. **"ROSCO's tower damper is worth about nothing"** (withdrawn in s52: its gain had been capped at 0.004, worth
    0.25 deg of authority; searched, it asks about 2 deg and buys most of the +25.3 tower DEL).
-5. **The duty argument against the model-based controller** (gone in both directions, s53 and s56: a PI tuning
+6. **The duty argument against the model-based controller** (gone in both directions, s53 and s56: a PI tuning
    reaches +33 regulation at 1.12x travel, and the learned PI route reaches 2.46x without catching the MPC).
-6. **One decomposition of the headline.** Of 58.0 points of speed MSE the full stack buys over the shipped
+7. **One decomposition of the headline.** Of 58.0 points of speed MSE the full stack buys over the shipped
    controller: tuning 51 %, model-based 44 %, learning 5 %; of 51.5 power MSE: 49 / 46 / 5 %; but of 18.9 tower
    DEL: tuning +25.3, model-based **-7.9**, learning +1.4. No single set of shares describes the ladder.
 
@@ -152,20 +186,19 @@ discussion, not in its title.
 
 ## Open, in order
 
-1. **Leg 1 at n = 6 - RUNNING since 2026-10-13 23:11** (`scripts/wsl/campaign_rosco_native_n6.sh`: nine runs,
-   llm / bayes / local, repeats 3-5, about 16 h and then 2 h of verification; roadmap s59). s58 took the
-   proposer claim off leg 3, so leg 1 carries it alone - and leg 1 is three runs per arm, where 3 of 3 against
-   2 of 3 is Fisher p = 1.0. The endpoints and their power are pre-registered in s59.1, before any of the nine
-   runs exists. **Primary:** simulations to the first feasible gain, Mann-Whitney one-sided, llm against the
-   strongest classical arm - about p = 0.03 if s53 replicates, 0.0011 at best, and it is sample efficiency,
-   which is what this page claims. **Secondary:** the count of runs delivering a shippable gain (6 of 6 against
-   4 of 6 is p = 0.45, a direction only), and the per-wind restatement of both, where the llm *selections*
-   currently read 0 of 3 off the design winds while two of its *candidates* hold. **If the primary does not
-   separate, no leg of this study has a proposer claim left** and s59.1 says in advance how that gets written.
+1. **Stage 3 of the leg-1 campaign - PAUSED on request at 1 of 18 evaluations (2026-10-14 17:45; resume with
+   `bash scripts/wsl/campaign_ctl.sh resume campaign_rosco_native`, about 1 h 50 min).** The nine new runs are
+   finished and **the pre-registered primary endpoint is already final and null** (s59.4): the model is not
+   distinguishable from Bayesian optimisation or a local search. What stage 3 still adds is the off-design
+   verification of five classical per-wind selections, which can only raise the local and bayes delivery
+   counts above the model arm's **final 0 of 6** - it cannot change the primary. Then
+   `rosco_proposer_test.py` gives the closing table.
 2. **The fixed-reward arm under the gate on the native base** - three runs, about 3 h, not started. s58 showed
    that *who* proposes the reward structure does not matter under the gate; this says whether **searching** the
    structure matters there at all. If a fixed reward also holds the loads, leg 3 collapses to the gate; if it
    does not, the structure search is load-bearing and only the proposer is not. s41 has the fixed reward under
    the gate on the MPC base losing 5.9 points of tower fatigue at 20 m/s, which points to the second reading,
    but the native base has never had that arm.
-3. The manuscript rewrite, `docs/plan_2026-10-12_manuscript-rewrite.md` - all of its gates are now open.
+3. The manuscript rewrite, `docs/plan_2026-10-12_manuscript-rewrite.md` - all of its gates are now open,
+   and s59.4 moves one more site: 5.5 (who proposes) becomes a null result with the divergence count as
+   its one positive finding, and the title can no longer carry the proposer.

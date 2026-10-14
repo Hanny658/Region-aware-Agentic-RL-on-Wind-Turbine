@@ -42,16 +42,29 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
 
 ### Leg 1 - the shipped GSPI, tuned by the agent (`docs/MAIN_LINE.md` leg 1)
 
-- **RUNNING again since 2026-10-14 09:57, leg 1 at n = 6 (roadmap s59, s59.3;
-  `scripts/wsl/campaign_rosco_native_n6.sh`, nine runs - llm / bayes / local, repeats 3-5; log
-  `~/wtrl/exp/rosco_native_n6.log`).** Paused on request 07:31 and resumed 09:57, 2 h 26 min idle, the
-  36 SIGSTOPped processes continued where they stopped. Finished: llm r3, bayes r3, local r3, llm r4.
-  In flight: bayes r4. Then local r4, llm r5, bayes r5, local r5 and stage 3 - about 9 h 40 min from
-  the resume, so expect it around 19:40. Pause again with `bash scripts/wsl/campaign_ctl.sh pause
-  campaign_rosco_native`; if the WSL VM goes down, relaunch the campaign script instead - a finished run
-  is skipped on its best.json and a deterministic proposer re-walks its own parameter-hash cache, but an
-  interrupted llm run starts its budget over. Do not compute the s59.1 tests on partial data: they are
-  pre-registered at n = 6 per arm.
+- **THE PROPOSER CLAIM IS GONE FROM LEG 1 TOO: at n = 6 the model is not distinguishable from classical
+  search (roadmap s59.4, 2026-10-14; 21 runs, 561 tunings, `scripts/dev/rosco_proposer_test.py`,
+  `docs/tables/rosco_proposer_test.csv`).** The primary endpoint of s59.1, fixed before the runs existed:
+  simulations to the first feasible gain, one-sided exact permutation - llm against bayes **p = 0.31**,
+  against local p = 0.19, against random p = 0.048; runs with a gain llm 5/6, bayes 5/6, local 4/6,
+  random 0/3; medians 10 / 18 / 14. The s53 reading (3/3, median 8 against 14 and 18) did not survive
+  doubling: llm r3 found nothing at all, bayes r4 found its gain in 5 simulations. The model still walks
+  furthest up the front (+38.40 (8.47) against local +29.23, bayes +23.79) and that is exactly the part
+  of the front where s55 found everything fails per wind: measured off the design winds the model arm
+  delivers **0 of 6, final**, against 1 of 6 each for local and bayes with five classical selections
+  still to verify (their design margins +0.1 to +1.3 against the model's -0.6 say they will likely
+  rise). **Post hoc, the one large difference in the model's favour: 0 of 144 of its candidates
+  destabilised the plant**, against 13/144 local (p = 0.00018), 9/144 bayes (p = 0.0034) and 16/72
+  random (p < 1e-5), with the malformed-reply audit at 0 in all six runs; and its runs repeat each other
+  (2 distinct per-wind selections of 3, against 4 of 4 in both classical arms). **No leg now has a
+  proposer claim against a dedicated search** - leg 3 lost it in s58, leg 2 never had it (llm = es) -
+  so what survives is the search SPACE, the measurement discipline, and one loop that runs in three
+  spaces at parity. s59.1 fixed this reading in advance, including that the title loses the proposer.
+- **PAUSED on request 2026-10-14 17:45 in stage 3**, 1 of its 18 new evaluations done, about 1 h 50 min
+  left: it rebuilds `docs/tables/rosco_search.csv` for all 21 runs and verifies the five pending
+  per-wind selections. Resume with `bash scripts/wsl/campaign_ctl.sh resume campaign_rosco_native`; if
+  the WSL VM went down meanwhile, relaunch `scripts/wsl/campaign_rosco_native_n6.sh` instead, since
+  stage 2 is skipped run by run on its best.json. Nothing in s59.4 depends on it.
   s58 took the proposer claim off leg 3, so leg 1 carries it alone, and leg 1 was n = 3 per arm where 3 of 3
   against 2 of 3 is Fisher p = 1.0. Endpoints and power pre-registered in s59.1 BEFORE the runs exist:
   **primary** the simulations to the first feasible gain (Mann-Whitney one-sided llm against bayes, about
