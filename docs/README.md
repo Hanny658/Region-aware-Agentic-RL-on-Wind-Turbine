@@ -13,7 +13,7 @@ same commit - that file is the only place the project's claim lives, and a stale
 
 | leg | what it asks | where the evidence is |
 |---|---|---|
-| **1. The shipped GSPI, tuned by the agent** | what agentic search is worth on a classical pitch loop, in tuning files the controller can take | roadmap v2 §51-§55; `design_2026-10-11_rosco-native-search.md`; `tables/rosco_{band_verified,tuned_baseline,perwind}.csv`, `tables/rosco_band_rows_*.csv` |
+| **1. The shipped GSPI, tuned by the agent** | what agentic search is worth on a classical pitch loop, in tuning files the controller can take | roadmap v2 §51-§55, **§59**; `design_2026-10-11_rosco-native-search.md`; `tables/rosco_{band_verified,tuned_baseline,perwind,proposer_test}.csv`, `tables/rosco_band_rows_*.csv` |
 | **2. The untuned MPC, designed by the agent** | whether the agent can repair a model-based controller it did not design | roadmap v2 §33, §36, §38, §57; `tables/design_search.csv`, `tables/range_*.csv` |
 | **3. The learned layer, and who writes its reward** | whether the level or the constraint is what the agent buys | roadmap v2 §32, §34, §35, §37, §39-§41, §47, **§49**, §56, §58; `tables/{gated_native,gated_residual,range_residual,mpc_residual}.csv` |
 | **discipline** | why the three legs are believable | roadmap v2 §22, §25-§28, §42, §52.3, §54, §55; `RESULTS_2026-09-10_data-and-caveats.md`; `tables/ladder_published_*.csv`, `tables/{lifetime_del,wohler,verification_probe}.csv` |
@@ -23,7 +23,7 @@ same commit - that file is the only place the project's claim lives, and a stale
 | file | what it is | read it for |
 |---|---|---|
 | `MAIN_LINE.md` | the claim and the three legs, one page | **first, always** |
-| `roadmap_2026-09-11_metric-set-objective.md` | the current experiment log, §1-§57, 2800 lines | the detail behind any single number; use the section map below, do not read it through |
+| `roadmap_2026-09-11_metric-set-objective.md` | the current experiment log, §1-§59, 3200 lines | the detail behind any single number; use the section map below, do not read it through |
 | `design_2026-10-11_rosco-native-search.md` | why the first parameter search was asking the wrong question, and the redesign | leg 1's parameterisation, box limits and constrained selection |
 | `plan_2026-10-12_manuscript-rewrite.md` | what has to change in `main.tex`, site by site, with four change reasons | before touching the manuscript |
 | `RESULTS_2026-09-10_data-and-caveats.md` | data provenance, run inventory, caveats C1-C12 | before quoting any number anywhere |
@@ -45,7 +45,9 @@ Numbers are sections of `roadmap_2026-09-11_metric-set-objective.md`.
 - **Leg 1:** §51 the search was asking the wrong question of the wrong box - §52 the baseline re-derived as a
   real tuning (§52.2 the front, §52.3 one line of the shipped file) - §53 the 12-run campaign, 321 tunings
   (§53.2 the set-mean constraint is gamed on a classical controller too) - §55 the band verified off the design
-  winds, the rule picks stage 1, the band is a duty ladder.
+  winds, the rule picks stage 1, the band is a duty ladder - **§59 the proposer question at n = 6: the primary
+  endpoint is null** (§59.1 the pre-registration, §59.2 the restatement under the rule that ships, §59.4 the
+  result and the 0-of-144 divergence count).
 - **Leg 2:** §33 the wind-scheduled tower weight - §36 model error over the range - §38 the verified design
   loop finds the schedule by itself and does not beat the hand design - §57 the unscheduled reference on fresh
   seeds.
