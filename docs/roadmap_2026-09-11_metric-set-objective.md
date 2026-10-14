@@ -3153,3 +3153,7 @@ would instead start its budget over, so a stop during an llm run costs that run.
 four finished runs is two arms at n = 4 and one at n = 4 in part, and reading them now is exactly the peeking
 the pre-registration exists to prevent. `rosco_proposer_test.py` will be run when the ninth run and stage 3
 are done.
+
+Resumed 2026-10-14 09:57 on request, 2 h 26 min after the pause: all 36 processes continued from SIGSTOP,
+bayes r4 went on from its candidate 17 of 24, and the frozen OpenFAST evaluations finished normally, so the
+pause cost nothing but wall clock. Expect the ninth run and stage 3 around 19:40 today.
