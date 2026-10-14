@@ -3223,6 +3223,45 @@ design spaces without being rebuilt - at parity with the best dedicated search i
 said in advance that the agentic part of the title would have to go if the primary came out null. It came out
 null.
 
-Stage 3 has about 1 h 50 min left when resumed (18 evaluations, 1 done): it rebuilds
-`docs/tables/rosco_search.csv` for all 21 runs and verifies the five pending per-wind selections, after which
-`rosco_proposer_test.py` gives the final delivery counts. Nothing else in this section depends on it.
+Stage 3 rebuilds `docs/tables/rosco_search.csv` for all 21 runs and re-scores every run's selection off the
+design winds, after which `rosco_proposer_test.py` gives the delivery counts; it covers three of the five
+pending per-wind rows and not the other two (s59.5 says which, and how much is left). Nothing else in this
+section depends on it.
+
+### 59.5 Paused in stage 3 on request, with three of the five pending per-wind rows already in (2026-10-14 23:23)
+
+Paused at 23:23 on request, SIGSTOP of all 20 processes of session 400 (state `T`), mid-evaluation of the
+bayes r5 selection on the fresh seeds. Resume with `bash scripts/wsl/campaign_ctl.sh resume
+campaign_rosco_native`; the interrupted evaluation continues from where it stopped, nothing but wall clock is
+lost, and if the WSL VM goes down meanwhile relaunch `campaign_rosco_native_n6.sh`, which skips stage 2 run by
+run on `best.json` and re-enters stage 3 against the same parameter-hash cache.
+
+**What stage 3 actually does, stated correctly because s59.4 got it wrong:** it re-scores the SET-MEAN
+selection of each of the 21 runs on held-out seeds 3-6 and fresh seeds 7-10, two evaluations of 28 episodes
+per distinct tuning, cached by parameter hash. 37 of those 42 evaluations are on disk; **5 are left** - bayes
+r5 on the fresh seeds (interrupted), and llm r4 #23 and llm r5 #24 on both seed sets - at about 11 min each,
+so **about 1 h**. It resolves a *per-wind* selection only where that run's per-wind selection IS its set-mean
+selection, which is the case for local r3, bayes r3 and bayes r5 and NOT for local r4 (#10 against #21) or
+local r5 (#18 against #9). **Those two need their own pass of four evaluations, about 45 min**, so the
+delivery count of s59.4 is not final when stage 3 ends.
+
+Three of the five pending rows landed before the pause, and they move in the direction s59.4 said the design
+margins pointed:
+
+    per-wind selection      design (worst)   held out (worst)      fresh (worst)   travel   ships
+       local r3 #8           +27.64 (+0.10)   +26.76 (+0.32)    +28.66 (-0.87)      1.05x   yes
+       bayes r3 #22          +24.35 (+0.60)   +24.86 (+0.57)    +26.72 (-1.15)      1.07x   NO, by 0.15
+       bayes r5 #15          +22.36 (+1.20)   +24.03 (+2.17)    interrupted         1.42x   pending
+
+So the delivery count under the rule that ships now reads **llm 0 of 6 (final), local 2 of 6, bayes 1 of 6
+with one row pending, random 0 of 3**, and two local rows (r4 #10, r5 #18) are not measured at all yet. The
+tolerance is -1.0 point on the worst single-wind load term, so bayes r3 misses it by 0.15 on the tower-base
+load - and **every one of the three new rows is worse on fresh seeds than held out** (+0.32 to -0.87, +0.57 to
+-1.15), the fifth instance of that pattern after s32, s53.2, s55 and s59.2. The primary endpoint is untouched:
+it is computed from the 21 finished histories.
+
+One row worth naming on its own: **local r3 #8 (omega 0.633, zeta 0.664, corner 3.214, damper 0.0012, hpf
+0.360) holds both loads at every wind speed off the design winds with +28.66 of regulation at 1.05x shipped
+pitch travel.** The standing baseline reads +29.75 fresh at 2.016x, so the selection rule still picks stage 1,
+by 1.09 points - but this is a sixth row for the duty ladder of s55.2-55.3, where the one-knob member buys
++23.0 at 1.000x, and it was found by the local search, not by the model.
