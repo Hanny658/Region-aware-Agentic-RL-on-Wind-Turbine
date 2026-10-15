@@ -3710,3 +3710,12 @@ any interruption `integrity_check.py` first.
 
 **Recorded before launch.** Launch follows the commit of this section; the first candidate line of the agent
 arm is checked once after launch and recorded below with the time.
+
+**Launched 2026-10-16 06:46 (session 396, commit b0def21, `~/wtrl/exp/rosco_margin.log`).** Off-design cache
+warmed with 120 files, the design-set cache of llm r0 with 1053; the shipped start came from the cache at
+exactly 0.000; the first agent reply arrived at 06:46, well formed (two candidates; 1190 prompt tokens with the
+shipping rule and the per-wind block present; 663 completion tokens), the first of them the one-knob corner 3.4
+with hpf 0.8 and the second a faster, better-damped loop at the same corner, and both were under evaluation at
+06:51 (16 OpenFAST processes). The log is block-buffered through grep, so candidate lines appear in chunks. Read
+it once it prints `=== done`; after any VM restart, `integrity_check.py` first, then relaunch the same command
+(finished runs skip on best.json, an unfinished run resumes from its history.jsonl).
