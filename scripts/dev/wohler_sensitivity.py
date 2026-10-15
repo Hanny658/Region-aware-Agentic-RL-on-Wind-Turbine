@@ -31,12 +31,19 @@ a = ap.parse_args()
 R6 = f"{a.exp}/mpcsearch600"
 TOWER, BLADE = (3, 4, 5), (8, 10, 12)
 
-CTRL = [("tuned ROSCO", f"{R6}/mexp/eval_rosco_tuned_mexp.csv"),
+# Every evaluation written after 2026-09-23 records the extra exponents in its ordinary CSV, so the native
+# baseline (s52) and the agent's leg-1 rows (s55) need no re-evaluation; the hand-scaled row of s29 is not a
+# tuning file and is kept out. Rows evaluated before that date fall back to campaign_mexp.sh's re-evaluation.
+CACHE = f"{a.exp}/roscosearch_native/_verify/cache"
+CTRL = [("tuned baseline, native (s52)", f"{R6}/fresh/eval_rosco_tuned_native_s78910.csv"),
+        ("agent one-line tuning (corner 3.0)", f"{CACHE}/eval_ddcdd3521ca6_s78910_90365b.csv"),
+        ("agent tuning, corner 6.5", f"{CACHE}/eval_52645b613ce6_s78910_90365b.csv"),
         ("scheduled MPC", f"{R6}/mexp/eval_sched_mpc_mexp.csv")]
-for d in sorted(glob.glob(f"{a.exp}/trwCwG3t_s?")) + sorted(glob.glob(f"{a.exp}/mrwCwG3t_s?")):
+for d in sorted(glob.glob(f"{a.exp}/tnrwCwG3t_s?")) + sorted(glob.glob(f"{a.exp}/mrwCwG3t_s?")):
     n = os.path.basename(d)
-    base = "tuned ROSCO" if n.startswith("t") else "scheduled MPC"
-    CTRL.append((f"{base} + gated layer ({n[-2:]})", f"{d}/eval_range_TIB_s78910_mexp.csv"))
+    base = "native baseline" if n.startswith("t") else "scheduled MPC"
+    cands = [f"{d}/eval_range_TIB_s78910_mexp.csv", f"{d}/eval_range_TIB_s78910.csv"]
+    CTRL.append((f"{base} + gated layer ({n[-2:]})", next((c for c in cands if os.path.exists(c)), cands[0])))
 
 
 def baseline_del():

@@ -219,7 +219,7 @@ if a.figdir:
         ax.set_title(t)
     fig.supxlabel("mean wind speed, m/s", fontsize=9, y=-0.04)
     axes[0].set_ylabel("reduction vs shipped, %")
-    axes[0].legend(loc="best", frameon=False)
+    axes[1].legend(loc="lower right", frameon=False)
     fig.suptitle("the same rungs per wind speed; shading is the gate ramp, below which each gated rung "
                  "coincides with its base by construction", fontsize=8, y=1.04)
     fig.tight_layout()

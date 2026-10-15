@@ -3464,3 +3464,67 @@ up while the PI rows hold +15 to +20 points, and below the gate the gated rung l
 **What is still blocking the rewrite: F1, the loop diagram**, which no script can make and which has to be
 drawn by hand in TikZ. `f5_duty.png` is replaced by F2 and eight v4/F-era figures are retired. Everything
 else the main text needs is measured and in `docs/tables/`.
+
+## 61 Before and after as levels, the discipline tables on the native baseline, and main.tex v7 (2026-10-15, no simulations)
+
+### 61.1 The overlay figure the user asked for (F7, `scripts/dev/figures_overlay.py`, `f5_overlay.png`)
+
+Every other figure reports percentage reductions; this one overlays the per-episode quantities those reductions
+are computed from, per mean wind speed, so a reader sees the two curves the reduction is the distance between:
+the shipped controller against the agent's two tuning files (leg 1) and the untuned offset-free LPV-MPC against
+the agent-scheduled one (leg 2), the shipped controller drawn in both rows, MSE panels logarithmic because the
+two regulation terms span two decades between 12 and 18 m/s. No simulation: each evaluation's CSV carries the
+absolute per-episode level and its JSON the reduction against the paired shipped rollout, so the shipped level
+is level / (1 - red/100) - and because every evaluation pairs against the same rollout, that derived level must
+agree across evaluations file by file. **It agrees to a relative 6e-16 on every wind file and every term**,
+which is the first direct check that the leg-1 verify cache and the leg-2 evaluations are paired to the same
+baseline bank. What the levels show that the reductions did not: at 24 m/s the untuned MPC's tower DEL is
+23.16 MN m against the shipped 21.36 and the scheduled one 21.39 (the -8.76 -> -0.33 of s57.2 as levels), and the
+schedule costs regulation only above 18 m/s.
+
+### 61.2 The two discipline tables were still on the hand-scaled baseline
+
+`lifetime_del.py` (site weighting) and `wohler_sensitivity.py` (Wohler exponents) had their rows hard-coded to
+`eval_rosco_tuned_s78910` and `eval_rosco_tuned_mexp` - the s29 hand-scaled row that s52 voided - and to the
+`trwCwG3t` gated runs trained on it. v6 quoted them ("+24.6 per episode and -0.3 Rayleigh-weighted"). Both now
+run on the native baseline without a simulation: every evaluation written after 2026-09-23 records the extra
+exponents in its ordinary CSV, so the native row, the agent's two leg-1 rows and the `tnrwCwG3t` gated runs
+carry them, and the baseline side is recomputed from the stored raw channels as before. The hand-scaled row is
+out of both tables. Re-running `lifetime_del.py` first produced no CSV because its output was piped through
+`head`, which closed the pipe before the write; run it to a file.
+
+**Site weighting on the native baseline (fresh seeds, tower DEL, per-episode mean / level ratio equal /
+Rayleigh V_ave 10 / 8.5 / 7.5):** native baseline 25.3 / 32.3 / 37.6 / 38.6 / 39.2; agent one-line 8.7 / 13.4 /
+16.6 / 17.1 / 17.3; scheduled MPC 17.4 / 27.8 / 40.4 / 43.8 / 46.1; baseline + layer (s1) 25.3 / 32.4 / 37.6 /
+38.6 / 39.2; MPC + layer (s1) 18.9 / 29.4 / 40.6 / 43.7 / 46.0. **Speed MSE:** native 29.7 / 28.8 / 28.6 / 28.2 /
+27.6; agent one-line 23.0 / 20.4 / 23.7 / 24.5 / 24.8; MPC 55.4 / 60.9 / 42.3 / 34.8 / 29.5; baseline + layer 35.9
+/ 37.3 / 32.4 / 30.4 / 28.9; MPC + layer 58.0 / 64.9 / 43.7 / 35.4 / 29.6. So against the native baseline the
+MPC's regulation advantage *shrinks* from +25.6 per episode to +13.7 / +6.6 / +1.9, and its tower disadvantage
+(-7.9 per episode, -4.5 as an equal-weight level ratio) is +2.8 / +5.2 / +6.9 under the weights, because the
+Rayleigh weights favour the bins near rated where the MPC's tower term is largest. These weighted aggregates
+carry no interval and the paper reports them as the convention's effect, not as a result. **Wohler (native
+rows):** tower m = 3 / 4 / 5 native 23.3 / 25.3 / 26.2, agent one-line 7.9 / 8.7 / 8.9, agent 6.5 14.3 / 16.2 /
+17.2, MPC 14.5 / 17.4 / 19.2, baseline + layer 23.1-23.6 / 25.3-26.0 / 26.4-27.2, MPC + layer (s1) 16.2 / 18.9 /
+20.3; the ordering is the same in every column. F6 (`f5_weighting.png`) is redrawn from the new table by a
+small `figures_weighting.py`, because `figures_v5.py`'s panel was keyed on the old labels.
+
+### 61.3 main.tex v7, written from scratch
+
+The user's instruction: the v6 narrative is a different paper, so rewrite rather than edit, to avoid the old
+framing leaking through. v7 is 16 pages under `arxiv.sty`: abstract; 1 introduction with C1-C5; 2 related work
+(LLM agents that tune controllers first, with ControlAgent, Shou, Chen, Wu, Li and Bigdeli cited and the Teke
+item left as a `\pending`); 3 setup (protocol table, the four reductions, the per-wind rule, the loop as a TikZ
+figure, the five ROSCO quantities with the measured box and the constrained rule); 4 leg 1 (the verified duty
+ladder table, the one-line result, the band as a duty ladder, F2 the front, F7 the overlay, then the search
+table, F3 the traces, the 0-of-144 paragraph labelled post hoc, the design screen's rank correlation); 5 leg 2
+(the MPC table with per-wind tower terms, F4); 6 leg 3 (the gated-layer table per seed); 7 the ladder (table,
+F5, the trade and the three decompositions); 8 how the numbers were read (per wind off the design winds, the
+three-aggregation table with F6, actuation); 9 discussion with the three disclosure sentences and the limits;
+10 conclusion. Appendices: A data and the composite named as the selection objective, B controllers and
+training, C the search in full (the measured box including zeta 0.10-2.00), **D the pre-registered proposer
+comparison with its per-run table and p = 0.3117 / 0.1937 / 0.0476, E the delivery count 0 of 6 against 4 of 6
+with the screen mechanism**, F the two reward controls (s49, s58), G MPC design points, H the reward
+expressions, I the IPC negative, J Wohler, K budget and availability. No number is reported in the composite;
+the symbol J does not appear. Four bib entries were added with partial author lists flagged in
+`references.md`; nine v4/F-era figure files were removed from `docs/manuscript/figures/`. Remaining before
+submission: Teke, the four author lists, `authors.tex`.

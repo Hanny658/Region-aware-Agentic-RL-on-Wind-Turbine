@@ -10,6 +10,12 @@ appendix** (`../appendix/APPENDIX_PLAN.md`). Nothing is deleted and nothing is r
 it was measured. Where a positive sentence here has a measured limit, the limit is named in the same row of
 the plan so it cannot be lost on the way into LaTeX.
 
+**Status, 2026-10-15 evening.** `../manuscript/main.tex` **v7 is written from this file**, from scratch rather
+than by editing v6, and compiles with MiKTeX (`latexmk -pdf main.tex`, 16 pages, 7 figures, 9 tables, no
+undefined references). Its ten sections are §3 below in order; its appendices are `../appendix/APPENDIX_PLAN.md`
+A-J (lettered A-K in the PDF because the IPC chapter is its own appendix). The three disclosure sentences of
+§6 are in the paper's §9. What remains is in §8.
+
 ---
 
 ## 1. The claim
@@ -87,12 +93,13 @@ instead of the six reporting choices, and the composite leaves every reported nu
 
 | id | content | source | status |
 |---|---|---|---|
-| **F1** | **The loop**, one panel: proposer -> tuning file -> OpenFAST (7 winds x 2 seeds) -> four reductions + three constraints -> history -> next proposal. The deterministic half is boxed, so what the language model does and does not decide is visible. | - | **the one artefact still missing** - to draw in TikZ; no script can make it |
+| **F1** | **The loop**, one panel: proposer -> tuning file -> OpenFAST (7 winds x 2 seeds) -> four reductions + three constraints -> history -> next proposal. The deterministic half is boxed, so what the language model does and does not decide is visible. | - | **done**: TikZ inside `main.tex` (Fig. 1) |
 | **F2** | **The front against duty**, two panels. (a) the design screen: all 485 distinct proposed tunings, regulation against pitch-travel ratio, split into the ones that lose a constraint, hold it on the set mean, and also hold both loads at every wind speed; log duty and symmetric-log regulation, so the long bad tail is shown rather than cropped. (b) the same x axis with fresh-seed regulation for the ten verified band members, filled where they hold per wind on both seed sets, the one-line row and stage 1 labelled. Replaces v6's `f5_duty.png`, which plotted the composite. | the campaign's `history.jsonl`, `rosco_band_verified.csv`, `rosco_tuned_baseline.csv` | **done**: `f5_front.png`, `scripts/dev/figures_leg1.py` |
 | **F3** | **Search traces**, one panel per proposer: cumulative best feasible regulation against the simulation index, one line per run, the first feasible gain marked, censoring named in the panel title. This is the honest form of "fewer simulations" - the random arm never arrives. | `history.jsonl` under `~/wtrl/exp/roscosearch_native` | **done**: `f5_search.png`, same script |
 | **F4** | **Per-wind terms**, the four reductions against mean wind speed for the four rungs, gate ramp shaded. Carries the MPC's tower-fatigue loss above 18 m/s and the learned layer's "nothing below the gate". | the rungs' own per-episode evaluations, joined on the wind file | **done**: `f5_perwind.png`, `scripts/dev/ladder_published.py --figdir` |
 | **F5** | **The ladder**, four published reductions per rung with paired bootstrap bars. **No composite panel, and the hand-scaled baseline is not a rung.** | the same arrays as T6 | **done**: `f5_stack.png`, same script |
-| **F6** | **Weighting**: Rayleigh weights for classes I-III, and the same controllers equally weighted and site weighted. | `lifetime_del.csv` | **keep** `f5_weighting.png` |
+| **F6** | **Weighting**: Rayleigh weights for classes I-III, and the same controllers equally weighted and site weighted, **on the native baseline** (the v6 panel was keyed on the hand-scaled row). | `lifetime_del.csv` as `lifetime_del.py --csv` now writes it | **done**: `f5_weighting.png`, `scripts/dev/figures_weighting.py` |
+| **F7** | **Before and after, as levels** (the user's request of 2026-10-15): the per-episode quantities the reductions are computed from, bin means per wind speed, the shipped controller overlaid with the agent's two tuning files (top row) and the untuned MPC with the agent-scheduled one (bottom row), MSE panels logarithmic. The shipped level is derived from each evaluation's own reduction and must agree across evaluations file by file; the script checks it (6e-16). | the four evaluations' own CSV/JSON pairs | **done**: `f5_overlay.png`, `scripts/dev/figures_overlay.py` |
 
 F2-F5 are drawn from the arrays their tables are made from, not from a parallel path: `figures_leg1.py`
 re-derives the first feasible gain of all 21 runs and **exits non-zero if any of them, or any arm's count and
@@ -118,7 +125,7 @@ duty knee, s26) and `../figures/r3_*.png` (R3 trajectories) are appendix candida
 | **T4** | **Leg 2.** Unscheduled and agent-scheduled MPC in four reductions with the paired difference, plus tower DEL per wind speed at 16-24 m/s. | `mpc_leg_fresh.csv`, `mpc_leg_heldout.csv` | `scripts/dev/mpc_leg_table.py` |
 | **T5** | **Leg 3.** The gated layer on the native baseline, three seeds, paired against its own base, both seed sets. | `gated_native.csv` | `scripts/dev/gated_native_table.py` |
 | **T6** | **The ladder** in four published reductions, fresh seeds, with duty. | `ladder_published_fresh.csv` | `scripts/dev/ladder_published.py` |
-| **T7** | **Three aggregations** of the same two controllers: per-episode, level ratio, Rayleigh. | `lifetime_del.csv` | `scripts/dev/lifetime_del.py`, `convention_flip.py` |
+| **T7** | **Three aggregations** of five controllers (native baseline, the agent's one-line row, the scheduled MPC, the two gated rungs): per-episode mean, level ratio equally weighted, Rayleigh at V_ave 10 / 8.5 / 7.5, for tower DEL and speed MSE. | `lifetime_del.csv` | `scripts/dev/lifetime_del.py --csv` (rows moved to the native baseline on 2026-10-15; the hand-scaled row is out) |
 
 Appendix tables: `gate_proposer_control.csv` (A3), `range_residual.csv` (A3), `rosco_proposer_test.csv`
 (A1-A2, the same file read under the shipping rule), `wohler.csv` (A5), `verification_probe.csv`,
@@ -164,7 +171,23 @@ null result can buy: the referee believes the rest.
 5. Name the band member used in every comparison; the baseline is a band from 0.97x to 2.02x travel, not a
    row.
 6. One aggregation rule everywhere: bin mean, then weighted power mean.
-7. The MPC's power-MSE advantage over the tuned baseline **vanishes** under site weighting (+24.6 per
-   episode, -0.3 Rayleigh-weighted). Never "flips".
+7. Site weighting is reported as the convention's effect, never as a result, and the weighted aggregates
+   carry no interval. Against the **native** baseline (fresh seeds, `lifetime_del.csv`): the MPC's regulation
+   advantage is +25.6 per episode and +13.7 / +6.6 / +1.9 under Rayleigh weights at V_ave 10 / 8.5 / 7.5 - it
+   *shrinks*; its tower-fatigue disadvantage, -7.9 per episode and -4.5 as an equally weighted level ratio, is
+   +2.8 / +5.2 / +6.9 under the same weights, because the weights favour the bins near rated. The v6 numbers
+   "+24.6 per episode, -0.3 Rayleigh-weighted" were measured over the hand-scaled baseline and are void.
 8. Report 600 s simulated / 20 s discarded / 580 s scored, and ADC against the 10 deg/s rate limit beside
    every travel ratio.
+
+## 8. What remains before submission (2026-10-15)
+
+1. **Open Teke, ICENSOS 2025** (title only) and either cite it or strike the `\pending` in §2 of `main.tex`;
+   C1 is printed as "to our knowledge" either way.
+2. **Complete four author lists** in `references.bib` (Shou, Li, Bigdeli, Gao - partial in the audit; the arXiv
+   pages are in `references.md`).
+3. `main.tex` carries no other `\pending`. Two overfull boxes remain (the band table at 34 pt inside its
+   `resizebox`, the reward verbatim at 43 pt), cosmetic.
+4. The Wohler appendix shows the MPC + layer row for seed 1 only: seeds 0 and 2 were evaluated before the extra
+   exponents were recorded and would need `campaign_mexp.sh` re-run to appear (no result depends on it).
+5. Authors and affiliations come from `authors.tex` (git-ignored); the anonymous fallback builds without it.

@@ -389,9 +389,23 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   the 21 runs, or any arm's count and median, disagrees with `docs/tables/rosco_proposer_test.csv` and s59.4;
   `scripts/dev/ladder_published.py --figdir` draws the ladder (`f5_stack.png`, no composite panel, the hand-
   scaled baseline not a rung) and the per-wind panel (`f5_perwind.png`) inside the script that writes the
-  table, so figure and table cannot drift. **F1, the loop diagram, is the one artefact still missing** and
-  must be drawn by hand in TikZ. The title may name the agent and may claim the application as new; by s59.1
-  it may NOT claim or imply that the agent beats another search.
+  table, so figure and table cannot drift. F1 is drawn in TikZ inside `main.tex`; F7 (`f5_overlay.png`,
+  `scripts/dev/figures_overlay.py`) overlays the untuned and the agent-tuned controllers as LEVELS per wind
+  speed and checks that the shipped level derived from every evaluation is the same rollout (6e-16). The title
+  may name the agent and may claim the application as new; by s59.1 it may NOT claim or imply that the agent
+  beats another search.
+- **main.tex v7 EXISTS (2026-10-15, roadmap s61): rewritten from scratch under `docs/paper/NARRATIVE.md`,
+  compiles with MiKTeX (`latexmk -pdf main.tex` in `docs/manuscript`, 16 pages, 7 figures, 9 tables, no
+  undefined references).** Ten sections (intro, related work, setup with the loop as Fig. 1, leg 1 with the
+  verified duty ladder, leg 2, leg 3, the ladder, how the numbers were read, discussion with the three
+  disclosure sentences, conclusion) and appendices A-K (D = the pre-registered proposer null, E = the delivery
+  count, both in full). Do NOT edit v6's text back in: the v6 bullet below is history. The v6 weighting numbers
+  ("+24.6 per episode, -0.3 Rayleigh-weighted") were measured over the hand-scaled baseline and are VOID;
+  `lifetime_del.py` and `wohler_sensitivity.py` now run on the native baseline (s61): the MPC's regulation
+  advantage over the native baseline SHRINKS from +25.6 per episode to +13.7 / +6.6 / +1.9 under Rayleigh
+  weights at V_ave 10 / 8.5 / 7.5, and its tower disadvantage (-7.9 per episode) is +2.8 / +5.2 / +6.9 under
+  the same weights; weighted aggregates carry no interval. Before submission: open Teke (ICENSOS 2025) for C1,
+  complete the four partial author lists in `references.bib` (`references.md` lists them), fill `authors.tex`.
 - **THE CLAIM CHANGED ON 2026-10-13 (user's decision): the paper is about what the agentic loop delivers on the
   shipped GSPI and on an untuned MPC, i.e. the three legs of `docs/MAIN_LINE.md`.** v6's single claim - *baseline
   tuning, aggregation convention and wind weighting decide the apparent benefit of advanced pitch control* -

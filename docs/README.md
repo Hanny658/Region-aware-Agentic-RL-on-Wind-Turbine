@@ -50,7 +50,7 @@ the same commit, and if it changes a *paper* number, `paper/EVIDENCE.md` too.
 | directory | what it is |
 |---|---|
 | `tables/` | every derived table as CSV. `paper/NARRATIVE.md` §5 classifies them into main text, appendix and **superseded, cite nothing from them** |
-| `manuscript/` | `main.tex` (v6, the substrate), `references.bib`, `arxiv.sty`, `figures/` |
+| `manuscript/` | `main.tex` (**v7**, rewritten 2026-10-15 from `paper/NARRATIVE.md`; `latexmk -pdf main.tex` under MiKTeX), `references.bib`, `references.md` (verification status per entry), `arxiv.sty`, `figures/` (F2-F7 as `scripts/dev/figures_{leg1,overlay,weighting}.py` and `ladder_published.py --figdir` write them) |
 | `figures/` | R3 trajectories and F-era figures; appendix candidates only, see `paper/NARRATIVE.md` §4 |
 | `logs/` | campaign logs, including failed attempts - provenance of specific runs |
 | `plant/DISCON.IN` | the ROSCO configuration as actually run (which load-mitigation features were on or off, caveat C4) |

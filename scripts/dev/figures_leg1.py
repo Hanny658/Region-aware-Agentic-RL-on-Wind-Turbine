@@ -174,7 +174,7 @@ if os.path.exists(base):
 LBL = {"llm_r1#9": ("one line of the shipped file\n(corner 1.57 -> 3.0), 1.00x travel", (13, -3), "left"),
        "llm_r1#11": ("the same line at 6.5", (-13, -13), "right"),
        "local_r0#22": ("sub-shipped duty, 0.97x", (13, -2), "left"),
-       "llm_r1#12": ("the most regulating row:\n-1.17 at 24 m/s", (-13, -5), "right")}
+       "llm_r1#12": ("the most regulating row:\n-1.17 at 24 m/s", (-13, -18), "right")}
 for r in band:
     key = r.get("from", "")
     if key in LBL:
@@ -225,10 +225,10 @@ for ax, arm in zip(axes, ARMS):
     # a censored run enters the median at budget + 1, as s59.1 fixed in advance; say so rather than printing
     # a median that reads like a run that arrived
     if got == 0:
-        sub = f"{got} of {len(names)} runs, no feasible gain in {a.budget} simulations"
+        sub = f"{got}/{len(names)} runs: no feasible gain in {a.budget}"
     else:
         cens = "" if got == len(names) else f", {len(names) - got} censored"
-        sub = f"{got} of {len(names)} runs, median {med:g} simulations{cens}"
+        sub = f"{got}/{len(names)} runs, median {med:g} sims{cens}"
     ax.set_title(f"{ARM_N[arm]}\n{sub}")
     ax.set_xlabel("simulations")
     ax.set_xlim(0, a.budget + 1)

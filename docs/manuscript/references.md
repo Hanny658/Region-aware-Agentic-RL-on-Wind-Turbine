@@ -34,3 +34,16 @@ SUPPLY** are not cited with bibliographic details until the user provides them.
 
 Deliberately not cited: any "Lakhani-style supervisor" reference (the phrase appears in a code
 comment; no verifiable source was found, so the guardrail is described without attribution).
+
+## Added 2026-10-15 (v7 rewrite, LLM-agent-in-the-tuning-loop related work)
+
+Verification status is the one recorded in `docs/paper/literature_2026-09-23.md`; author lists marked partial
+must be completed from the arXiv abstract pages before submission.
+
+| key | reference | status / source |
+|---|---|---|
+| [Shou2026pidllm] | Shou et al., "A Physics-Informed Framework for PID Tuning of Chemical Processes Using Large Language Model Agents," arXiv:2607.26594, 2026. | VERIFIED (delegated); **author list partial** — https://arxiv.org/abs/2607.26594 |
+| [Li2026greedy] | Y. Li, "Greedy Is a Strong Default: Agents as Iterative Optimizers," arXiv:2603.27415, 2026. | VERIFIED (delegated); given name not recorded — https://arxiv.org/abs/2603.27415 |
+| [Bigdeli2026falsifiers] | Bigdeli, J. Zhou, S. Bak, "Large Language Models as Falsifiers for Cyber-Physical Systems," arXiv:2609.20752, 2026. | VERIFIED (delegated); **author list partial** — https://arxiv.org/html/2609.20752 |
+| [Gao2026rfagent] | Gao et al., "RF-Agent: Automated Reward Function Design via Language Agent Tree Search," arXiv:2602.23876, 2026. | VERIFIED (delegated); **author list partial** — https://arxiv.org/abs/2602.23876 |
+| (not added) | Teke, "The Role of Artificial Intelligence Agents in Optimization and Control of Wind Energy Systems," ICENSOS 2025. | **title only; abstract not retrieved. Must be opened before C1 ("first in wind") is printed** — https://avesis.mcbu.edu.tr/yayin/1d4eb7f3-97b3-47d6-a923-b2dc56b69fc9/ |

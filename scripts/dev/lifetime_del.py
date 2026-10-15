@@ -45,14 +45,20 @@ COL = {"tower": "TwrBsMyt_DEL_MNm", "blade": "RootMyc1_DEL_MNm"}
 REG = {"power MSE": "power_mse_R3", "speed MSE": "gen_speed_mse_R3"}
 R6 = f"{a.exp}/mpcsearch600"
 
+CACHE = f"{a.exp}/roscosearch_native/_verify/cache"
 CONTROLLERS = [
-    # label, csv path, per-episode JSON with the reductions (to back out the GSPI baseline), seed set
-    ("tuned ROSCO", f"{R6}/fresh/eval_rosco_tuned_s78910.csv", f"{R6}/fresh/eval_rosco_tuned_s78910.json", "s78910"),
+    # label, csv path, per-episode JSON with the reductions (to back out the GSPI baseline), seed set.
+    # The hand-scaled row of s29 (eval_rosco_tuned_s78910) is not a tuning file (s52) and is kept out; the
+    # standing baseline is the native tuning, and the agent's one-line row is the leg-1 headline (s55, s60).
+    ("tuned baseline, native (s52)", f"{R6}/fresh/eval_rosco_tuned_native_s78910.csv",
+     f"{R6}/fresh/eval_rosco_tuned_native_s78910.json", "s78910"),
+    ("agent one-line tuning (corner 3.0)", f"{CACHE}/eval_ddcdd3521ca6_s78910_90365b.csv",
+     f"{CACHE}/eval_ddcdd3521ca6_s78910_90365b.json", "s78910"),
     ("scheduled MPC", f"{R6}/fresh/eval_sched_mpc_s78910.csv", f"{R6}/fresh/eval_sched_mpc_s78910.json", "s78910"),
 ]
-for d in sorted(glob.glob(f"{a.exp}/trwCwG3t_s?")) + sorted(glob.glob(f"{a.exp}/mrwCwG3t_s?")):
+for d in sorted(glob.glob(f"{a.exp}/tnrwCwG3t_s?")) + sorted(glob.glob(f"{a.exp}/mrwCwG3t_s?")):
     n = os.path.basename(d)
-    base = "tuned ROSCO" if n.startswith("t") else "scheduled MPC"
+    base = "native baseline" if n.startswith("t") else "scheduled MPC"
     CONTROLLERS.append((f"{base} + gated residual ({n[-2:]})", f"{d}/eval_range_TIB_s78910.csv", f"{d}/eval_range_TIB_s78910.json", "s78910"))
 
 

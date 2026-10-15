@@ -193,9 +193,12 @@ discussion, not in its title.
 - **Protocol:** 12-24 m/s in 2 m/s steps, IEC class B, 600 s simulated / 20 s discarded / 580 s scored; seeds
   1-2 design, 3-6 held out, 7-10 fresh (`docs/paper/RESULTS_2026-09-10_data-and-caveats.md`).
 - **Actuator duty beside every row:** pitch travel ratio and ADC against the 10 deg/s rate limit.
-- **One aggregation rule:** bin mean, then weighted power mean. Site weighting is not cosmetic - the MPC's
-  power-MSE advantage over the tuned baseline is +24.6 per episode and -0.3 Rayleigh-weighted
-  (`scripts/dev/convention_flip.py`); an advantage that *vanishes*, never a reversal.
+- **One aggregation rule:** bin mean, then weighted power mean. Site weighting is not cosmetic, and it is
+  reported as the convention's effect, never as a result (s61, native baseline, `docs/tables/lifetime_del.csv`):
+  the MPC's regulation advantage over the tuned baseline is +25.6 per episode and +13.7 / +6.6 / +1.9 under
+  Rayleigh weights at V_ave 10 / 8.5 / 7.5 - it *shrinks* - while its tower-fatigue disadvantage, -7.9 per
+  episode, is +2.8 / +5.2 / +6.9 under the same weights. The weighted aggregates carry no interval. (The
+  "+24.6 per episode, -0.3 Rayleigh-weighted" of v6 was measured over the hand-scaled baseline and is void.)
 - **The baseline is a band, not a row** (s52.3, s55.2): 1.00x to 2.72x travel, +22.6 to +37.0 regulation. Name
   the member used in every comparison.
 
@@ -214,14 +217,11 @@ discussion, not in its title.
    does not, the structure search is load-bearing and only the proposer is not. s41 has the fixed reward under
    the gate on the MPC base losing 5.9 points of tower fatigue at 20 m/s, which points to the second reading,
    but the native base has never had that arm.
-3. **The manuscript rewrite**, now planned in `docs/paper/NARRATIVE.md` (claim, contributions C1-C5,
-   section order, figures F1-F6, tables T1-T7, wording guardrails) with the numbers collected in
-   `docs/paper/EVIDENCE.md` and the rest in `docs/appendix/APPENDIX_PLAN.md`. The site-by-site table of
-   `docs/archive/plan_2026-10-12_manuscript-rewrite.md` is still the correct checklist for reasons (A)-(D) -
-   the composite leaving the reporting, the baseline becoming a named band member, the two false statements,
-   and the retrained PI-base rung. **F2-F5 now exist** (2026-10-15): `scripts/dev/figures_leg1.py` draws the
-   front against duty and the search traces and refuses to run if either disagrees with
-   `rosco_proposer_test.csv`, and `scripts/dev/ladder_published.py --figdir` draws the ladder and the per-wind
-   panel from the arrays its own table is made from. **F1, the loop diagram, is the one artefact still
-   missing** and has to be drawn by hand in TikZ. One citation must be opened before C1 is printed: Teke,
-   ICENSOS 2025, on AI agents in wind energy systems.
+3. **The manuscript: v7 is written (2026-10-15) and compiles** - `docs/manuscript/main.tex`, rewritten from
+   scratch under `docs/paper/NARRATIVE.md` (positive results in the main text, nulls in appendices D-E with the
+   three disclosure sentences in §9), 16 pages, 7 figures (F1 in TikZ, F2-F7 from `figures_leg1.py`,
+   `ladder_published.py --figdir`, `figures_weighting.py`, `figures_overlay.py`, each refusing to run or
+   cross-checking against its table) and 9 tables. Before submission: open Teke (ICENSOS 2025) for C1,
+   complete four partial author lists in `references.bib`, and fill `authors.tex`. The site-by-site table of
+   `docs/archive/plan_2026-10-12_manuscript-rewrite.md` is satisfied: the composite is out of every reported
+   number, the baseline is the native band, the two false statements are gone, the PI rung is the retrained one.
