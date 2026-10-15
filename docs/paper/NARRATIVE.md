@@ -182,9 +182,10 @@ null result can buy: the referee believes the rest.
 
 ## 8. What remains before submission (2026-10-15)
 
-1. ~~Open Teke, ICENSOS 2025~~ **Done 2026-10-15:** not a paywall, simply not online - the AVESIS record has
-   no abstract, DOI or PDF and the series' proceedings site carries only its 2023 volume. It is named in a
-   footnote in §2 of `main.tex`, the `\pending` is gone, and C1 is printed as "to our knowledge".
+1. ~~Open Teke, ICENSOS 2025~~ **Closed 2026-10-15:** only a repository record exists (no abstract, DOI or
+   text; no 2025 proceedings volume online), so its content cannot be verified, and by the user's decision it
+   is **removed from the manuscript entirely** - neither cited nor mentioned. C1 is printed as "to our
+   knowledge", and the `\pending` is gone.
 2. ~~Complete four author lists~~ **Done 2026-10-15:** all four arXiv pages are open access and were fetched
    directly; `references.bib` carries the full names (note the first author of arXiv:2609.20752 is
    ArjomandBigdeli; the bib key keeps the short form).

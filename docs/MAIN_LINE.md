@@ -222,7 +222,8 @@ discussion, not in its title.
    three disclosure sentences in §9), 16 pages, 7 figures (F1 in TikZ, F2-F7 from `figures_leg1.py`,
    `ladder_published.py --figdir`, `figures_weighting.py`, `figures_overlay.py`, each refusing to run or
    cross-checking against its table) and 9 tables. Before submission: fill `authors.tex`. (The four new bib
-   entries were fetched from arXiv on 2026-10-15, open access, full author lists; the Teke record was checked
-   the same day - no abstract, DOI or text online - and is a footnote in §2, so C1 stays "to our knowledge".) The site-by-site table of
+   entries were fetched from arXiv on 2026-10-15, open access, full author lists; an unverifiable conference
+   record found the same day was removed from the manuscript entirely by the user's decision, and C1 stays
+   "to our knowledge".) The site-by-site table of
    `docs/archive/plan_2026-10-12_manuscript-rewrite.md` is satisfied: the composite is out of every reported
    number, the baseline is the native band, the two false statements are gone, the PI rung is the retrained one.

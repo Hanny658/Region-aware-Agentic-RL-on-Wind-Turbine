@@ -3549,3 +3549,9 @@ Role of Artificial Intelligence Agents in Optimization and Control of Geothermal
 Its content cannot be checked, so it is not cited: s2 of `main.tex` names it in a footnote as the one record
 whose title could hold a counterexample and says it could not be checked, and C1 stays "to our knowledge".
 `main.tex` now carries no `\pending`.
+
+**Addendum, later the same day.** The user's decision: since the record cannot be verified, treat it as if it
+were not there and remove it from the manuscript entirely. The footnote is gone from s2 of `main.tex` and the
+entry from `references.md` (a one-line "dropped" note remains there pointing here); the record is neither
+cited nor mentioned anywhere in the paper. For the log: the repository entry itself does exist (fetched
+2026-10-15), it is its content that cannot be checked. C1 is printed as "to our knowledge".

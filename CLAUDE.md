@@ -381,11 +381,10 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   checked on 2026-10-15:** four targeted searches plus the 2026-09-23 audit found no LLM in any wind
   turbine control-design loop, so the claim stands as a domain-first with "to our knowledge", with the
   mechanism attributed to ControlAgent (arXiv:2410.19811), Shou (arXiv:2607.26594), Chen (Processes 2026)
-  and Wu (Building Simulation 2026). The one record whose title could hold a counterexample, Teke,
-  *The Role of Artificial Intelligence Agents in Optimization and Control of Wind Energy Systems*,
-  ICENSOS 2025, was checked on 2026-10-15: not a paywall, simply not online (no abstract, DOI or PDF;
-  the series' proceedings site carries only its 2023 volume), so it is a footnote in s2, not a
-  citation, and C1 stays "to our knowledge". **F2-F5 exist as of 2026-10-15:** `scripts/dev/figures_leg1.py`
+  and Wu (Building Simulation 2026). One conference record with a relevant title surfaced in that search
+  and could not be verified (repository entry only, no abstract, DOI or text); by the user's decision it is
+  REMOVED from the manuscript entirely - neither cited nor mentioned (s61.4). C1 stays "to our knowledge".
+  **F2-F5 exist as of 2026-10-15:** `scripts/dev/figures_leg1.py`
   draws the front against pitch duty (`f5_front.png`, all 485 proposed tunings on log/symlog axes) and the
   per-run search traces (`f5_search.png`), and it EXITS NON-ZERO if its first-feasible-gain index for any of
   the 21 runs, or any arm's count and median, disagrees with `docs/tables/rosco_proposer_test.csv` and s59.4;
