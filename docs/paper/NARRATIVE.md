@@ -182,11 +182,13 @@ null result can buy: the referee believes the rest.
 
 ## 8. What remains before submission (2026-10-15)
 
-1. **Open Teke, ICENSOS 2025** (title only) and either cite it or strike the `\pending` in §2 of `main.tex`;
-   C1 is printed as "to our knowledge" either way.
-2. **Complete four author lists** in `references.bib` (Shou, Li, Bigdeli, Gao - partial in the audit; the arXiv
-   pages are in `references.md`).
-3. `main.tex` carries no other `\pending`. Two overfull boxes remain (the band table at 34 pt inside its
+1. ~~Open Teke, ICENSOS 2025~~ **Done 2026-10-15:** not a paywall, simply not online - the AVESIS record has
+   no abstract, DOI or PDF and the series' proceedings site carries only its 2023 volume. It is named in a
+   footnote in §2 of `main.tex`, the `\pending` is gone, and C1 is printed as "to our knowledge".
+2. ~~Complete four author lists~~ **Done 2026-10-15:** all four arXiv pages are open access and were fetched
+   directly; `references.bib` carries the full names (note the first author of arXiv:2609.20752 is
+   ArjomandBigdeli; the bib key keeps the short form).
+3. `main.tex` carries no `\pending`. Two overfull boxes remain (the band table at 34 pt inside its
    `resizebox`, the reward verbatim at 43 pt), cosmetic.
 4. The Wohler appendix shows the MPC + layer row for seed 1 only: seeds 0 and 2 were evaluated before the extra
    exponents were recorded and would need `campaign_mexp.sh` re-run to appear (no result depends on it).

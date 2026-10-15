@@ -381,9 +381,11 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   checked on 2026-10-15:** four targeted searches plus the 2026-09-23 audit found no LLM in any wind
   turbine control-design loop, so the claim stands as a domain-first with "to our knowledge", with the
   mechanism attributed to ControlAgent (arXiv:2410.19811), Shou (arXiv:2607.26594), Chen (Processes 2026)
-  and Wu (Building Simulation 2026) — and ONE item must be opened before it is printed: Teke,
+  and Wu (Building Simulation 2026). The one record whose title could hold a counterexample, Teke,
   *The Role of Artificial Intelligence Agents in Optimization and Control of Wind Energy Systems*,
-  ICENSOS 2025 (title only, abstract not retrieved). **F2-F5 exist as of 2026-10-15:** `scripts/dev/figures_leg1.py`
+  ICENSOS 2025, was checked on 2026-10-15: not a paywall, simply not online (no abstract, DOI or PDF;
+  the series' proceedings site carries only its 2023 volume), so it is a footnote in s2, not a
+  citation, and C1 stays "to our knowledge". **F2-F5 exist as of 2026-10-15:** `scripts/dev/figures_leg1.py`
   draws the front against pitch duty (`f5_front.png`, all 485 proposed tunings on log/symlog axes) and the
   per-run search traces (`f5_search.png`), and it EXITS NON-ZERO if its first-feasible-gain index for any of
   the 21 runs, or any arm's count and median, disagrees with `docs/tables/rosco_proposer_test.csv` and s59.4;
@@ -404,8 +406,9 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   `lifetime_del.py` and `wohler_sensitivity.py` now run on the native baseline (s61): the MPC's regulation
   advantage over the native baseline SHRINKS from +25.6 per episode to +13.7 / +6.6 / +1.9 under Rayleigh
   weights at V_ave 10 / 8.5 / 7.5, and its tower disadvantage (-7.9 per episode) is +2.8 / +5.2 / +6.9 under
-  the same weights; weighted aggregates carry no interval. Before submission: open Teke (ICENSOS 2025) for C1,
-  complete the four partial author lists in `references.bib` (`references.md` lists them), fill `authors.tex`.
+  the same weights; weighted aggregates carry no interval. The four bib entries added for s2 (Shou,
+  Li, ArjomandBigdeli, Gao) were fetched from their arXiv pages on 2026-10-15 - all open access - and carry
+  full author lists; `references.md` records each check. Before submission: fill `authors.tex`.
 - **THE CLAIM CHANGED ON 2026-10-13 (user's decision): the paper is about what the agentic loop delivers on the
   shipped GSPI and on an untuned MPC, i.e. the three legs of `docs/MAIN_LINE.md`.** v6's single claim - *baseline
   tuning, aggregation convention and wind weighting decide the apparent benefit of advanced pitch control* -

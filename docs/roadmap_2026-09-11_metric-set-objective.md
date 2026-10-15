@@ -3528,3 +3528,24 @@ expressions, I the IPC negative, J Wohler, K budget and availability. No number 
 the symbol J does not appear. Four bib entries were added with partial author lists flagged in
 `references.md`; nine v4/F-era figure files were removed from `docs/manuscript/figures/`. Remaining before
 submission: Teke, the four author lists, `authors.tex`.
+
+### 61.4 The five references the rewrite depended on, checked directly (2026-10-15)
+
+The user asked whether the papers flagged in s61.3 sit behind paywalls and whether they could be checked
+directly. All four arXiv entries are open access and were fetched from their abstract pages: Shou, Hong, Ren,
+Wang, Yang, Liao (arXiv:2607.26594, eess.SY, 29 Jul 2026 - hosted LLMs tune PID loops on 100 FOPDT + 100 SOPDT
+plants, 75-89 % / 77-79 % success, a fine-tuned Qwen3-0.6B reaching 94.0 %); Yitao Li (arXiv:2603.27415,
+28 Mar 2026, CC BY 4.0 - greedy hill climbing with early stopping matches the elaborate agent variants at
+fewer evaluations); **ArjomandBigdeli**, Zhou, Bak (arXiv:2609.20752, 17 Sep 2026 - the first author's surname
+is ArjomandBigdeli, the bib key keeps the short form; LLM-Falsifier best on 14 of 21 ARCH-COMP specifications
+by simulations to a counterexample); Gao, Zhang, Jiang, You, Zhang, Deng (arXiv:2602.23876, 27 Feb 2026, CC BY
+4.0). `references.bib` now carries the full names and `references.md` the check.
+
+The Teke record is **not a paywall - it is simply not online.** The AVESIS entry (Manisa Celal Bayar University)
+lists it as a full-text paper at the 6th ICENSOS, Konya, 10-11 August 2025, with no abstract, DOI or PDF; the
+series' proceedings site (as-proceeding.com/index.php/icensos) carries only its 2023 volume (ISBN
+978-605-72325-9-5), no 2025 proceedings book was found anywhere, and the same author has a sibling record "The
+Role of Artificial Intelligence Agents in Optimization and Control of Geothermal Energy Systems" (ICCAR 2025).
+Its content cannot be checked, so it is not cited: s2 of `main.tex` names it in a footnote as the one record
+whose title could hold a counterexample and says it could not be checked, and C1 stays "to our knowledge".
+`main.tex` now carries no `\pending`.

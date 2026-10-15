@@ -221,7 +221,8 @@ discussion, not in its title.
    scratch under `docs/paper/NARRATIVE.md` (positive results in the main text, nulls in appendices D-E with the
    three disclosure sentences in §9), 16 pages, 7 figures (F1 in TikZ, F2-F7 from `figures_leg1.py`,
    `ladder_published.py --figdir`, `figures_weighting.py`, `figures_overlay.py`, each refusing to run or
-   cross-checking against its table) and 9 tables. Before submission: open Teke (ICENSOS 2025) for C1,
-   complete four partial author lists in `references.bib`, and fill `authors.tex`. The site-by-site table of
+   cross-checking against its table) and 9 tables. Before submission: fill `authors.tex`. (The four new bib
+   entries were fetched from arXiv on 2026-10-15, open access, full author lists; the Teke record was checked
+   the same day - no abstract, DOI or text online - and is a footnote in §2, so C1 stays "to our knowledge".) The site-by-site table of
    `docs/archive/plan_2026-10-12_manuscript-rewrite.md` is satisfied: the composite is out of every reported
    number, the baseline is the native band, the two false statements are gone, the PI rung is the retrained one.
