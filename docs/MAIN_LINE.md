@@ -219,6 +219,9 @@ discussion, not in its title.
    `docs/paper/EVIDENCE.md` and the rest in `docs/appendix/APPENDIX_PLAN.md`. The site-by-site table of
    `docs/archive/plan_2026-10-12_manuscript-rewrite.md` is still the correct checklist for reasons (A)-(D) -
    the composite leaving the reporting, the baseline becoming a named band member, the two false statements,
-   and the retrained PI-base rung. Three artefacts do not exist yet and gate the figure set: F1 (the loop
-   diagram, TikZ), and F2 / F3 (`scripts/dev/figures_leg1.py`, the front against duty and the search traces).
-   One citation must be opened before C1 is printed: Teke, ICENSOS 2025, on AI agents in wind energy systems.
+   and the retrained PI-base rung. **F2-F5 now exist** (2026-10-15): `scripts/dev/figures_leg1.py` draws the
+   front against duty and the search traces and refuses to run if either disagrees with
+   `rosco_proposer_test.csv`, and `scripts/dev/ladder_published.py --figdir` draws the ladder and the per-wind
+   panel from the arrays its own table is made from. **F1, the loop diagram, is the one artefact still
+   missing** and has to be drawn by hand in TikZ. One citation must be opened before C1 is printed: Teke,
+   ICENSOS 2025, on AI agents in wind energy systems.

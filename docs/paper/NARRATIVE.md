@@ -87,12 +87,21 @@ instead of the six reporting choices, and the composite leaves every reported nu
 
 | id | content | source | status |
 |---|---|---|---|
-| **F1** | **The loop**, one panel: proposer -> tuning file -> OpenFAST (7 winds x 2 seeds) -> four reductions + three constraints -> history -> next proposal. The deterministic half is boxed, so what the language model does and does not decide is visible. | - | **to draw** (TikZ; no script) |
-| **F2** | **The front and the ladder.** Regulation reduction against pitch-travel ratio, every evaluated tuning as a faint point, the per-wind-holding ones filled, the four verified band members and the shipped controller labelled. Replaces v6's `f5_duty.png`, which plotted the composite. | `rosco_search.csv`, `rosco_perwind.csv`, `rosco_band_rows_fresh.csv` | **to write**: `scripts/dev/figures_leg1.py` |
-| **F3** | **Search traces.** Cumulative best feasible regulation against simulation index, one line per run, four arms in four colours, the first feasible gain marked. This is the honest form of "fewer simulations": the random arm never arrives. | `history.jsonl` under `~/wtrl/exp/roscosearch_native` | **to write**: same script |
-| **F4** | **Per-wind terms**, the four reductions against mean wind speed for the baseline, the MPC rows and the gated layer, gate ramp shaded. Carries leg 2's repair at 22-24 m/s and leg 3's "nothing below the gate". | `mpc_leg_fresh.csv`, `gated_native.csv` | **regenerate** `f5_perwind.png` |
-| **F5** | **The ladder**, four published reductions per rung with paired bootstrap bars. **No composite panel.** | `ladder_published_fresh.csv` | **regenerate** `f5_stack.png` (drop the composite panel) |
+| **F1** | **The loop**, one panel: proposer -> tuning file -> OpenFAST (7 winds x 2 seeds) -> four reductions + three constraints -> history -> next proposal. The deterministic half is boxed, so what the language model does and does not decide is visible. | - | **the one artefact still missing** - to draw in TikZ; no script can make it |
+| **F2** | **The front against duty**, two panels. (a) the design screen: all 485 distinct proposed tunings, regulation against pitch-travel ratio, split into the ones that lose a constraint, hold it on the set mean, and also hold both loads at every wind speed; log duty and symmetric-log regulation, so the long bad tail is shown rather than cropped. (b) the same x axis with fresh-seed regulation for the ten verified band members, filled where they hold per wind on both seed sets, the one-line row and stage 1 labelled. Replaces v6's `f5_duty.png`, which plotted the composite. | the campaign's `history.jsonl`, `rosco_band_verified.csv`, `rosco_tuned_baseline.csv` | **done**: `f5_front.png`, `scripts/dev/figures_leg1.py` |
+| **F3** | **Search traces**, one panel per proposer: cumulative best feasible regulation against the simulation index, one line per run, the first feasible gain marked, censoring named in the panel title. This is the honest form of "fewer simulations" - the random arm never arrives. | `history.jsonl` under `~/wtrl/exp/roscosearch_native` | **done**: `f5_search.png`, same script |
+| **F4** | **Per-wind terms**, the four reductions against mean wind speed for the four rungs, gate ramp shaded. Carries the MPC's tower-fatigue loss above 18 m/s and the learned layer's "nothing below the gate". | the rungs' own per-episode evaluations, joined on the wind file | **done**: `f5_perwind.png`, `scripts/dev/ladder_published.py --figdir` |
+| **F5** | **The ladder**, four published reductions per rung with paired bootstrap bars. **No composite panel, and the hand-scaled baseline is not a rung.** | the same arrays as T6 | **done**: `f5_stack.png`, same script |
 | **F6** | **Weighting**: Rayleigh weights for classes I-III, and the same controllers equally weighted and site weighted. | `lifetime_del.csv` | **keep** `f5_weighting.png` |
+
+F2-F5 are drawn from the arrays their tables are made from, not from a parallel path: `figures_leg1.py`
+re-derives the first feasible gain of all 21 runs and **exits non-zero if any of them, or any arm's count and
+median, disagrees with `rosco_proposer_test.csv` and s59.4**; `ladder_published.py --figdir` draws F4 and F5
+inside the script that writes T6, so the figure cannot drift from the table.
+
+    ~/wtrl/run.sh python scripts/dev/figures_leg1.py
+    ~/wtrl/run.sh python scripts/dev/ladder_published.py --seeds s78910 \
+        --csv docs/tables/ladder_published_fresh.csv --figdir docs/manuscript/figures
 
 Retired from the figure set: `fig1_levers`, `fig2_composition`, `fig3_mechanism`, `fig4_reference`,
 `fig_mpc_error`, `fig_mpcbase`, `fig_training`, `fig_trajectory` (v4 / F-era, superseded objective and

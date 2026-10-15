@@ -3428,11 +3428,39 @@ classical arms delivered more often under the shipping rule, both in full in app
 number itself in the appendix, as the user asked. None of C1-C5 depends on either result, so the disclosure
 costs the paper nothing.
 
-### 60.4 What is now blocking the rewrite
+### 60.4 The figure set, built the same day (no simulations)
 
-Three artefacts do not exist: **F1**, the loop diagram (TikZ, no script), and **F2 / F3**, the front against
-pitch duty and the per-run search traces, both of which need a new `scripts/dev/figures_leg1.py` reading
-`rosco_search.csv`, `rosco_perwind.csv`, `rosco_band_rows_fresh.csv` and the campaign's own `history.jsonl`.
-`f5_stack.png` and `f5_perwind.png` need regenerating without the composite panel, `f5_duty.png` is replaced
-by F2, and eight v4/F-era figures are retired. Everything else the main text needs is already measured and
-already in `docs/tables/`.
+Four of the five missing figures now exist, and both scripts are written so that a figure cannot drift away
+from the table beside it.
+
+**`scripts/dev/figures_leg1.py`** reads the campaign's own 21 `history.jsonl` files and writes two panels.
+**F2 `f5_front.png`** is the front against actuator duty: (a) all 485 distinct proposed tunings on the design
+screen, split into the 236 that lose a constraint, the 97 that hold it on the set mean and the 113 that also
+hold both loads at every wind speed, with 39 more the plant could not run; (b) the ten verified band members
+with their fresh-seed regulation, filled where they hold per wind on both seed sets, the one-line row and
+stage 1 labelled. Panel (a) uses a **log duty axis and a symmetric-log regulation axis** because the box is
+real and half of what a proposer can write is far worse than shipped - the median proposal reads -33 % of
+regulation and the worst -17412 %, so a linear window would have hidden 56 % of the cloud rather than showing
+that most of the space is bad. **F3 `f5_search.png`** is one panel per proposer, cumulative best feasible
+regulation against the simulation index, the first feasible gain marked, censoring named in the title.
+The script **re-derives the first feasible gain of every run and exits non-zero** if any of the 21 disagrees
+with `docs/tables/rosco_proposer_test.csv`, or if any arm's count and median disagree with s59.4; it found two
+of its own bugs that way (a median taken as the upper of the two central values, and the shipped identity
+check counted as a proposal), both fixed, and now reports 0 mismatches.
+
+**`scripts/dev/ladder_published.py --figdir`** draws **F5 `f5_stack.png`** (the four published reductions per
+rung with paired bootstrap bars) and **F4 `f5_perwind.png`** (the same rungs per wind speed, gate ramp shaded)
+*inside the script that writes the table*, from the same joined arrays, so the two cannot disagree. This
+replaces regenerating `figures_v5.py`, whose stack carried a fifth panel for the composite and whose first
+rung was the hand-scaled baseline s52 voided - regenerating it would have reproduced a figure built on a row
+that is not a tuning file. The superseded rows stay in the table, which is where they explain why the
+model-based rung used to look load-optimal, and are kept out of the figures. Re-running the generator
+reproduced both committed CSVs byte for byte, which is the check that the table on disk is still the table the
+code makes.
+
+F4 carries two things the set mean hides and the text needs: the MPC rows lose tower-base fatigue from 18 m/s
+up while the PI rows hold +15 to +20 points, and below the gate the gated rung lies exactly on its base.
+
+**What is still blocking the rewrite: F1, the loop diagram**, which no script can make and which has to be
+drawn by hand in TikZ. `f5_duty.png` is replaced by F2 and eight v4/F-era figures are retired. Everything
+else the main text needs is measured and in `docs/tables/`.

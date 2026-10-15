@@ -40,6 +40,8 @@ ap.add_argument("--seeds", default="s78910", choices=["s78910", "s3456"],
 ap.add_argument("--gate_seed", default="s1", help="which agent seed of the gated layer to show")
 ap.add_argument("--n_boot", type=int, default=20000)
 ap.add_argument("--csv", default=None)
+ap.add_argument("--figdir", default=None,
+                help="also draw f5_stack.png and f5_perwind.png here, from these same arrays")
 a = ap.parse_args()
 
 
@@ -159,3 +161,67 @@ if a.csv:
         w.writeheader()
         w.writerows(out)
     print(f"\n-> {a.csv}")
+
+
+# ----------------------------------------------------------------- figures F5 and F4 of docs/paper/NARRATIVE.md
+# Drawn here rather than in figures_v5.py so that the figure and the table above come from exactly the same
+# arrays: v5's stack carried a fifth panel for the composite, and its first rung was the hand-scaled baseline
+# that s52 voided. The superseded rows stay in the table (they explain why the model-based rung used to look
+# load-optimal) and are kept out of the figures.
+if a.figdir:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    plt.rcParams.update({"font.size": 9, "axes.titlesize": 9.5, "axes.labelsize": 9, "legend.fontsize": 7.5,
+                         "figure.dpi": 150, "savefig.dpi": 220, "axes.spines.top": False,
+                         "axes.spines.right": False})
+    os.makedirs(a.figdir, exist_ok=True)
+    LADDER = ["tuned baseline, native (s52)", "native baseline + gated layer",
+              "scheduled offset-free LPV-MPC", "MPC + wind-gated learned layer"]
+    SHORT = {"tuned baseline, native (s52)": "tuned baseline\n(a tuning file)",
+             "native baseline + gated layer": "+ gated\nlearned layer",
+             "scheduled offset-free LPV-MPC": "scheduled\noffset-free MPC",
+             "MPC + wind-gated learned layer": "MPC + gated\nlearned layer"}
+    CLR = ["#4C72B0", "#55A868", "#DD8452", "#C44E52"]
+    shown = [n for n in LADDER if n in data]
+
+    fig, axes = plt.subplots(1, 4, figsize=(11.0, 3.0))
+    for ax, (t, k) in zip(axes, TERMS):
+        for j, n in enumerate(shown):
+            m, lo, hi = ci(col(n, k))
+            ax.barh(j, m, height=0.62, color=CLR[j], alpha=0.9)
+            ax.plot([lo, hi], [j, j], lw=1.3, color="#333333", solid_capstyle="butt")
+            ax.annotate(f"{m:+.1f}", (m, j), textcoords="offset points",
+                        xytext=(4 if m >= 0 else -4, -8), fontsize=7,
+                        ha="left" if m >= 0 else "right", color="#333333")
+        ax.axvline(0.0, lw=0.8, color="#999999")
+        ax.set_yticks(range(len(shown)))
+        ax.set_yticklabels([SHORT.get(n, n) for n in shown] if ax is axes[0] else [])
+        ax.invert_yaxis()
+        ax.set_title(t)
+    fig.supxlabel("reduction against the paired shipped controller, %", fontsize=9, y=-0.04)
+    fig.suptitle(f"{len(common)} episodes of the {a.seeds[1:]} wind fields, every rung the same episodes; "
+                 f"bars are 95 % paired stratified bootstraps", fontsize=8, y=1.04)
+    fig.tight_layout()
+    fig.savefig(f"{a.figdir}/f5_stack.png", bbox_inches="tight")
+    print(f"-> {a.figdir}/f5_stack.png")
+
+    fig, axes = plt.subplots(1, 4, figsize=(11.0, 2.8), sharex=True)
+    winds = np.unique(u)
+    for ax, (t, k) in zip(axes, TERMS):
+        for j, n in enumerate(shown):
+            v = col(n, k)
+            ax.plot(winds, [np.nanmean(v[u == s]) for s in winds], "-o", ms=3.2, lw=1.2, color=CLR[j],
+                    label=SHORT.get(n, n).replace("\n", " "))
+        ax.axhline(0.0, lw=0.8, color="#999999")
+        ax.axvspan(15, 17, color="#CCCCCC", alpha=0.35, lw=0)     # the gate ramp of the learned layer
+        ax.set_title(t)
+    fig.supxlabel("mean wind speed, m/s", fontsize=9, y=-0.04)
+    axes[0].set_ylabel("reduction vs shipped, %")
+    axes[0].legend(loc="best", frameon=False)
+    fig.suptitle("the same rungs per wind speed; shading is the gate ramp, below which each gated rung "
+                 "coincides with its base by construction", fontsize=8, y=1.04)
+    fig.tight_layout()
+    fig.savefig(f"{a.figdir}/f5_perwind.png", bbox_inches="tight")
+    print(f"-> {a.figdir}/f5_perwind.png")

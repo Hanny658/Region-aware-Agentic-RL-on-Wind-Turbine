@@ -383,9 +383,15 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   mechanism attributed to ControlAgent (arXiv:2410.19811), Shou (arXiv:2607.26594), Chen (Processes 2026)
   and Wu (Building Simulation 2026) — and ONE item must be opened before it is printed: Teke,
   *The Role of Artificial Intelligence Agents in Optimization and Control of Wind Energy Systems*,
-  ICENSOS 2025 (title only, abstract not retrieved). Three artefacts gate the figure set and do not exist:
-  F1 (the loop diagram, TikZ) and F2 / F3 (`scripts/dev/figures_leg1.py`). The title may name the agent and
-  may claim the application as new; by s59.1 it may NOT claim or imply that the agent beats another search.
+  ICENSOS 2025 (title only, abstract not retrieved). **F2-F5 exist as of 2026-10-15:** `scripts/dev/figures_leg1.py`
+  draws the front against pitch duty (`f5_front.png`, all 485 proposed tunings on log/symlog axes) and the
+  per-run search traces (`f5_search.png`), and it EXITS NON-ZERO if its first-feasible-gain index for any of
+  the 21 runs, or any arm's count and median, disagrees with `docs/tables/rosco_proposer_test.csv` and s59.4;
+  `scripts/dev/ladder_published.py --figdir` draws the ladder (`f5_stack.png`, no composite panel, the hand-
+  scaled baseline not a rung) and the per-wind panel (`f5_perwind.png`) inside the script that writes the
+  table, so figure and table cannot drift. **F1, the loop diagram, is the one artefact still missing** and
+  must be drawn by hand in TikZ. The title may name the agent and may claim the application as new; by s59.1
+  it may NOT claim or imply that the agent beats another search.
 - **THE CLAIM CHANGED ON 2026-10-13 (user's decision): the paper is about what the agentic loop delivers on the
   shipped GSPI and on an untuned MPC, i.e. the three legs of `docs/MAIN_LINE.md`.** v6's single claim - *baseline
   tuning, aggregation convention and wind weighting decide the apparent benefit of advanced pitch control* -
