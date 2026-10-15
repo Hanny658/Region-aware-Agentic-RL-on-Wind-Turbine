@@ -3555,3 +3555,47 @@ were not there and remove it from the manuscript entirely. The footnote is gone 
 entry from `references.md` (a one-line "dropped" note remains there pointing here); the record is neither
 cited nor mentioned anywhere in the paper. For the log: the repository entry itself does exist (fetched
 2026-10-15), it is its content that cannot be checked. C1 is printed as "to our knowledge".
+
+## 62 Repairing the selection rule: the margin screen read on the existing campaign, and a proposer that is told the rule that ships (2026-10-15)
+
+### 62.1 Pre-registration of the margin screen, written before any of its three evaluations ran
+
+**The question.** s59.6 closed leg 1 with the screen, not the search, as the thing that fails: in llm r1 the
+agent had itself visited the two tunings that hold off the design winds (#9, #11) and the rule took #12,
+because on 14 design episodes #12 reads +36.96 with a worst single wind of -0.60 and two episodes per wind
+cannot tell -0.60 from -1.20. If the screen is what fails, a screen with a margin should hand the user the rows
+that hold, from the same candidates, with no search re-run.
+
+**The rule, fixed now.** Among the candidates of a run that hold the three constraints on the set mean with
+positive regulation, require the worst single-wind load term (tower or blade, any of the seven wind speeds) to
+be **>= 0 on the design set** - one point of margin inside the published tolerance of -1 - and select the
+largest regulation among them. The shipping rule is **unchanged**: both loads within 1.0 point at every wind
+speed on 28 held-out AND 28 fresh episodes. The margin is 1.0 and not something fitted to the 21 runs: s55
+verified ten band members off the design winds and the design-set worst single wind separated them cleanly,
+holding members at +0.2 to +0.7 and failing ones at -0.4 to -0.9, so "worst >= 0" is the threshold that data
+chose before s59 existed. A secondary reading at worst >= -0.5 costs nothing extra (its two new selections are
+inside this pass) and is reported beside it.
+
+**What it costs, counted from the candidate cache without reading any outcome.** Under worst >= 0 the rule
+has a candidate in 10 of 21 runs (llm 3: r1, r2, r5; local 4; bayes 3; random 0); 7 of the 10 selections are
+already measured on both seed sets, 3 are new (bayes_r1#13, llm_r2#12, llm_r5#14): 168 episodes of 600 s,
+about an hour on seven workers. `scripts/wsl/campaign_rule_margin.sh`.
+
+**The ceiling, stated in advance.** In three of the six agent runs (r0, r3, r4) no candidate holds both loads
+at every wind speed even on the design screen, so no selection rule can deliver more than 3 of 6 for the agent
+arm, 4 of 6 for the local search, 3 of 6 for Bayesian optimisation. A flip of 0 of 6 to 3 of 6 on the same runs
+is a paired exact p = 0.125. This is a mechanism check, not a result.
+
+**What each outcome means, and what follows from it - decided now.**
+- If at least 2 of the 3 agent runs with a candidate deliver under the margin screen, the screen is confirmed
+  as the failure and the next experiment is justified: a proposer that is SHOWN the per-wind terms and TOLD the
+  shipping rule (s62.2), run as a new arm against classical arms given the same information, pre-registered
+  before launch. The user has authorised that launch in advance on this condition.
+- If 1 or 0 of the 3 deliver, the agent's candidates do not generalise even with margin, the prompt is the only
+  lever left, and nothing is launched without the user.
+- In either case this is an additional analysis (appendix D3), reported beside the pre-registered D1 and D2
+  and never in place of them, and no statement that the agent beats a classical search follows from it.
+
+**Recorded before reading:** `rosco_perwind_select.py --verify --tol 0.0 --ship_tol 1.0` selects and
+evaluates; `rosco_proposer_test.py --screen_tol 0.0` writes `docs/tables/rosco_proposer_test_margin.csv`.
+Launched 2026-10-15 after this section was committed.

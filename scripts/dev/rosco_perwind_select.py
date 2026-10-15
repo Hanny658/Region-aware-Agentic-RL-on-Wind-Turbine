@@ -43,7 +43,11 @@ ap.add_argument("--roots", nargs="+",
                 default=[os.path.expanduser("~/wtrl/exp/roscotune_native"),
                          os.path.expanduser("~/wtrl/exp/roscosearch_native")])
 ap.add_argument("--tol", type=float, default=PER_WIND_TOL,
-                help="points of load reduction allowed to be negative at a single wind speed")
+                help="the SCREEN: points of load reduction allowed to be negative at a single wind speed on the "
+                     "design set when selecting (0.0 = the margin screen of roadmap s62.1)")
+ap.add_argument("--ship_tol", type=float, default=PER_WIND_TOL,
+                help="the SHIPPING rule: the same tolerance applied off the design winds when deciding whether "
+                     "a selection ships; stays at the published 1.0 whatever the screen is")
 ap.add_argument("--top", type=int, default=12)
 ap.add_argument("--csv", default=None)
 ap.add_argument("--verify", action="store_true",
@@ -171,8 +175,9 @@ if a.verify:
         return min(vals) if vals else float("nan")
 
     print()
-    print(f"Each run's per-wind selection measured off the design winds, tolerance {a.tol:.1f} point "
-          f"at any single wind speed on BOTH seed sets:")
+    print(f"Each run's per-wind selection (screen: worst single wind >= {-a.tol:+.1f} on the design set) measured "
+          f"off the design winds; it ships if both loads are within {a.ship_tol:.1f} point at every wind speed "
+          f"on BOTH seed sets:")
     print(f"{'run':>12} {'candidate':>10} {'design':>8} {'held out':>9} {'fresh':>8}   {'design w/w':>11} "
           f"{'heldout w/w':>12} {'fresh w/w':>10}  ships")
     for name in sorted(runs):
@@ -183,7 +188,7 @@ if a.verify:
             continue
         ho, fr = ev.run(bp["params"], 0, seeds=[3, 4, 5, 6]), ev.run(bp["params"], 1, seeds=[7, 8, 9, 10])
         w_ho, w_fr = worst_measured(ho), worst_measured(fr)
-        ships = w_ho == w_ho and w_fr == w_fr and min(w_ho, w_fr) >= -a.tol
+        ships = w_ho == w_ho and w_fr == w_fr and min(w_ho, w_fr) >= -a.ship_tol
         print(f"{name:>12} {'#' + str(bp['i']):>10} {bp['assess']['objective']:>8.2f} "
               f"{assess(ho).get('objective', float('nan')):>9.2f} "
               f"{assess(fr).get('objective', float('nan')):>8.2f}   {worst_per_wind(bp)[0]:>11.2f} "
