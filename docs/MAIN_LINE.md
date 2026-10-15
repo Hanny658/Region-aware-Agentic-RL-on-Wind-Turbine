@@ -37,7 +37,12 @@ set-mean objective *better* than the classical searches, walks further up the re
 can support, and therefore delivers nothing at all under the rule that ships - **0 of 6 runs against 4 of 6
 for a plain local search** and 2 of 6 for Bayesian optimisation, all 21 runs measured (s59.6, final; Fisher
 two-sided p = 0.061 against the local search). The fourth instance of a set-mean constraint being gamed
-(s32, s53.2, s55), with the agent on the losing side of it.
+(s32, s53.2, s55), with the agent on the losing side of it. Read again with one point of margin in the
+screen (s62.1, pre-registered, no search re-run), the same candidates deliver in 2 of the agent's 6 runs (0
+before), 2 of 6 for Bayesian optimisation (a different pair) and the same 4 of 6 for the local search: the
+screen was what failed in two of the three agent runs that had a candidate, and the agent's delivered rows
+carry the most regulation of any arm (+32.0 (5.2) against +19.9 and +26.0). The arm that is told the rule
+is running (s62.2).
 
 What the loop does win on leg 1, post hoc and reported as such: **it never proposed a candidate the plant
 could not run** (0 of 144, against 13 of 144 for the local search, 9 of 144 for Bayesian optimisation and 16 of
@@ -76,7 +81,12 @@ Agent-found rows that hold both load terms at **every** wind speed on 28 held-ou
   regulation and everything that fails between +26.7 and +37.7, the model's three selections being the highest
   rows of all. The one row a user would take out of 21 runs is **local r3 #8 - one filter corner and a small
   damper, +28.66 of regulation at 1.05x shipped pitch travel**, and the two rows with the largest margins are
-  the two the campaign's own stage 3 never looked at (local r4 #10, r5 #18).
+  the two the campaign's own stage 3 never looked at (local r4 #10, r5 #18). **Under the margin screen of
+  s62.1 (worst single-wind load term >= 0 on the design set, shipping rule unchanged) the same runs read
+  local 4 of 6, bayes 2 of 6, llm 2 of 6:** llm r1 #11 (+28.35 at 1.57x) and r5 #14 (+35.71 at 2.18x, the
+  most-regulating delivered row of the 21 runs) ship, llm r2 #12 misses by 0.50 at 24 m/s on fresh seeds;
+  Fisher p = 0.57 against local. The agent's candidates deliver when the screen lets them, in 2 of the 3
+  runs where it can; the classical arms still deliver at least as often.
 - **Post hoc, and the one difference that is large: 0 of 144 llm candidates destabilised the plant**, against
   13 of 144 local (Fisher p = 0.00018), 9 of 144 bayes (p = 0.0034) and 16 of 72 random (p < 1e-5); every one
   of those 144 was really proposed by the model (the malformed-reply audit reads 0 in all six runs). It also
@@ -169,7 +179,8 @@ with the reward *structure* proposed by the agent. Evidence: roadmap s34, s37, s
 3. **"The agent finds the shippable design."** The reverse is measured: off the design winds the classical
    arms deliver a tuning holding both loads at every wind speed and the model arm never does (local 4/6,
    bayes 2/6, model 0/6, s59.6). The model finds the largest *set-mean* number fastest, and that number does
-   not ship.
+   not ship. With one point of margin in the screen the same runs read 2/6 against 4/6 and 2/6 (s62.1): the
+   agent's candidates ship where the screen lets them, and the classical arms still ship at least as often.
 4. **A composite score.** Report the four published reductions, each on its own. The symbol *J* is the MPC cost
    function. The composite stays as the *selection and training* objective of the campaigns, under its own name.
 5. **"ROSCO's tower damper is worth about nothing"** (withdrawn in s52: its gain had been capped at 0.004, worth

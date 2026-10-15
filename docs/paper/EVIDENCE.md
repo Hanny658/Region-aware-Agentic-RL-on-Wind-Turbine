@@ -84,7 +84,10 @@ itself.
 ### 4.4 Numbers that belong to the appendix, not here
 
 The pre-registered proposer endpoint, the delivery count under the shipping rule, and the front-position
-mechanism: appendix A1-A2 (`../appendix/APPENDIX_PLAN.md`).
+mechanism: appendix A1-A2 (`../appendix/APPENDIX_PLAN.md`). The margin-screen reading of s62.1, quoted in
+one sentence of §9 (with one point of margin in the design-set screen the agent's selections ship in two of
+its six runs, at the highest regulation of any delivered row, and the classical arms still at least as
+often): appendix D3, `../tables/rosco_proposer_test_margin.csv`.
 
 ## §5 Leg 2 - the untuned MPC (`../tables/mpc_leg_fresh.csv`, `mpc_leg_heldout.csv`, `design_search.csv`; s33, s38, s57.2)
 

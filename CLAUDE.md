@@ -14,7 +14,7 @@ knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TSTE 2026 (`Rela
   in the main narrative, D1 and D2 being the pre-registered proposer null and the delivery count.
 - `docs/README.md` — the three groups (`paper/`, `appendix/`, `archive/`), which document is evidence for which
   leg, and a section map of the 3400-line roadmap.
-- `docs/roadmap_2026-09-11_metric-set-objective.md` — the current experiment log, §0–§60. Use the section map;
+- `docs/roadmap_2026-09-11_metric-set-objective.md` — the current experiment log, §0–§62. Use the section map;
   it is not meant to be read through.
 - `docs/paper/RESULTS_2026-09-10_data-and-caveats.md` — provenance and caveats C1–C12, before quoting any number.
 - `docs/archive/` — superseded or wrong; `ARCHIVE.md` says why each file is out and what replaced it. The F-era
@@ -50,6 +50,20 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
 
 ### Leg 1 - the shipped GSPI, tuned by the agent (`docs/MAIN_LINE.md` leg 1)
 
+- **THE SCREEN WAS THE FAILURE, MEASURED (roadmap s62.1, 2026-10-16, pre-registered; `campaign_rule_margin.sh`,
+  `docs/tables/rosco_proposer_test_margin.csv`): with one point of margin in the design-set screen (worst
+  single-wind load term >= 0; shipping rule unchanged) the SAME 21 runs deliver local 4 of 6, bayes 2 of 6,
+  llm 2 of 6 (was 0 of 6), random 0 of 3.** llm r1 #11 (+28.35 at 1.57x) and r5 #14 (+35.71 at 2.18x, the
+  most-regulating delivered row of the campaign) ship, llm r2 #12 misses by 0.50 at 24 m/s on fresh seeds;
+  Fisher p = 0.57 against local - the classical arms still deliver at least as often, so no proposer claim.
+  The two remaining failures have design margins inside the range of the eight that ship: the 14-episode
+  screen's resolution is now the limit, not the margin. **The arm that is TOLD the rule is running (s62.2,
+  `campaign_rosco_margin.sh`, launched 2026-10-16, about 32 h; `campaign_ctl.sh ... campaign_rosco_margin`):
+  every arm selects under the screen, the llm arm is also shown the per-wind terms and told the rule
+  (`rosco_search.py --screen_tol 0.0`); endpoints and the reading of every outcome are fixed in s62.2 before
+  launch; whatever it finds goes to appendix D3.** `rosco_proposer_test.py` no longer writes
+  `rosco_proposer_test.csv` unless `--csv` names it (a reading without the flag overwrote the committed
+  table once; restored from git).
 - **THE PROPOSER CLAIM IS GONE FROM LEG 1 TOO: at n = 6 the model is not distinguishable from classical
   search (roadmap s59.4, 2026-10-14; 21 runs, 561 tunings, `scripts/dev/rosco_proposer_test.py`,
   `docs/tables/rosco_proposer_test.csv`).** The primary endpoint of s59.1, fixed before the runs existed:

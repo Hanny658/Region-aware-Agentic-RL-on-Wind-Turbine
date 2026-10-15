@@ -14,7 +14,7 @@ At the top level, three files that are none of the three: [`MAIN_LINE.md`](MAIN_
 complete internal record (every leg, every control, every null, and *what cannot be claimed*) - read it before
 writing anything, because `paper/NARRATIVE.md` is deliberately narrower than it;
 [`roadmap_2026-09-11_metric-set-objective.md`](roadmap_2026-09-11_metric-set-objective.md), the live
-experiment log, §0-§60, 3400 lines, which is not meant to be read through (use the section map below); and
+experiment log, §0-§62, 3700 lines, which is not meant to be read through (use the section map below); and
 [`RESTORE.md`](RESTORE.md), how to rebuild the environment and the data.
 
 **Rule for anything written from here on:** a new experiment document opens with the leg it serves and one
@@ -74,7 +74,9 @@ Numbers are sections of `roadmap_2026-09-11_metric-set-objective.md`.
   winds, the rule picks stage 1, the band is a duty ladder - **§59 the proposer question at n = 6: the primary
   endpoint is null and the delivery count is reversed** (§59.1 the pre-registration, §59.2 the restatement
   under the rule that ships, §59.4 the null primary and the 0-of-144 divergence count, §59.6 the closing
-  count) - **§60 the documents regrouped and the paper's narrative fixed**.
+  count) - **§60 the documents regrouped and the paper's narrative fixed** - §61 the overlay figure, the
+  discipline tables on the native baseline and main.tex v7 - **§62 the selection rule repaired: the margin
+  screen read on the same candidates (§62.1) and the arm that is told the rule (§62.2, running)**.
 - **Leg 2:** §33 the wind-scheduled tower weight - §36 model error over the range - §38 the verified design
   loop finds the schedule by itself and does not beat the hand design - §57 the unscheduled reference on fresh
   seeds.

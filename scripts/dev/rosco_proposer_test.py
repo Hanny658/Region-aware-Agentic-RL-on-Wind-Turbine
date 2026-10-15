@@ -52,7 +52,9 @@ ap.add_argument("--screen_tol", type=float, default=None,
 ap.add_argument("--against", default="bayes", help="the arm the primary test is against (the strongest classical)")
 ap.add_argument("--search_csv", default="docs/tables/rosco_search.csv",
                 help="stage 3 of the campaign, for the off-design verification of the set-mean selections")
-ap.add_argument("--csv", default="docs/tables/rosco_proposer_test.csv")
+ap.add_argument("--csv", default=None,
+                help="where to write the per-run table; nothing is written without it, so that a reading under "
+                     "another screen never overwrites the committed docs/tables/rosco_proposer_test.csv")
 a = ap.parse_args()
 
 ARM_ORDER = ("random", "local", "bayes", "llm")

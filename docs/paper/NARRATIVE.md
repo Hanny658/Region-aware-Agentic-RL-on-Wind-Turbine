@@ -194,3 +194,10 @@ null result can buy: the referee believes the rest.
 4. The Wohler appendix shows the MPC + layer row for seed 1 only: seeds 0 and 2 were evaluated before the extra
    exponents were recorded and would need `campaign_mexp.sh` re-run to appear (no result depends on it).
 5. Authors and affiliations come from `authors.tex` (git-ignored); the anonymous fallback builds without it.
+6. **Leg 1 under the margin screen (2026-10-16).** The s62.1 re-read is in app. E of `main.tex` and in
+   `../appendix/APPENDIX_PLAN.md` D3: with one point of margin in the design-set screen the agent's
+   selections ship in 2 of 6 runs (0 before) and the classical arms still at least as often, so no proposer
+   claim. The campaign in which every arm selects under that screen and the agent is also told the rule
+   (`campaign_rosco_margin.sh`, s62.2, launched 2026-10-16, about 32 h) is read under the endpoints fixed
+   in s62.2 and goes to D3 whatever it finds; only the branch s62.2 names (agent arm at 4 of 6 or more)
+   may move one sentence into §4 of the main text.

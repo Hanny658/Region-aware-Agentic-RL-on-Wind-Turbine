@@ -3599,3 +3599,114 @@ is a paired exact p = 0.125. This is a mechanism check, not a result.
 **Recorded before reading:** `rosco_perwind_select.py --verify --tol 0.0 --ship_tol 1.0` selects and
 evaluates; `rosco_proposer_test.py --screen_tol 0.0` writes `docs/tables/rosco_proposer_test_margin.csv`.
 Launched 2026-10-15 after this section was committed.
+
+**Outcome of 62.1 (the pass finished 2026-10-16 01:03; 168 episodes; `~/wtrl/exp/rule_margin.log`,
+`docs/tables/rosco_proposer_test_margin.csv`; the WSL VM restarted at about 06:30, five hours after the pass,
+and `integrity_check.py --since "2026-10-15 23:00"` found nothing broken).** Under worst >= 0 on the design
+set, shipping rule unchanged, the ten selections measured on 28 held-out and 28 fresh episodes (regulation
+design / held out / fresh; worst single-wind load term design / held out / fresh, with where the fresh one is):
+
+| run | selection, travel (first screen-holding candidate at simulation) | regulation | worst single wind | ships |
+|---|---|---|---|---|
+| llm r1 | #11, corner 6.500 damper off, 1.572x (8) | +28.60 / +27.56 / +28.35 | +0.50 / +1.64 / +0.82 (blade, 16) | yes |
+| llm r2 | #12, omega 0.620 corner 2.500, 1.019x (12) | +23.40 / +22.49 / +24.10 | +0.40 / -0.60 / **-1.50** (tower, 24) | no |
+| llm r5 | #14, zeta 0.850 corner 6.000, 2.178x (6) | +34.63 / +35.30 / +35.71 | +0.40 / +1.42 / -0.24 (tower, 24) | yes |
+| bayes r1 | #13, 1.183x (13) | +26.89 / +27.96 / +28.69 | +0.30 / -0.00 / -0.73 (tower, 24) | yes |
+| bayes r3 | #22, 1.069x (22) | +24.35 / +24.86 / +26.72 | +0.60 / +0.57 / **-1.15** (blade, 14) | no |
+| bayes r5 | #15, 1.415x (15) | +22.36 / +24.03 / +23.30 | +1.20 / +2.17 / +0.84 | yes |
+| local r0 | #21, 2.719x (18) | +14.30 / +14.20 / +11.62 | -0.00 / +1.12 / +0.33 | yes |
+| local r3 | #8, 1.050x (8) | +27.64 / +26.76 / +28.66 | +0.10 / +0.32 / -0.87 (tower, 24) | yes |
+| local r4 | #10, 2.377x (10) | +15.97 / +19.07 / +16.40 | +1.20 / +1.99 / +1.10 | yes |
+| local r5 | #18, 1.250x (18) | +21.32 / +22.84 / +22.78 | +1.30 / +2.10 / +1.06 | yes |
+
+The other eleven runs (llm r0, r3, r4; bayes r0, r2, r4; local r1, r2; random r0-r2) have no candidate that
+holds both loads at every wind speed on the design set, as counted in advance.
+
+**The counts, measured off the design winds: local 4 of 6 (+19.87 (7.43) of regulation), bayes 2 of 6
+(+26.00 (3.81)), llm 2 of 6 (+32.03 (5.20)), random 0 of 3.** Fisher two-sided llm against local p = 0.57,
+against bayes p = 1.0. Paired on the same runs against s59.6: the agent arm goes 0 -> 2 of 6 (both discordant
+runs in the same direction, sign test one-sided p = 0.25); bayes stays at 2 of 6 with the pair changed (r2 #21
+at +16.57 is screened out at a design worst of -0.7, r1 #13 at +28.69 comes in); local keeps the same four
+selections. The secondary reading at worst >= -0.5 gives the same counts in every arm; its only different
+selection (llm r2 #21 for #12) was already in the cache and does not ship either.
+
+**The decision rule of 62.1: 2 of the 3 agent runs with a candidate deliver, which is the go branch.** In
+both runs the agent had a candidate holding the screen early (r1 by its 8th simulation, r5 by its 6th) and
+the delivered row by the 11th and 14th, and the set-mean rule walked past them. llm r5 #14 is the
+most-regulating delivered row of the 21 runs, +35.71 at 2.178x shipped travel, with tower DEL +13.0 / +19.7 /
++14.0 / +10.6 / +8.0 / +4.4 / -0.2 per wind on fresh seeds; local r3 #8 (+28.66 at 1.050x) remains the row at
+near-shipped duty, so the two sit on different rungs of the s55 duty ladder and neither replaces the other.
+
+**What the two remaining failures say about the screen.** llm r2 #12 and bayes r3 #22 fail on fresh seeds
+only, by 0.50 and 0.15 points past the tolerance, and their design-set margins (+0.40, +0.60) sit inside the
+range of the eight that ship (-0.00 to +1.30): at two episodes per wind the design-set worst single wind does
+not separate them, so the margin is not the remaining limit, the resolution is. The set-mean tower term orders
+them better but its boundary is at the resolution of 28 episodes: the three rows at +3.84 to +3.92 come out
+-1.15, -1.50 and -0.73 fresh (bayes r3 #22, llm r2 #12, bayes r1 #13), one of the three inside the tolerance;
+everything at +6.0 and above ships with its worst fresh cell no lower than -0.87. s55's ordering (failing
++1.0 to +4.4, holding +7.8 to +15.9) therefore survives with its boundary now bracketed at +3.9 to +6.0.
+
+**What follows, as fixed in 62.1.** The screen is confirmed as the failure for two of the three agent runs
+that had a candidate; the arm that is told the rule (62.2) is justified and the user's conditional
+authorisation applies. This is appendix D3 beside D1 and D2; the classical arms deliver at least as often
+under either screen, and no statement that the agent beats a classical search follows. One infrastructure
+note: `rosco_proposer_test.py` wrote to `docs/tables/rosco_proposer_test.csv` by default, and the secondary
+reading overwrote the committed s59.6 table once (restored from git, no number changed); the default is now
+no file, so a reading writes a table only where `--csv` names one.
+
+### 62.2 Pre-registration of the arm that is told the rule, written before launch (2026-10-16)
+
+**The question.** s59 was a specification failure: the proposers were told and selected under the set-mean
+rule, the per-wind terms were recorded in every history row and shown to no proposer, and the model's own
+explanations never mention a wind speed or a margin. 62.1 showed the candidates deliver where the screen lets
+them. The experiment that follows asks whether a search that is GIVEN the rule that ships delivers under it:
+every arm selects under the margin screen, and the agent is additionally shown what the screen sees.
+
+**The campaign (`scripts/wsl/campaign_rosco_margin.sh`, `scripts/rosco_search.py --screen_tol 0.0`; commit
+9d5a35f, smoke-tested on llm r1's history without API or simulation).** Arms llm, local, bayes, six repeats
+each, eighteen runs; random is not re-run (0 of 3 with any feasible gain in s59, and it cannot be told a rule).
+Unchanged: the box, the shipped start, 24 candidates, the 14-episode design set with two episodes per wind,
+the seven workers, the evaluation and its cache (warmed from the s53/s59 run directories and the `_verify`
+cache for every arm alike, so a revisited tuning costs nothing and no arm is favoured). Changed, for every
+arm: selection under worst >= 0 on the design set - the local search's incumbent, the Bayesian arm's
+feasibility model (a second GP on the worst per-wind term) and each run's best.json. Changed, for the agent
+arm only: the system prompt loses the "compared ... exploit" race framing and asks for margin; the task carries
+the shipping rule, the design set's resolution and the s55 facts; every history row shows the two load terms
+at each of the seven wind speeds with a flag (holds at every wind speed / set mean only / infeasible). The
+asymmetry is the design - the classical arms can be screened but not told - and is disclosed with the result.
+Order: the agent arm first, so that it is readable on its own if the campaign is stopped after about 10.5 h;
+then local, then bayes; about 32 h in all, then `rosco_perwind_select.py --verify --tol 0.0 --ship_tol 1.0`
+on the new root and `rosco_proposer_test.py --screen_tol 0.0 --csv docs/tables/rosco_proposer_test_margin_campaign.csv`.
+Pausable with `campaign_ctl.sh {pause|resume|stop|status} campaign_rosco_margin`; a run interrupted by a VM
+restart resumes from its `history.jsonl` on relaunch (at most the in-flight batch of two is repeated); after
+any interruption `integrity_check.py` first.
+
+**Endpoints.**
+1. *Primary:* per arm, the number of its six runs whose selection under the screen holds both loads at every
+   wind speed on 28 held-out AND 28 fresh episodes - the shipping rule of s55, unchanged. The comparison of
+   interest is the agent arm against its own s59 count on the same box and design set (0 of 6 under the rule
+   it was given then; 2 of 6 under the 62.1 re-read), independent runs, Fisher two-sided against 0 of 6:
+   3 of 6 is p = 0.18, 4 of 6 p = 0.061, 5 of 6 p = 0.015, 6 of 6 p = 0.002.
+2. *Secondary:* the same count for the classical arms against their s59 counts (local 4 of 6, bayes 2 of 6),
+   which says whether the screen alone moves an arm; simulations to the first candidate that holds the screen
+   on the design set (one-sided exact permutation, censored at 25); the regulation and pitch travel of the
+   delivered tunings; and the divergence and malformed-reply counts, as in s59.4.
+3. *Between arms within the campaign,* six against six: only 6 of 6 against at most 1 of 6 is below 0.05
+   two-sided (p = 0.015; 6 against 2 is 0.061, 5 against 1 is 0.078, 5 against 0 is 0.015). Anything short of
+   that is a direction.
+
+**What each outcome means, decided now.**
+- Agent arm at 4 of 6 or more: the specification was the failure of s59 (p <= 0.061 against its own earlier
+  count). Leg 1's main text may then say, with the count, that the agent's selections ship once the rule that
+  ships is part of what it is told; D2 stays in the appendix unchanged, and the comparison with the classical
+  arms stays in D3 whatever it reads. If a classical arm rises as far, the screen and not the telling is the
+  lever, and the text says so.
+- Agent arm at 3 of 6: a direction (p = 0.18); nothing moves into the main text, D3 reports it.
+- Agent arm at 2 of 6 or fewer: the 62.1 read does not generalise beyond its own runs; the main text keeps the
+  s59.6 wording and D3 reports the campaign in full.
+- In no outcome does a claim that the agent beats a classical search follow (s59.1 stands; this campaign has no
+  proposer-comparison primary), and a selection that fails off the design winds by less than a point remains
+  possible for every arm because the design set's resolution is unchanged (62.1 saw two).
+
+**Recorded before launch.** Launch follows the commit of this section; the first candidate line of the agent
+arm is checked once after launch and recorded below with the time.
