@@ -14,10 +14,15 @@
 #   setsid nohup bash scripts/wsl/campaign_perwind_verify.sh > ~/wtrl/exp/perwind_verify.log 2>&1 < /dev/null &
 #   bash scripts/wsl/campaign_ctl.sh {pause|resume|stop|status} campaign_perwind_verify
 set -u
+export TMPDIR=$HOME/wtrl/tmp; mkdir -p "$TMPDIR"
 cd /mnt/c/Users/hanny/Desktop/MyProjectSpace/Region-aware-Agentic-RL-on-Wind-Turbine
 EXP=$HOME/wtrl/exp
 RUN=$HOME/wtrl/run.sh
 ps -o sid= -p $$ | tr -d ' ' > "$EXP/campaign_perwind_verify.sid"
+
+# the 600 s protocol lives in its own bank and its own paired baselines, exactly as the campaign sets them:
+# without this the evaluation looks for the 150 s fields in ~/wtrl/wind and dies before it runs an episode
+export WTRL_HOME=$HOME/wtrl600 WTRL_WIND=$HOME/wtrl/wind600
 
 # pgrep is unreliable on this setup (CLAUDE.md), so the wait is a plain ps | grep on stage 3's own command
 while ps aux | grep -q "[r]osco_search_table.py --root $EXP/roscosearch_native"; do
