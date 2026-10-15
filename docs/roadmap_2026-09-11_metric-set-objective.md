@@ -3719,3 +3719,8 @@ with hpf 0.8 and the second a faster, better-damped loop at the same corner, and
 06:51 (16 OpenFAST processes). The log is block-buffered through grep, so candidate lines appear in chunks. Read
 it once it prints `=== done`; after any VM restart, `integrity_check.py` first, then relaunch the same command
 (finished runs skip on best.json, an unfinished run resumes from its history.jsonl).
+
+**Paused 2026-10-16 07:24 on request** (`campaign_ctl.sh pause campaign_rosco_margin`, session 396, 36 processes
+stopped; llm r0 at 8 of 24 candidates in its history.jsonl). Resume with `campaign_ctl.sh resume
+campaign_rosco_margin`. A VM restart drops a paused session: then `integrity_check.py` first and relaunch the
+same command, which resumes llm r0 from its history.
