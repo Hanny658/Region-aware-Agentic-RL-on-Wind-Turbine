@@ -50,35 +50,38 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   random 0/3; medians 10 / 18 / 14. The s53 reading (3/3, median 8 against 14 and 18) did not survive
   doubling: llm r3 found nothing at all, bayes r4 found its gain in 5 simulations. The model still walks
   furthest up the front (+38.40 (8.47) against local +29.23, bayes +23.79) and that is exactly the part
-  of the front where s55 found everything fails per wind: measured off the design winds the model arm
-  delivers **0 of 6, final**, against **local 2 of 6 and bayes 1 of 6** with three classical rows
-  still unmeasured (s59.5: the first three came in as the design margins predicted - local r3 ships
-  with +28.66 of regulation at 1.05x shipped pitch travel, bayes r3 misses the -1.0 tolerance by 0.15,
-  bayes r5 pending, and all three are worse on fresh seeds than held out). **Post hoc, the one large difference in the model's favour: 0 of 144 of its candidates
+  of the front where s55 found everything fails per wind: measured off the design winds, all 11 per-wind
+  selections verified, **the model arm delivers 0 of 6 against 4 of 6 for the local search and 2 of 6 for
+  bayes** (s59.6, final; Fisher two-sided p = 0.061 against local, 0.030 one-sided in the direction the
+  data went, which is the opposite of the pre-registered one). Everything that ships sits between +11.6
+  and +28.7 points of regulation and everything that fails between +26.7 and +37.7, the model's three
+  selections being the highest rows of all - position on the front, not the proposer. The one row a user
+  would take out of 21 runs is local r3 #8, one filter corner and a small damper: +28.66 of regulation at
+  1.05x shipped pitch travel. **Post hoc, the one large difference in the model's favour: 0 of 144 of its candidates
   destabilised the plant**, against 13/144 local (p = 0.00018), 9/144 bayes (p = 0.0034) and 16/72
   random (p < 1e-5), with the malformed-reply audit at 0 in all six runs; and its runs repeat each other
   (2 distinct per-wind selections of 3, against 4 of 4 in both classical arms). **No leg now has a
   proposer claim against a dedicated search** - leg 3 lost it in s58, leg 2 never had it (llm = es) -
   so what survives is the search SPACE, the measurement discipline, and one loop that runs in three
   spaces at parity. s59.1 fixed this reading in advance, including that the title loses the proposer.
-- **RUNNING again since 2026-10-15 09:31** (session 409; the overnight pause did not survive, the WSL VM
-  went down and the relaunch of `campaign_rosco_native_n6.sh` skipped all nine runs on their best.json,
-  `integrity_check.py` clean). Stage 3 has 37 of its 42 row-evaluations cached and 5 to run, about 1 h:
-  bayes r5 on the fresh seeds and the llm r4 / r5 selections on both seed sets. Because stage 3 re-scores
-  each run's SET-MEAN selection, the per-wind selections of local r4 (#10) and local r5 (#18) are NOT
-  covered: `scripts/dev/rosco_perwind_select.py --verify` is the pass that measures them (four evaluations,
-  about 45 min) and `scripts/wsl/campaign_perwind_verify.sh` (session 557) is queued behind stage 3 to run
-  it and print the closing delivery table. Until those land the delivery count is not final (s59.5).
-  Pause either with `bash scripts/wsl/campaign_ctl.sh pause {campaign_rosco_native|campaign_perwind_verify}`.
-  Nothing in s59.4 depends on any of it.
+- **FINISHED 2026-10-15 11:18, nothing of s59 is pending** (stage 3 at 10:23 after the overnight WSL
+  restart took the pause down with it - relaunching `campaign_rosco_native_n6.sh` skipped all nine runs on
+  their best.json and `integrity_check.py` was clean; then `scripts/wsl/campaign_perwind_verify.sh`, which
+  runs the new `rosco_perwind_select.py --verify` pass for the per-wind selections stage 3 does not cover,
+  because stage 3 only re-scores each run's SET-MEAN selection). Stage 3 by-products: 21 of 21 selections
+  feasible held out and fresh, design against held-out correlation +1.00 (rank +1.00), optimism -0.43 mean
+  and +0.88 worst. One infrastructure failure, reported and repaired: the new script did not export
+  `WTRL_WIND` / `WTRL_HOME`, so four evaluations died instantly on the 150 s wind bank; those cache entries
+  were deleted and the four re-run. **Any later verification pass must export the 600 s bank the way
+  `campaign_rosco_native.sh` does.**
   s58 took the proposer claim off leg 3, so leg 1 carries it alone, and leg 1 was n = 3 per arm where 3 of 3
   against 2 of 3 is Fisher p = 1.0. Endpoints and power pre-registered in s59.1 BEFORE the runs exist:
   **primary** the simulations to the first feasible gain (Mann-Whitney one-sided llm against bayes, about
   p = 0.03 if s53 replicates, 0.0011 at best; a run that never finds one is censored and enters at 25);
   **secondary** the count of runs delivering a shippable gain (underpowered and said so in advance: 6 of 6
   against 4 of 6 is p = 0.45) and the per-wind restatement of both. s59.1 fixes what each outcome means,
-  including that a null primary leaves **no proposer claim in any leg**. Do not start a second copy of either
-  session while they are alive, and do not start a Claude-side watcher for them.
+  including that a null primary leaves **no proposer claim in any leg**. All of it is measured; do not launch
+  the campaign again.
 - **THE RESTATEMENT IS ALREADY IN, AND IT IS NOT FLATTERING (roadmap s59.2, no simulations;
   `scripts/dev/rosco_proposer_test.py`, `docs/tables/rosco_proposer_test.csv`).** The twelve runs of s53
   read three ways. Under the rule the search used: llm 3/3 runs with a shippable gain, median 8 sims,

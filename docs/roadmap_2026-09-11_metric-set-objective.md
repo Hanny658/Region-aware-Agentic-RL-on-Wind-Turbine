@@ -3280,3 +3280,78 @@ the gap for local r4 #10 and local r5 #18 and will close it for any future run w
 `scripts/wsl/campaign_perwind_verify.sh` (session 557) waits for stage 3 to release the seven workers, runs it,
 and then prints the closing delivery table from `rosco_proposer_test.py`. Four evaluations, about 45 min,
 queued behind stage 3's remaining five.
+
+### 59.6 The campaign is closed, and the delivery count reverses the s53 reading completely (2026-10-15 11:18)
+
+Stage 3 finished at 10:23:49 and the pass it does not cover at 11:18. **The whole of s59 is now measured: 21
+runs, 561 tunings proposed, 486 of them distinct, 39 the plant could not run, 211 holding the three set-mean
+constraints, 114 of those also holding both loads at every wind speed on the design screen, and every one of
+the 11 per-wind selections verified on 28 held-out and 28 fresh episodes.** Stage 3's own by-products: 21 of 21
+set-mean selections stay feasible on both seed sets, design against held-out correlates +1.00 (rank +1.00) over
+the 21, and the design score is pessimistic on average (optimism -0.43 points, worst +0.88) - the s38 warning
+that a small design set cannot rank designs still does not transfer to this space.
+
+One infrastructure failure, reported as such: the first run of the new verification pass
+(`campaign_perwind_verify.sh`) did not export `WTRL_WIND` / `WTRL_HOME`, so `evaluate.py` looked for the 150 s
+wind bank, raised `FileNotFoundError: ~/wtrl/wind/U12_TIB_S3.bts` and wrote four `failure_kind:
+infrastructure` records in 20 seconds. Those four cache entries were deleted, the script now exports the 600 s
+bank and its paired baselines as the campaign does, and the four evaluations ran properly from 10:38 to 11:18.
+No candidate and no result was affected; the counts below are from the re-run.
+
+The three readings of the same 21 runs, final:
+
+                     runs   with a gain   sims: median                  values   regulation of the gains
+    the rule the search used (the three constraints on the set mean) - the primary endpoint lives here
+            random     3        0 of 3             25.0            [25,25,25]                          -
+             local     6        4 of 6             14.0     [8,9,10,18,25,25]             +29.23 (12.14)
+             bayes     6        5 of 6             18.0     [5,7,15,21,21,25]             +23.79 (14.03)
+               llm     6        5 of 6             10.0      [6,8,8,12,13,25]              +38.40 (8.47)
+    the same rule with the loads required at every wind speed, SCREENED on the design set
+             local     6        4 of 6             18.0    [8,10,18,18,25,25]              +19.81 (6.02)
+             bayes     6        4 of 6             21.5    [7,15,21,22,25,25]              +24.17 (7.94)
+               llm     6        3 of 6             18.5     [6,8,12,25,25,25]              +35.84 (1.94)
+    the same rule MEASURED off the design winds - what a user of the tool gets
+            random     3        0 of 3             25.0            [25,25,25]                          -
+             local     6      **4 of 6**           18.0    [8,10,18,18,25,25]              +19.87 (7.43)
+             bayes     6        2 of 6             25.0   [15,21,25,25,25,25]              +19.94 (4.76)
+               llm     6      **0 of 6**           25.0   [25,25,25,25,25,25]                          -
+
+**The model arm delivers nothing in six runs; the local search delivers in four of six.** llm against local is
+Fisher two-sided p = 0.0606 on the counts (0.0303 one-sided in the direction the data actually went, which is
+not the direction s59.1 set the test up to detect); llm against bayes 0 of 6 against 2 of 6, p = 0.4545. This
+is secondary B of s59.1, pre-registered and declared underpowered in advance, and it came out reversed: the
+hypothesis was that the model arm would be no worse than the classical arms under the per-wind rule, and it is
+the only arm that hands a user nothing.
+
+Each run's per-wind selection off the design winds, which is where the count comes from (regulation; worst
+single-wind load term on the design screen, held out, fresh; tolerance -1.0 on both measured sets):
+
+                 design   held out   fresh   design w/w   heldout w/w   fresh w/w   ships
+      local r0 #21    14.30     14.20   11.62        -0.00         +1.12       +0.33   yes
+      local r3  #8    27.64     26.76   28.66        +0.10         +0.32       -0.87   yes
+      local r4 #10    15.97     19.07   16.40        +1.20         +1.99       +1.10   yes
+      local r5 #18    21.32     22.84   22.78        +1.30         +2.10       +1.06   yes
+      bayes r2 #21    15.37     18.58   16.57        -0.70         +2.37       +0.25   yes
+      bayes r5 #15    22.36     24.03   23.30        +1.20         +2.17       +0.84   yes
+      bayes r1  #7    34.59     35.07   37.43        -0.60         -0.47       -2.04   NO
+      bayes r3 #22    24.35     24.86   26.72        +0.60         +0.57       -1.15   NO
+      llm r1 #12 = llm r5 #11
+                      36.96     36.98   37.74        -0.60         +1.06       -1.17   NO
+      llm r2 #24      33.60     32.66   34.83        -0.70         -1.94       -3.40   NO
+    llm r0, r3, r4 and the three random runs have no candidate that holds both loads per wind on the design set
+
+**The mechanism is position on the front, not the proposer, and the table says it twice.** Everything that
+ships sits between +11.6 and +28.7 points of regulation; everything that fails sits between +26.7 and +37.7.
+The model's selections are the three highest rows in the table and all three fail on the tower-base load; the
+local search delivers four times because its selections sit lower. The one local row high on the front
+(r3 #8, +28.66 fresh) ships by 0.13 points, and the two rows stage 3 never looked at (r4 #10, r5 #18) ship with
+the largest margins of all (+1.10 and +1.06 fresh), exactly as their design margins of +1.20 and +1.30 said
+they would - fifth instance of the s55 rule that the margin, not the level, predicts holding.
+
+So leg 1 closes like this: **the model reaches the best set-mean number fastest and the search space is real,
+but under the rule the project ships by the agent arm delivers 0 of 6 against 4 of 6 for a plain (1+lambda)
+local search, and the single row a user would actually take out of 21 runs is local r3 #8 - one filter corner
+and a small damper, +28.66 of regulation at 1.05x shipped pitch travel.** The primary endpoint is unchanged
+(p = 0.3117 against bayes), so s59.1's outcome branch 3 stands and the agentic part of the title goes; this
+section adds that the honest restatement is not neutral but against the proposer, and that it would have been
+missed by measuring only what the search itself selected.

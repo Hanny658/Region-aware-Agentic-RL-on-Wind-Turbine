@@ -27,9 +27,10 @@ scopes, all measured rather than assumed:
 repairs an 8.8-point per-wind violation for 1.7 points of regulation (s57.2), and on the ungated PI base the
 agent arm is what holds the loads (s49). On the shipped PI loop it does the opposite: it optimises the stated
 set-mean objective *better* than the classical searches, walks further up the regulation front than the rule
-can support, and therefore delivers less under the rule that ships - 0 of 6 runs against 2 of 6 for the local
-search and 1 of 6 for Bayesian optimisation, three classical rows still unmeasured (s59.4, s59.5). The fourth
-instance of a set-mean constraint being gamed (s32, s53.2, s55), with the agent on the losing side of it.
+can support, and therefore delivers nothing at all under the rule that ships - **0 of 6 runs against 4 of 6
+for a plain local search** and 2 of 6 for Bayesian optimisation, all 21 runs measured (s59.6, final; Fisher
+two-sided p = 0.061 against the local search). The fourth instance of a set-mean constraint being gamed
+(s32, s53.2, s55), with the agent on the losing side of it.
 
 What the loop does win on leg 1, post hoc and reported as such: **it never proposed a candidate the plant
 could not run** (0 of 144, against 13 of 144 for the local search, 9 of 144 for Bayesian optimisation and 16 of
@@ -59,13 +60,16 @@ Agent-found rows that hold both load terms at **every** wind speed on 28 held-ou
   against 14 and 18) did not survive doubling - llm r3 found nothing, bayes r4 found its gain in 5 simulations.
   Regulation of the selections is still highest in the llm arm, +38.40 (8.47) against local +29.23 (12.14) and
   bayes +23.79 (14.03), and that is the part of the front where s55 found everything fails per wind.
-- **What the model arm delivers under the rule that ships: 0 of 6 (final), against local 2 of 6 and bayes
-  1 of 6** with three classical rows still unmeasured (s59.4, s59.5). Its two distinct per-wind selections
-  miss the tolerance by 0.17 and 2.40 points off the design winds; the classical selections carry +0.1 to +1.3
-  points of design margin where the model's carry -0.6, and s55 established that this margin is the predictor.
-  The first three of those rows came in as predicted: local r3 ships (+28.66 of regulation at **1.05x** shipped
-  pitch travel, worst single wind -0.87), bayes r3 misses by 0.15 and bayes r5 is pending; all three are worse
-  on fresh seeds than held out, the fifth instance of that pattern.
+- **What each arm delivers under the rule that ships, all 11 per-wind selections now measured on 28 held-out
+  and 28 fresh episodes (s59.6, final): local 4 of 6, bayes 2 of 6, llm 0 of 6, random 0 of 3.** Fisher
+  two-sided p = 0.061 for llm against local (0.030 one-sided in the direction the data went, which is the
+  opposite of the one s59.1 set up), p = 0.45 against bayes. The deliveries carry +19.87 (7.43) and +19.94
+  (4.76) points of regulation; the model's two distinct selections miss the tolerance by 0.17 and 2.40.
+  **Position on the front is the mechanism:** everything that ships sits between +11.6 and +28.7 points of
+  regulation and everything that fails between +26.7 and +37.7, the model's three selections being the highest
+  rows of all. The one row a user would take out of 21 runs is **local r3 #8 - one filter corner and a small
+  damper, +28.66 of regulation at 1.05x shipped pitch travel**, and the two rows with the largest margins are
+  the two the campaign's own stage 3 never looked at (local r4 #10, r5 #18).
 - **Post hoc, and the one difference that is large: 0 of 144 llm candidates destabilised the plant**, against
   13 of 144 local (Fisher p = 0.00018), 9 of 144 bayes (p = 0.0034) and 16 of 72 random (p < 1e-5); every one
   of those 144 was really proposed by the model (the malformed-reply audit reads 0 in all six runs). It also
@@ -155,9 +159,10 @@ with the reward *structure* proposed by the agent. Evidence: roadmap s34, s37, s
    reward grammar equals it and holds with more margin (3/3 against 3/3, s58). It separates from **random
    search** in all three legs and from a dedicated search in none. The one remaining proposer separation in
    the whole study is the **ungated** PI base of leg 3 (4/5 against 1/8, p = 0.032, s49).
-3. **"The agent finds the shippable design."** On leg 1 it is the classical arms that deliver a tuning holding
-   both loads at every wind speed off the design winds (local 2/6, bayes 1/6, model 0/6, s59.4, s59.5). The
-   model finds the largest *set-mean* number fastest, and that number does not ship.
+3. **"The agent finds the shippable design."** The reverse is measured: off the design winds the classical
+   arms deliver a tuning holding both loads at every wind speed and the model arm never does (local 4/6,
+   bayes 2/6, model 0/6, s59.6). The model finds the largest *set-mean* number fastest, and that number does
+   not ship.
 4. **A composite score.** Report the four published reductions, each on its own. The symbol *J* is the MPC cost
    function. The composite stays as the *selection and training* objective of the campaigns, under its own name.
 5. **"ROSCO's tower damper is worth about nothing"** (withdrawn in s52: its gain had been capped at 0.004, worth
@@ -189,14 +194,13 @@ discussion, not in its title.
 
 ## Open, in order
 
-1. **Stage 3 of the leg-1 campaign - PAUSED on request at 37 of its 42 evaluations (2026-10-14 23:23; resume
-   with `bash scripts/wsl/campaign_ctl.sh resume campaign_rosco_native`, about 1 h).** The nine new runs are
-   finished and **the pre-registered primary endpoint is already final and null** (s59.4): the model is not
-   distinguishable from Bayesian optimisation or a local search. What is left is bayes r5 on the fresh seeds
-   and the two llm selections of r4 and r5, none of which can change the primary, plus a separate pass of four
-   evaluations (about 45 min) for the two local per-wind selections stage 3 does not cover (local r4 #10, r5
-   #18, s59.5). All of it can only raise the classical delivery counts above the model arm's **final 0 of 6**.
-   Then `rosco_proposer_test.py` gives the closing table.
+1. **The selection rule, which is now the cheapest open question in the study (not started).** s59.6 closed
+   the leg-1 campaign with the screen, not the search, as the thing that fails: a 14-episode design set with
+   two episodes per wind cannot tell -0.60 from -1.20, so the rule hands the user the highest row on the front
+   and that row loses the tower-base load off the design winds. Two candidate repairs, both cheap because the
+   candidate cache is on disk: screen with a margin (s55 and s59.6 both found the margin predicts holding), or
+   spend design episodes at the winds where the constraint binds. This decides whether the search space is
+   usable, independently of who proposes.
 2. **The fixed-reward arm under the gate on the native base** - three runs, about 3 h, not started. s58 showed
    that *who* proposes the reward structure does not matter under the gate; this says whether **searching** the
    structure matters there at all. If a fixed reward also holds the loads, leg 3 collapses to the gate; if it
@@ -204,5 +208,6 @@ discussion, not in its title.
    the gate on the MPC base losing 5.9 points of tower fatigue at 20 m/s, which points to the second reading,
    but the native base has never had that arm.
 3. The manuscript rewrite, `docs/plan_2026-10-12_manuscript-rewrite.md` - all of its gates are now open,
-   and s59.4 moves one more site: 5.5 (who proposes) becomes a null result with the divergence count as
-   its one positive finding, and the title can no longer carry the proposer.
+   and s59.4 / s59.6 move one more site: 5.5 (who proposes) becomes a null result with the divergence count as
+   its one positive finding, the delivery count has to be written as it came out (0 of 6 against 4 of 6), and
+   the title can no longer carry the proposer.
