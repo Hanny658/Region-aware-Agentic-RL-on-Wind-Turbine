@@ -3,7 +3,7 @@
 # keep one finding: an unconstrained mean of four reductions makes a parameter search buy regulation with
 # tower fatigue. Its box is not usable - two of its four inputs are scalar multipliers on ROSCO's gain
 # tables rather than ROSCO tuning quantities, and three of its limits were chosen rather than measured.
-# See docs/design_2026-10-11_rosco-native-search.md. Do not start this script.
+# See docs/paper/design_2026-10-11_rosco-native-search.md. Do not start this script.
 #
 # Who should propose a classical controller's parameters? (2026-10-09)
 #

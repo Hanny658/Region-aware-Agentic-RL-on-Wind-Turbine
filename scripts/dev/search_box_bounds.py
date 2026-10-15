@@ -1,6 +1,6 @@
 """Where the parameter-search box ends, read off the plant instead of chosen (2026-10-11).
 
-Every limit of the search box in `docs/design_2026-10-11_rosco-native-search.md` is either a controller
+Every limit of the search box in `docs/paper/design_2026-10-11_rosco-native-search.md` is either a controller
 setting or something measured on the shipped controller's own baselines. This script produces all of them, so
 the box is reproducible rather than asserted, and it checks the one piece of algebra the redesign rests on:
 that ROSCO's gain-schedule formula can be inverted exactly from the shipped tables.

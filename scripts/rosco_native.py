@@ -17,7 +17,7 @@ that tuning has to return the shipped tables bit for bit, which `self_test()` as
 
 Every box limit is a controller setting or a measurement on the shipped controller's own baselines; none is
 chosen. `scripts/dev/search_box_bounds.py` reproduces all of them, and
-`docs/design_2026-10-11_rosco-native-search.md` gives the reasoning per limit.
+`docs/paper/design_2026-10-11_rosco-native-search.md` gives the reasoning per limit.
 """
 from __future__ import annotations
 

@@ -11,9 +11,12 @@ constraint-tiered evaluation, and the agentic supervision layer.
 GSPI / LPV-MPC / ROSCO-tower-damper baselines, and the individual-pitch negative result that bounds
 the supervision claim.
 
-Detailed, dated records: `docs/README.md` (index), `docs/REPORT_2026-09-01.md` (verified
-findings F1–F7), `docs/roadmap_2026-08-30.md` (day-by-day experiment log, §1–23),
-`docs/litreview_schedule_paradigm_2026-09-01.md` (supervision-paradigm literature review).
+Start at `docs/MAIN_LINE.md` (the claim and the three legs of evidence, one page), then
+`docs/README.md` (the documentation index: `docs/paper/` is what the paper draws on,
+`docs/appendix/` what is measured but not in the main narrative, `docs/archive/` what is superseded).
+The live experiment log is `docs/roadmap_2026-09-11_metric-set-objective.md`; the F-era records
+(`docs/archive/REPORT_2026-09-01.md`, `docs/archive/roadmap_2026-08-30.md`) are history, and no number
+from them is comparable to a current one.
 
 ## System
 
@@ -291,11 +294,11 @@ Experiment campaigns are complete; the repository is in **manuscript preparation
 - **Data**: every derived table is in `docs/tables/` and rebuilt by
   `python3 scripts/dev/build_tables.py` (standard library only) from the run artifacts in
   `~/wtrl/exp`. The run inventory, the environment and the reporting caveats C1–C12 are in
-  `docs/RESULTS_2026-09-10_data-and-caveats.md`. The wind bank and paired GSPI baselines
+  `docs/paper/RESULTS_2026-09-10_data-and-caveats.md`. The wind bank and paired GSPI baselines
   (64 realisations, 5.5 GB) live in WSL with a copy at `../wtrl-data/` — copy them, never
   regenerate them.
 - **Open before submission**: seeds 3–4 for the J arms (n = 5 lifts the exact-test floor to
-  0.0625) and the caveats in `docs/RESULTS_2026-09-10_data-and-caveats.md` §4.
+  0.0625) and the caveats in `docs/paper/RESULTS_2026-09-10_data-and-caveats.md` §4.
 
 ## How to run
 

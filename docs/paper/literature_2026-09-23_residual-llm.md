@@ -18,7 +18,7 @@ Verification discipline used here:
 Already known before this scan and not re-reported: Silver et al. arXiv:1812.06298; Johannink et al.
 arXiv:1812.03201; Policy Decorator arXiv:2412.13630; Kalaria et al. arXiv:2410.06570; Eureka
 arXiv:2310.12931; Text2Reward; Language to Rewards; the budget-matched HPO study arXiv:2606.21641.
-Earlier scan: `docs/literature_2026-09-16.md`.
+Earlier scan: `docs/archive/literature_2026-09-16.md`.
 
 ---
 

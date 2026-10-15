@@ -3,7 +3,7 @@
 Scope of this scan: recent (2024–2026) published work in three themes relevant to the TCST
 submission — (1) RL pitch control, (2) MPC for wind turbines with attention to scheduled cost
 *weights*, (3) disturbance observers / offset-free / adaptive MPC and effective-wind-speed
-estimation. Companion to `docs/literature_2026-09-16.md`; that earlier file is not superseded.
+estimation. Companion to `docs/archive/literature_2026-09-16.md`; that earlier file is not superseded.
 
 ## Verification discipline
 
@@ -183,7 +183,7 @@ attenuate the 1P frequency"; EWIPC shows a "notable decrease in amplitude" for b
 tower deflection relative to ROSIPC. Under turbulent wind, **IPC effectiveness was "less pronounced"
 than under steady conditions**, and EWIPC only "performs slightly better".
 
-Relevant to `docs/RESULTS_2026-09-05_ipc-negative.md`: an independent statement that the IPC benefit
+Relevant to `docs/appendix/RESULTS_2026-09-05_ipc-negative.md`: an independent statement that the IPC benefit
 shrinks under realistic turbulence, which is the same direction as our negative result.
 
 **Caution.** The introduction reviews MPC, H∞ and PI control from the literature, but the actual

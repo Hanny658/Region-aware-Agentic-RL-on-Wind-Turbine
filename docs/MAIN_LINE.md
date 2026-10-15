@@ -4,6 +4,13 @@
 below, measurement discipline that makes the legs believable, or history. If a new experiment does not change a
 number on this page, it belongs under a leg heading in `README.md` and nowhere else.
 
+**This page and the paper are not the same scope (user's decision, 2026-10-15).** This is the project's
+complete record, nulls included. The *paper's* narrative is `docs/paper/NARRATIVE.md`: the main text carries
+the positive results, and the nulls and negative results - including the pre-registered proposer endpoint and
+the delivery count below - are appendix material (`docs/appendix/APPENDIX_PLAN.md`, items D1-D2). Nothing on
+this page is softened to make that split work; the three sentences of disclosure that keep the paper honest
+about it are specified in `NARRATIVE.md` §6.
+
 ## The claim
 
 **One agentic loop, three design spaces, no rebuild: it beats random search in all three, reaches the level of
@@ -41,7 +48,7 @@ be claimed* for the rest.
 
 Object: ROSCO's own parameters (`omega_pc`, `zeta_pc`, `F_LPFCornerFreq`, `FA_KI`, `FA_HPFCornerFreq`), every
 candidate a tuning file the controller can take. Evidence: roadmap s52-s55,
-`docs/design_2026-10-11_rosco-native-search.md`, `docs/tables/rosco_band_verified.csv`,
+`docs/paper/design_2026-10-11_rosco-native-search.md`, `docs/tables/rosco_band_verified.csv`,
 `rosco_tuned_baseline.csv`, `rosco_perwind.csv`.
 
 Agent-found rows that hold both load terms at **every** wind speed on 28 held-out *and* 28 fresh episodes
@@ -184,7 +191,7 @@ discussion, not in its title.
 - **Load constraints hold per wind speed, measured off the design winds.** A set-mean constraint is gamed, with
   learning (s32) and without it (s53.2, s55) - three instances. Screen on the design set, *measure* off it.
 - **Protocol:** 12-24 m/s in 2 m/s steps, IEC class B, 600 s simulated / 20 s discarded / 580 s scored; seeds
-  1-2 design, 3-6 held out, 7-10 fresh (`docs/RESULTS_2026-09-10_data-and-caveats.md`).
+  1-2 design, 3-6 held out, 7-10 fresh (`docs/paper/RESULTS_2026-09-10_data-and-caveats.md`).
 - **Actuator duty beside every row:** pitch travel ratio and ADC against the 10 deg/s rate limit.
 - **One aggregation rule:** bin mean, then weighted power mean. Site weighting is not cosmetic - the MPC's
   power-MSE advantage over the tuned baseline is +24.6 per episode and -0.3 Rayleigh-weighted
@@ -207,7 +214,11 @@ discussion, not in its title.
    does not, the structure search is load-bearing and only the proposer is not. s41 has the fixed reward under
    the gate on the MPC base losing 5.9 points of tower fatigue at 20 m/s, which points to the second reading,
    but the native base has never had that arm.
-3. The manuscript rewrite, `docs/plan_2026-10-12_manuscript-rewrite.md` - all of its gates are now open,
-   and s59.4 / s59.6 move one more site: 5.5 (who proposes) becomes a null result with the divergence count as
-   its one positive finding, the delivery count has to be written as it came out (0 of 6 against 4 of 6), and
-   the title can no longer carry the proposer.
+3. **The manuscript rewrite**, now planned in `docs/paper/NARRATIVE.md` (claim, contributions C1-C5,
+   section order, figures F1-F6, tables T1-T7, wording guardrails) with the numbers collected in
+   `docs/paper/EVIDENCE.md` and the rest in `docs/appendix/APPENDIX_PLAN.md`. The site-by-site table of
+   `docs/archive/plan_2026-10-12_manuscript-rewrite.md` is still the correct checklist for reasons (A)-(D) -
+   the composite leaving the reporting, the baseline becoming a named band member, the two false statements,
+   and the retrained PI-base rung. Three artefacts do not exist yet and gate the figure set: F1 (the loop
+   diagram, TikZ), and F2 / F3 (`scripts/dev/figures_leg1.py`, the front against duty and the search traces).
+   One citation must be opened before C1 is printed: Teke, ICENSOS 2025, on AI agents in wind energy systems.

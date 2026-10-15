@@ -2,7 +2,7 @@
 # Who should propose a classical controller's parameters, in ROSCO's own quantities (2026-10-11)
 #
 # Replaces campaign_rosco_search.sh, whose box contained two quantities ROSCO does not expose and three limits we
-# had chosen rather than measured (docs/design_2026-10-11_rosco-native-search.md). Here the searched quantities are
+# had chosen rather than measured (docs/paper/design_2026-10-11_rosco-native-search.md). Here the searched quantities are
 # omega_pc, zeta_pc, F_LPFCornerFreq, FA_KI and FA_HPFCornerFreq, the gain schedule is regenerated with ROSCO's own
 # formula so every candidate is a controller that could ship in a tuning file, every box limit is read off the
 # plant, and selection is constrained: maximise the generator-speed regulation reduction subject to tower-base

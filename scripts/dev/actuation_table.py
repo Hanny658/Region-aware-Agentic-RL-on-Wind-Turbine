@@ -1,6 +1,6 @@
 """Actuator cost of every controller, from the evaluation CSVs already on disk (no simulations).
 
-The literature scan (docs/literature_2026-09-16.md, items 12 and 16) reports fatigue reductions jointly with
+The literature scan (docs/archive/literature_2026-09-16.md, items 12 and 16) reports fatigue reductions jointly with
 pitch travel / actuator duty cycle, and treats a load gain bought with actuation as suspect. Every eval_*.csv
 already carries pitch_travel_deg per episode and the paired GSPI baseline carries pitch_travel_base_deg in the
 eval_*.json per_episode records, so the actuator columns come for free:

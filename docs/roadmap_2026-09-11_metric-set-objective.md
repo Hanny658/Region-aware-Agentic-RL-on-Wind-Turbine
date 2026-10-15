@@ -821,7 +821,7 @@ nominal MPC and the MPC-base residuals lead, because compensation buys regulatio
 
 ## 22. Actuator cost: the MPC's gains are bought with ~7.6x the pitch travel (2026-09-16, `scripts/dev/actuation_table.py`, no simulations)
 
-The literature scan (`docs/literature_2026-09-16.md`, items 12 and 16) reports fatigue reductions jointly with
+The literature scan (`docs/archive/literature_2026-09-16.md`, items 12 and 16) reports fatigue reductions jointly with
 pitch travel / actuator duty cycle and treats load gains bought with actuation as suspect. Our evaluation files
 already carry pitch travel per episode, so the column was free. Held-out wind seeds 3-6, mean over episodes and
 seeds; travel is the summed |d beta| of the scored window, duty is travel per scored second.
@@ -1075,7 +1075,7 @@ carried into a paper as general:
    peak excursion above rated; none comes near a trip level.
 
 Consequence for the evaluation protocol: report the range set as the main table (it is what the literature scan
-of `docs/literature_2026-09-16.md` found to be expected), report per-wind-speed terms next to the aggregate, and
+of `docs/archive/literature_2026-09-16.md` found to be expected), report per-wind-speed terms next to the aggregate, and
 treat "no term negative at any wind speed" as the load constraint instead of the set mean.
 
 ## 29. Tuned ROSCO baseline: three quarters of the MPC margin belongs to an untuned baseline (2026-09-18 01:32-03:15; `scripts/rosco_tune.py`, stage A of `campaign_must2.sh`)
@@ -1799,7 +1799,7 @@ Reading.
    over the range; neither is a substitute for the other, and the set mean J stays the single-number objective.
 
 
-## 43. Novelty audit and protocol audit before the rewrite (2026-09-23; `docs/literature_2026-09-23*.md`, `scripts/dev/transient_check.py`)
+## 43. Novelty audit and protocol audit before the rewrite (2026-09-23; `docs/paper/literature_2026-09-23*.md`, `scripts/dev/transient_check.py`)
 
 Four literature scans and two checks against our own artefacts, run before the manuscript was rewritten. The scans
 are in four files, every entry carrying a URL and one of VERIFIED / VERIFIED (bib only) / UNVERIFIED; no number from
@@ -2205,7 +2205,7 @@ on tuning depth; a turbulence-class sensitivity (A or C) would test whether the 
 random-structure control for the gated configuration; and an archival release with a DOI for the code, the prompts
 and the generated rewards.
 
-## 51. The parameter search was asking the wrong question of the wrong box (2026-10-09 to 10-11; `docs/design_2026-10-11_rosco-native-search.md`, `scripts/rosco_native.py`, `eval/selection.py`, `scripts/dev/search_box_bounds.py`, `campaign_rosco_native.sh`)
+## 51. The parameter search was asking the wrong question of the wrong box (2026-10-09 to 10-11; `docs/paper/design_2026-10-11_rosco-native-search.md`, `scripts/rosco_native.py`, `eval/selection.py`, `scripts/dev/search_box_bounds.py`, `campaign_rosco_native.sh`)
 
 The proposer comparison launched on 10-09 (four proposers, three repeats, 16 candidates each, scored by the composite
 on the design winds) reached 8 of its 12 runs before an audit stopped it. Three defects, in order of seriousness.
@@ -3004,7 +3004,7 @@ already holds its own loads.
 2. The honest form of the agentic claim for leg 3 is about the **search space**, not the proposer: a searched
    reward *structure* is what buys both the level and, where it binds, the constraint. The language model is
    distinguishable from a random draw out of its own vocabulary in exactly one configuration of this study.
-3. The gate is prior art (Kim arXiv:2609.21307, Abbas IET CTA 2026; `docs/literature_2026-09-23.md`), so the
+3. The gate is prior art (Kim arXiv:2609.21307, Abbas IET CTA 2026; `docs/paper/literature_2026-09-23.md`), so the
    device that supplies the feasibility is not ours either. Say so where the gate is introduced.
 4. Legs 1 and 2 are untouched: their controls are random *search* in the design space (0/3 runs on leg 1,
    0/48 on leg 2), not a random draw from a reward grammar, and both still separate.
@@ -3355,3 +3355,84 @@ and a small damper, +28.66 of regulation at 1.05x shipped pitch travel.** The pr
 (p = 0.3117 against bayes), so s59.1's outcome branch 3 stands and the agentic part of the title goes; this
 section adds that the honest restatement is not neutral but against the proposer, and that it would have been
 missed by measuring only what the search itself selected.
+
+## 60 The narrative fixed, the documents regrouped, and C1's novelty checked (2026-10-15, no simulations)
+
+**The user's decision, in their words:** the main narrative carries only the positive results; the headline
+contribution is **the first use of an LLM agent in controller tuning in the wind turbine field**; the negative
+results are considered later for the appendix. This section records what that implies, what was moved, and the
+one thing that had to be verified before the narrative could rest on it.
+
+### 60.1 The documents, in three groups
+
+Sixteen markdown files totalling 7260 lines were scattered across one directory with no indication of which
+served the paper. They are now in three, and every file is in exactly one:
+
+- **`docs/paper/`** - what the main text draws on: the new `NARRATIVE.md` (the claim, contributions C1-C5
+  with a novelty status each, the ten sections with their evidence, figures F1-F6, tables T1-T7, and eight
+  wording guardrails), the new `EVIDENCE.md` (the number book: every main-text number, by section, with its
+  table and its roadmap section, so the paper can be written without reading this log), plus the leg-1 search
+  design, the data-and-caveats file and the four literature-audit files.
+- **`docs/appendix/`** - measured and real but not in the main narrative: the new `APPENDIX_PLAN.md`
+  (appendices A-J) and the IPC negative result.
+- **`docs/archive/`** - superseded or wrong: the new `ARCHIVE.md` (why each file is out, what replaced it, and
+  the five retracted claims kept visible), the two F-era documents, the two earlier literature scans, and
+  `plan_2026-10-12_manuscript-rewrite.md`, whose site-by-site table remains the correct checklist for the
+  edit reasons (A)-(D) even though its framing was written under a claim that has since changed twice.
+
+`MAIN_LINE.md`, this log and `RESTORE.md` stay at the top level. **`MAIN_LINE.md` was not narrowed to match
+the paper:** it stays the project's complete record, nulls and *what cannot be claimed* included, and now says
+in its header that the paper's scope is deliberately smaller and where that scope is written down. All
+inbound references were repaired - 18 files, including four scripts whose docstrings name the search-design
+document - and `CLAUDE.md` was edited at byte level so its CRLF line endings survived (the first `sed` pass
+converted six CRLF files to LF; all six were restored and verified against `HEAD`).
+
+The tables and figures were classified rather than moved, because the generators write to fixed paths:
+`NARRATIVE.md` §4-§5 names which figure and which CSV each float comes from, which are appendix-only, and
+which 17 CSVs are **superseded and may not be cited** (the `table_J_*` family, the 42-episode range tables,
+and everything else measured over the composite or the hand-scaled baseline that s52 voided).
+
+### 60.2 C1's novelty, checked before the narrative was allowed to rest on it
+
+The 2026-09-23 audit covered LLM-written *rewards* (A(iii)) but never asked whether anyone has put an LLM in a
+wind turbine control-design loop. Four targeted searches on 2026-10-15 - LLM agent + wind turbine controller
+tuning; "large language model" + wind turbine + ROSCO gain tuning; the one AI-agents-in-wind-energy review
+that surfaced; LLM agent + OpenFAST + simulation-in-the-loop tuning - returned **no instance**. The nearest
+work is all in other domains and must be cited beside the claim: ControlAgent (arXiv:2410.19811, LLM agents
+designing controllers), Shou et al. (arXiv:2607.26594, an LLM agent tuning PID for 200 chemical plants),
+Chen et al. (Processes 14:2954, 2026, which benchmarks LLM gain *ranking* at 31.8-53.2 % accuracy and
+concludes that simulator-based validation remains necessary - the best available justification for our
+deterministic verification loop), and Wu et al. (Building Simulation 2026, LLM reward *weights* on a real
+energy system). **So C1 holds as a domain-first with "to our knowledge", and one item must be opened before
+it is printed:** Teke, *The Role of Artificial Intelligence Agents in Optimization and Control of Wind Energy
+Systems*, ICENSOS 2025 - title confirmed, abstract not retrievable in this session.
+
+### 60.3 What the positive narrative is, and the one thing it must still disclose
+
+The claim: one agentic loop, three design spaces, no per-space machinery, and every candidate it proposes is
+a controller the plant can run. The main text's four positive deliverables are the agent's two verified
+shipped-duty rows on the pitch loop (`llm_r1#9`: +17.73 / +22.98 / +8.66 / +2.02 at **1.000x** travel, found
+in 8 simulations; `llm_r1#11`: +24.20 / +28.35 / +16.25 / +2.48 at 1.647x - both holding every load term at
+every wind speed on 28 held-out and 28 fresh episodes, where random search finds nothing in 72 candidates),
+the MPC feasibility repair (tower DEL at 24 m/s -8.76 -> -0.33 in 24 simulations, random 0 of 48), the gated
+layer's +5.8 to +6.4 power MSE over the tuned baseline with tower fatigue never negative, and the
+**0 of 144 unrunnable candidates** against 13/144, 9/144 and 16/72 (p = 0.00018, 0.0034, < 1e-5), which is
+the publishable form of the stability the user asked about and is reported as post hoc.
+
+One flag, recorded because it is a risk the narrative carries rather than a disagreement with it: **s59.1
+pre-registered the proposer endpoint and the delivery count before the runs existed.** A pre-registered
+endpoint that is measured and then not mentioned is different in kind from a result that simply did not make
+the cut, and a referee who finds it later has grounds to distrust the rest. `NARRATIVE.md` §6 therefore
+specifies three sentences for the discussion - the endpoint was pre-registered, it came out null at n = 6, the
+classical arms delivered more often under the shipping rule, both in full in appendix D1-D2 - and keeps every
+number itself in the appendix, as the user asked. None of C1-C5 depends on either result, so the disclosure
+costs the paper nothing.
+
+### 60.4 What is now blocking the rewrite
+
+Three artefacts do not exist: **F1**, the loop diagram (TikZ, no script), and **F2 / F3**, the front against
+pitch duty and the per-run search traces, both of which need a new `scripts/dev/figures_leg1.py` reading
+`rosco_search.csv`, `rosco_perwind.csv`, `rosco_band_rows_fresh.csv` and the campaign's own `history.jsonl`.
+`f5_stack.png` and `f5_perwind.png` need regenerating without the composite panel, `f5_duty.png` is replaced
+by F2, and eight v4/F-era figures are retired. Everything else the main text needs is already measured and
+already in `docs/tables/`.

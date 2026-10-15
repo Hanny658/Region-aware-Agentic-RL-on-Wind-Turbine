@@ -1,6 +1,6 @@
 #!/bin/bash
 # Control direction, stage 1 (2026-09-16). Two questions the literature scan left open
-# (docs/literature_2026-09-16.md):
+# (docs/archive/literature_2026-09-16.md):
 #
 #   Q1  Does a learned residual still add anything once the MPC's model error has been removed by a
 #       disturbance estimator? Nobody has measured observer-recovered vs residual-learned error on one

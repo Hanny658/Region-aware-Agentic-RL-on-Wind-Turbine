@@ -6,18 +6,26 @@ knobs at a slow timescale. Baseline paper: Wang/Dong/Zhao, IEEE TSTE 2026 (`Rela
 
 ## Read these first
 - `docs/MAIN_LINE.md` — the claim, the three legs of evidence, what cannot be claimed (**start here**, one page).
-- `docs/README.md` — which document is evidence for which leg, and a section map of the 2800-line roadmap.
-- `docs/roadmap_2026-09-11_metric-set-objective.md` — the current experiment log, §1–§57. Use the section map; it
-  is not meant to be read through.
-- `docs/RESULTS_2026-09-10_data-and-caveats.md` — provenance and caveats C1–C12, before quoting any number.
-- `docs/REPORT_2026-09-01.md` + `docs/roadmap_2026-08-30.md` — F-era history; its objective, baseline and
-  aggregation are all superseded, so read them for mechanism, not numbers.
+- `docs/paper/NARRATIVE.md` — the PAPER's narrative, which is NARROWER than MAIN_LINE by the user's decision of
+  2026-10-15: the main text carries the positive results, the nulls and negative results are appendix
+  material. It holds the claim, contributions C1–C5 with their novelty status, the section order, figures
+  F1–F6, tables T1–T7 and the wording guardrails. `docs/paper/EVIDENCE.md` is the number book behind it
+  (every main-text number with its source); `docs/appendix/APPENDIX_PLAN.md` holds what is measured but not
+  in the main narrative, D1 and D2 being the pre-registered proposer null and the delivery count.
+- `docs/README.md` — the three groups (`paper/`, `appendix/`, `archive/`), which document is evidence for which
+  leg, and a section map of the 3400-line roadmap.
+- `docs/roadmap_2026-09-11_metric-set-objective.md` — the current experiment log, §0–§60. Use the section map;
+  it is not meant to be read through.
+- `docs/paper/RESULTS_2026-09-10_data-and-caveats.md` — provenance and caveats C1–C12, before quoting any number.
+- `docs/archive/` — superseded or wrong; `ARCHIVE.md` says why each file is out and what replaced it. The F-era
+  records (`REPORT_2026-09-01.md`, `roadmap_2026-08-30.md`) are history: read them for mechanism, never for
+  numbers, and no number from that directory may enter the manuscript.
 - Design decisions history: the user's explicit answers are recorded in the report; do not re-ask them.
 
 ## Scope
 This repository covers region-aware residual RL for **collective pitch**, agentic (LLM)
 supervision, the GSPI / LPV-MPC / ROSCO-tower-damper baselines (roadmap §1–23), and the
-**individual-pitch negative result** (`docs/RESULTS_2026-09-05_ipc-negative.md`), which is kept
+**individual-pitch negative result** (`docs/appendix/RESULTS_2026-09-05_ipc-negative.md`), which is kept
 because it bounds the supervision claim. **Do not describe research directions beyond that scope**
 in this repo's docs, commits or manuscripts. The IPC/torque code paths stay in the tree (inert at
 `--ipc_max 0` / `--dtau_max 0`) because run configs reference them.
@@ -97,7 +105,7 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   worst single wind of -0.60 and two episodes per wind cannot tell -0.60 from -1.20. Separate cheap
   question, not this campaign: screen with a margin (s55: the set-mean margin predicts holding) or spend
   episodes at the winds where the constraint binds.
-- **Parameter-search audit and redesign (2026-10-11, `docs/design_2026-10-11_rosco-native-search.md`,
+- **Parameter-search audit and redesign (2026-10-11, `docs/paper/design_2026-10-11_rosco-native-search.md`,
   `scripts/rosco_native.py`, `eval/selection.py`, `campaign_rosco_native.sh`):** the s29/s31 tuned baseline was
   **not a ROSCO tuning**. It scaled `PC_GS_KP` / `PC_GS_KI` by two scalars, and because ROSCO builds the schedule as
   `Kp = (2 zeta omega + A(beta))/B(beta)`, `Ki = omega^2/B(beta)`, a scalar on Kp implies a damping ratio that varies
@@ -350,7 +358,7 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   holds held-out: same J as the J-selected point at 38-41 % of its actuation, blade DEL 3 -> 5-6 % (s26). On a
   compensated base the residual has nothing of size left to learn (5 of 6 mismatched runs never beat episode 0,
   s24) and residuals do not transfer across model error while the estimator holds +-15 % (s23). ROSCO's tower
-  damper is worth ~0 J at 600 s (s23). Literature scan: `docs/literature_2026-09-16.md`.
+  damper is worth ~0 J at 600 s (s23). Literature scan: `docs/archive/literature_2026-09-16.md`.
 - **Wind-range protocol (2026-09-18, roadmap s27-s28; the main evaluation set from here on):** 12-24 m/s in 2 m/s
   steps, IEC turbulence class B, 600 s, TurbSim seeds 1-6 (42 held-out episodes; `campaign_must1_range.sh`,
   `scripts/dev/range_table.py`, `docs/tables/range_*.csv`). Several s19-s26 statements are specific to the
@@ -362,12 +370,29 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
 
 ### Manuscript
 
+- **THE NARRATIVE IS FIXED AND THE DOCUMENTS ARE REGROUPED (2026-10-15, user's decision, roadmap s60):
+  the main text carries the POSITIVE results and the nulls go to the appendix, and the headline
+  contribution is the first LLM agent in the loop for wind turbine controller tuning.**
+  `docs/paper/NARRATIVE.md` is now the only place the paper's argument lives: the claim, contributions
+  C1–C5 with a novelty status each, the ten sections with the evidence for every one, figures F1–F6 and
+  tables T1–T7 with their generators, and eight wording guardrails. `docs/paper/EVIDENCE.md` is the
+  number book; `docs/appendix/APPENDIX_PLAN.md` is appendices A–J, D1 and D2 being the pre-registered
+  proposer null (p = 0.31 against bayes) and the delivery count (0 of 6 against 4 of 6). **C1's novelty was
+  checked on 2026-10-15:** four targeted searches plus the 2026-09-23 audit found no LLM in any wind
+  turbine control-design loop, so the claim stands as a domain-first with "to our knowledge", with the
+  mechanism attributed to ControlAgent (arXiv:2410.19811), Shou (arXiv:2607.26594), Chen (Processes 2026)
+  and Wu (Building Simulation 2026) — and ONE item must be opened before it is printed: Teke,
+  *The Role of Artificial Intelligence Agents in Optimization and Control of Wind Energy Systems*,
+  ICENSOS 2025 (title only, abstract not retrieved). Three artefacts gate the figure set and do not exist:
+  F1 (the loop diagram, TikZ) and F2 / F3 (`scripts/dev/figures_leg1.py`). The title may name the agent and
+  may claim the application as new; by s59.1 it may NOT claim or imply that the agent beats another search.
 - **THE CLAIM CHANGED ON 2026-10-13 (user's decision): the paper is about what the agentic loop delivers on the
   shipped GSPI and on an untuned MPC, i.e. the three legs of `docs/MAIN_LINE.md`.** v6's single claim - *baseline
   tuning, aggregation convention and wind weighting decide the apparent benefit of advanced pitch control* -
   becomes the paper's **measurement discipline**: it keeps its evidence and its sections, but it moves to the
-  setup and the discussion and stops being the headline. `docs/plan_2026-10-12_manuscript-rewrite.md` carries
-  the site-by-site pass; the structure below is v6's and is the substrate, not the target.
+  setup and the discussion and stops being the headline. `docs/archive/plan_2026-10-12_manuscript-rewrite.md` is
+  archived but its site-by-site table is still the correct checklist for reasons (A)-(D); the
+  structure below is v6's and is the substrate, not the target.
 - **Manuscript (docs/manuscript/main.tex, v6, restructured 2026-09-24; target venue Wind Energy Science).**
   v6's claim, now demoted as above: *baseline tuning, aggregation convention and wind weighting decide the
   apparent benefit of advanced pitch control*. The controllers were INSTRUMENTS under it. Structure: 1 intro, 2 related work, 3 setup, 4 the ladder,
@@ -384,7 +409,7 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   (+1.5-2.1 on the MPC, +4.2-4.8 on the tuned baseline at 1.40x travel), 16/16 paired intervals above zero on
   held-out AND fresh seeds; then the site-weighted reading (s42) and ablations (shape vs level, proposer vs
   random structure, gate vs no gate, estimator vs residual). Figures `figures/f5_{stack,perwind,weighting,duty}.png`
-  from `scripts/dev/figures_v5.py`. Novelty audit `docs/literature_2026-09-23.md`: the GATE (Kim arXiv:2609.21307,
+  from `scripts/dev/figures_v5.py`. Novelty audit `docs/paper/literature_2026-09-23.md`: the GATE (Kim arXiv:2609.21307,
   Abbas IET CTA 2026), the WEIGHT SCHEDULE (Wintermeyer-Kallen 2021) and OFFSET-FREE MPC in wind (Liu IEEE TII 2024)
   are prior art and must be attributed, never claimed; what survives is CPC-only beating a TUNED ROSCO on regulation
   and both DELs, and the shape-vs-weights discriminator (cite Wu Building Simulation 2026, Chen Processes 2026).
@@ -398,7 +423,7 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   a full disk left 7 zero-byte TurbSim fields (the generator skips existing names) and 9 unreadable baseline .npz.
 - Data: WSL `~/wtrl/{exp,wind,baselines/openfast}`, copy at `../wtrl-data/`; J tables via
   `scripts/dev/j_table.py [--csv]`, F-era tables in `docs/tables/` (`scripts/dev/build_tables.py`);
-  provenance and caveats C1–C12 in `docs/RESULTS_2026-09-10_data-and-caveats.md`.
+  provenance and caveats C1–C12 in `docs/paper/RESULTS_2026-09-10_data-and-caveats.md`.
 
 - F-era headline, kept as history (08-30 roadmap §21–§23, REPORT_2026-09-01): llm_fork 17.89 ± 2.02
   (7 seeds) > random_fork 12.36 ± 5.30 in 7/7 seeds (exact p = 0.0156); fork verification adds nothing

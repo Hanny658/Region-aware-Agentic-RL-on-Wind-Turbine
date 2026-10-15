@@ -1,7 +1,7 @@
 # Individual pitch control: a documented negative result (2026-09-03 → 09-05)
 
 The individual-pitch (dq cyclic) experiments of this project, kept as a documented negative. They
-matter because they bound the supervision claim of `roadmap_2026-08-30.md` §21–§22: on the
+matter because they bound the supervision claim of `../archive/roadmap_2026-08-30.md` §21–§22: on the
 collective channel the LLM proposer beats verified random search (+5.5 F, 7/7 seeds, exact
 p = 0.0156, replicated on a second wind set); on the cyclic channel the *same* supervisor, prompt,
 knobs and guardrail loses to fixed weights three times in a row. Reporting both is what makes the

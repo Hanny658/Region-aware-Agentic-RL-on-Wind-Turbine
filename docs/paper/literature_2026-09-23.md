@@ -1,6 +1,6 @@
 # Literature recall, 2026-09-23 — novelty audit and related-works foundation (IEEE TCST)
 
-Extends `docs/literature_2026-09-16.md`; entries already in that file are not repeated unless a newer or
+Extends `docs/archive/literature_2026-09-16.md`; entries already in that file are not repeated unless a newer or
 better version was found. Target venue: IEEE TCST special issue on data-driven and learning-based control.
 
 **Verification legend.** Every entry carries a URL and one of:
