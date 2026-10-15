@@ -3265,3 +3265,18 @@ One row worth naming on its own: **local r3 #8 (omega 0.633, zeta 0.664, corner 
 pitch travel.** The standing baseline reads +29.75 fresh at 2.016x, so the selection rule still picks stage 1,
 by 1.09 points - but this is a sixth row for the duty ladder of s55.2-55.3, where the one-knob member buys
 +23.0 at 1.000x, and it was found by the local search, not by the model.
+
+Resumed on request 2026-10-15 09:31, and the pause did not survive: the WSL VM had gone down overnight, so
+session 400 was gone and `campaign_ctl.sh resume` had nothing to continue. `integrity_check.py --since
+"2026-10-14 17:00"` reports no broken artefact, and the relaunch of `campaign_rosco_native_n6.sh` (session 409)
+skipped all nine runs on their `best.json` and re-entered stage 3 against the parameter-hash cache, so the only
+thing lost is the one evaluation that was in flight at the pause - bayes r5 on the fresh seeds, which starts
+again: 37 of the 42 row-evaluations of stage 3 are cache hits, and 12 of the 15 distinct selections are
+measured on both seed sets.
+
+The pass stage 3 does not cover is now a script rather than a note: `scripts/dev/rosco_perwind_select.py
+--verify` evaluates each run's PER-WIND selection on held-out and fresh seeds into the same cache, which closes
+the gap for local r4 #10 and local r5 #18 and will close it for any future run whose two rules disagree, and
+`scripts/wsl/campaign_perwind_verify.sh` (session 557) waits for stage 3 to release the seven workers, runs it,
+and then prints the closing delivery table from `rosco_proposer_test.py`. Four evaluations, about 45 min,
+queued behind stage 3's remaining five.

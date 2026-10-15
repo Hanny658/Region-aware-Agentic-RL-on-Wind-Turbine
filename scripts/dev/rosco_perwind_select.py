@@ -15,7 +15,15 @@ What it prints: how many of the evaluated tunings survive the per-wind screen, t
 what the screen costs in regulation against the set-mean rule, and for each run whether the screen changes what
 that run would have selected.
 
+`--verify` is the part that does cost simulations, and it exists because stage 3 of the campaign does not cover
+it: that stage re-scores each run's SET-MEAN selection off the design winds, so a run whose per-wind selection
+is a different candidate is left unmeasured (s59.5: local r4 #10 against #21, local r5 #18 against #9). With
+the flag, every run's per-wind selection is evaluated on held-out seeds 3-6 and fresh seeds 7-10, two
+evaluations of 28 episodes each, into the same parameter-hash cache the rest of the campaign reads, so a
+selection another stage has already measured costs nothing and `rosco_proposer_test.py` picks the new rows up.
+
     ~/wtrl/run.sh python scripts/dev/rosco_perwind_select.py [--tol 1.0] [--top 12] [--csv <path>]
+    ~/wtrl/run.sh python scripts/dev/rosco_perwind_select.py --verify [--port0 8300] [--workers 7]
 """
 from __future__ import annotations
 
@@ -38,6 +46,14 @@ ap.add_argument("--tol", type=float, default=PER_WIND_TOL,
                 help="points of load reduction allowed to be negative at a single wind speed")
 ap.add_argument("--top", type=int, default=12)
 ap.add_argument("--csv", default=None)
+ap.add_argument("--verify", action="store_true",
+                help="evaluate each run's per-wind selection off the design winds (seeds 3-6 and 7-10)")
+ap.add_argument("--verify_root", default=os.path.expanduser("~/wtrl/exp/roscosearch_native"),
+                help="the search root whose _verify cache the evaluations are written to and read from")
+ap.add_argument("--workers", type=int, default=7)
+ap.add_argument("--port0", type=int, default=8300)
+ap.add_argument("--means", nargs="+", type=float, default=[12, 14, 16, 18, 20, 22, 24])
+ap.add_argument("--ti", default="B")
 a = ap.parse_args()
 
 runs: dict[str, list] = {}
@@ -121,3 +137,58 @@ if a.csv and rows_pw:
         w.writeheader()
         w.writerows(rows_pw)
     print(f"\n-> {a.csv}")
+
+
+# ----------------------------------------------- the per-wind selections off the design winds (costs simulations)
+if a.verify:
+    from eval.selection import assess  # noqa: E402
+    from scripts.rosco_native import Evaluator  # noqa: E402
+
+    class VArgs:
+        root = a.verify_root + "/_verify"
+        template = os.path.expanduser("~/wtrl/runs/template_5mw")
+        config_run = os.path.expanduser("~/wtrl/exp/jg3t_s0")
+        seeds = [3, 4, 5, 6]
+        episode_s = 600.0
+        workers = a.workers
+        port0 = a.port0
+
+    ev = Evaluator(VArgs())
+    ev.extra_args = ["--means", *[f"{m:g}" for m in a.means], "--ti", a.ti]
+
+    def worst_measured(fit: dict) -> float:
+        """The worst load reduction at any single wind speed of an evaluation: bin mean first, then the worst bin."""
+        by: dict[float, dict[str, list]] = {}
+        for e in fit.get("per_episode", []):
+            if e.get("mean_wind") is None:
+                continue
+            d = by.setdefault(e["mean_wind"], {})
+            for nm, col in (("tower", "TwrBsMyt_DEL_red_pct"), ("blade", "RootMyc1_DEL_red_pct")):
+                v = e.get(col)
+                if v is not None and v == v:
+                    d.setdefault(nm, []).append(float(v))
+        vals = [sum(v) / len(v) for d in by.values() for v in d.values()]
+        return min(vals) if vals else float("nan")
+
+    print()
+    print(f"Each run's per-wind selection measured off the design winds, tolerance {a.tol:.1f} point "
+          f"at any single wind speed on BOTH seed sets:")
+    print(f"{'run':>12} {'candidate':>10} {'design':>8} {'held out':>9} {'fresh':>8}   {'design w/w':>11} "
+          f"{'heldout w/w':>12} {'fresh w/w':>10}  ships")
+    for name in sorted(runs):
+        hist = runs[name]
+        bp = max(hist, key=lambda r: per_wind_rank_key(r, a.tol))
+        if bp["i"] == 0 or per_wind_rank_key(bp, a.tol)[0] != 1:
+            print(f"{name:>12} {'-':>10}   no candidate holds both loads at every wind speed on the design set")
+            continue
+        ho, fr = ev.run(bp["params"], 0, seeds=[3, 4, 5, 6]), ev.run(bp["params"], 1, seeds=[7, 8, 9, 10])
+        w_ho, w_fr = worst_measured(ho), worst_measured(fr)
+        ships = w_ho == w_ho and w_fr == w_fr and min(w_ho, w_fr) >= -a.tol
+        print(f"{name:>12} {'#' + str(bp['i']):>10} {bp['assess']['objective']:>8.2f} "
+              f"{assess(ho).get('objective', float('nan')):>9.2f} "
+              f"{assess(fr).get('objective', float('nan')):>8.2f}   {worst_per_wind(bp)[0]:>11.2f} "
+              f"{w_ho:>12.2f} {w_fr:>10.2f}  {'yes' if ships else 'NO'}")
+    print()
+    print("The design column is the 14-episode screen; the other two are 28 episodes each and are the "
+          "measurement.")
+    print("Run scripts/dev/rosco_proposer_test.py for the delivery counts these rows feed.")

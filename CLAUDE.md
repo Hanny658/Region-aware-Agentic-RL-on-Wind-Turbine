@@ -61,22 +61,24 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   proposer claim against a dedicated search** - leg 3 lost it in s58, leg 2 never had it (llm = es) -
   so what survives is the search SPACE, the measurement discipline, and one loop that runs in three
   spaces at parity. s59.1 fixed this reading in advance, including that the title loses the proposer.
-- **PAUSED on request 2026-10-14 23:23 in stage 3**, 37 of its 42 evaluations done, about 1 h left
-  (bayes r5 on the fresh seeds, interrupted mid-run, and the llm r4 / r5 selections on both seed sets).
-  Stage 3 re-scores each run's SET-MEAN selection off the design winds, so it does NOT cover the per-wind
-  selections of local r4 (#10) and local r5 (#18): those need a separate pass of four evaluations, about
-  45 min, and until they are in the delivery count is not final (s59.5). Resume with
-  `bash scripts/wsl/campaign_ctl.sh resume campaign_rosco_native`; if the WSL VM went down meanwhile,
-  relaunch `scripts/wsl/campaign_rosco_native_n6.sh` instead, since stage 2 is skipped run by run on its
-  best.json. Nothing in s59.4 depends on it.
+- **RUNNING again since 2026-10-15 09:31** (session 409; the overnight pause did not survive, the WSL VM
+  went down and the relaunch of `campaign_rosco_native_n6.sh` skipped all nine runs on their best.json,
+  `integrity_check.py` clean). Stage 3 has 37 of its 42 row-evaluations cached and 5 to run, about 1 h:
+  bayes r5 on the fresh seeds and the llm r4 / r5 selections on both seed sets. Because stage 3 re-scores
+  each run's SET-MEAN selection, the per-wind selections of local r4 (#10) and local r5 (#18) are NOT
+  covered: `scripts/dev/rosco_perwind_select.py --verify` is the pass that measures them (four evaluations,
+  about 45 min) and `scripts/wsl/campaign_perwind_verify.sh` (session 557) is queued behind stage 3 to run
+  it and print the closing delivery table. Until those land the delivery count is not final (s59.5).
+  Pause either with `bash scripts/wsl/campaign_ctl.sh pause {campaign_rosco_native|campaign_perwind_verify}`.
+  Nothing in s59.4 depends on any of it.
   s58 took the proposer claim off leg 3, so leg 1 carries it alone, and leg 1 was n = 3 per arm where 3 of 3
   against 2 of 3 is Fisher p = 1.0. Endpoints and power pre-registered in s59.1 BEFORE the runs exist:
   **primary** the simulations to the first feasible gain (Mann-Whitney one-sided llm against bayes, about
   p = 0.03 if s53 replicates, 0.0011 at best; a run that never finds one is censored and enters at 25);
   **secondary** the count of runs delivering a shippable gain (underpowered and said so in advance: 6 of 6
   against 4 of 6 is p = 0.45) and the per-wind restatement of both. s59.1 fixes what each outcome means,
-  including that a null primary leaves **no proposer claim in any leg**. Do not launch it again and do not
-  start a watcher for it.
+  including that a null primary leaves **no proposer claim in any leg**. Do not start a second copy of either
+  session while they are alive, and do not start a Claude-side watcher for them.
 - **THE RESTATEMENT IS ALREADY IN, AND IT IS NOT FLATTERING (roadmap s59.2, no simulations;
   `scripts/dev/rosco_proposer_test.py`, `docs/tables/rosco_proposer_test.csv`).** The twelve runs of s53
   read three ways. Under the rule the search used: llm 3/3 runs with a shippable gain, median 8 sims,
