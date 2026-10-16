@@ -3724,3 +3724,6 @@ it once it prints `=== done`; after any VM restart, `integrity_check.py` first, 
 stopped; llm r0 at 8 of 24 candidates in its history.jsonl). Resume with `campaign_ctl.sh resume
 campaign_rosco_margin`. A VM restart drops a paused session: then `integrity_check.py` first and relaunch the
 same command, which resumes llm r0 from its history.
+
+**Resumed 2026-10-16 08:23 on request** (`campaign_ctl.sh resume campaign_rosco_margin`; the session had survived
+the pause intact, llm r0 continuing from candidate 8).
