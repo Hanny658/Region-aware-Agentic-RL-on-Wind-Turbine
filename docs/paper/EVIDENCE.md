@@ -87,7 +87,9 @@ The pre-registered proposer endpoint, the delivery count under the shipping rule
 mechanism: appendix A1-A2 (`../appendix/APPENDIX_PLAN.md`). The margin-screen reading of s62.1, quoted in
 one sentence of §9 (with one point of margin in the design-set screen the agent's selections ship in two of
 its six runs, at the highest regulation of any delivered row, and the classical arms still at least as
-often): appendix D3, `../tables/rosco_proposer_test_margin.csv`.
+often): appendix D3, `../tables/rosco_proposer_test_margin.csv`. The campaign that told the agent the screen
+(s62.3; one sentence in §9: told that screen, the agent drives to its edge in every run and ships in one of
+six): appendix D3, `../tables/rosco_proposer_test_margin_campaign.csv`.
 
 ## §5 Leg 2 - the untuned MPC (`../tables/mpc_leg_fresh.csv`, `mpc_leg_heldout.csv`, `design_search.csv`; s33, s38, s57.2)
 

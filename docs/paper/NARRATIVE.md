@@ -198,6 +198,7 @@ null result can buy: the referee believes the rest.
    `../appendix/APPENDIX_PLAN.md` D3: with one point of margin in the design-set screen the agent's
    selections ship in 2 of 6 runs (0 before) and the classical arms still at least as often, so no proposer
    claim. The campaign in which every arm selects under that screen and the agent is also told the rule
-   (`campaign_rosco_margin.sh`, s62.2, launched 2026-10-16, about 32 h) is read under the endpoints fixed
-   in s62.2 and goes to D3 whatever it finds; only the branch s62.2 names (agent arm at 4 of 6 or more)
-   may move one sentence into §4 of the main text.
+   (s62.2, s62.3, finished 2026-10-17) came out in the pre-registered branch that moves nothing into the
+   main text: the agent drives to the screen's edge in all six runs and ships in 1 of 6; app. E carries it
+   in full, including that the task text named the filter corner the earlier campaign had found, so the
+   one-simulation time to the first screen-holding candidate measures the prompt and not the search.

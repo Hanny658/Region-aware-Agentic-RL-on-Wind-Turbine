@@ -76,7 +76,8 @@ Numbers are sections of `roadmap_2026-09-11_metric-set-objective.md`.
   under the rule that ships, §59.4 the null primary and the 0-of-144 divergence count, §59.6 the closing
   count) - **§60 the documents regrouped and the paper's narrative fixed** - §61 the overlay figure, the
   discipline tables on the native baseline and main.tex v7 - **§62 the selection rule repaired: the margin
-  screen read on the same candidates (§62.1) and the arm that is told the rule (§62.2, running)**.
+  screen read on the same candidates (§62.1) and the arm that is told the rule (§62.2) and its result, told the screen the agent drives to its edge in
+  every run and ships in 1 of 6 (§62.3)**.
 - **Leg 2:** §33 the wind-scheduled tower weight - §36 model error over the range - §38 the verified design
   loop finds the schedule by itself and does not beat the hand design - §57 the unscheduled reference on fresh
   seeds.

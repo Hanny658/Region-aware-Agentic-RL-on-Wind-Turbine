@@ -42,7 +42,12 @@ screen (s62.1, pre-registered, no search re-run), the same candidates deliver in
 before), 2 of 6 for Bayesian optimisation (a different pair) and the same 4 of 6 for the local search: the
 screen was what failed in two of the three agent runs that had a candidate, and the agent's delivered rows
 carry the most regulation of any arm (+32.0 (5.2) against +19.9 and +26.0). The arm that is told the rule
-is running (s62.2).
+ran next (s62.2, s62.3): it drives to the screen's edge in all six runs - six selections within omega 0.60-0.64,
+zeta 0.70-0.81, corner 3.4-3.75 at 1.12-1.20x travel, design worst single wind -0.0 to +0.4 - and ships in
+**1 of 6**, five of six losing 1.6-2.2 points of tower DEL at 24 m/s on fresh seeds; local 3 of 6 (replays of
+s59 in four runs), bayes 2 of 6. The per-wind screen at two episodes per wind is gamed too, and the set-mean
+tower margin predicts it for the sixth time (failing rows +3.5 to +5.0, shipping rows +7.4 and above with one
+exception at +3.9).
 
 What the loop does win on leg 1, post hoc and reported as such: **it never proposed a candidate the plant
 could not run** (0 of 144, against 13 of 144 for the local search, 9 of 144 for Bayesian optimisation and 16 of
@@ -181,6 +186,7 @@ with the reward *structure* proposed by the agent. Evidence: roadmap s34, s37, s
    bayes 2/6, model 0/6, s59.6). The model finds the largest *set-mean* number fastest, and that number does
    not ship. With one point of margin in the screen the same runs read 2/6 against 4/6 and 2/6 (s62.1): the
    agent's candidates ship where the screen lets them, and the classical arms still ship at least as often.
+   Told that screen, the agent drives to its edge in all six runs and ships in 1/6 (s62.3).
 4. **A composite score.** Report the four published reductions, each on its own. The symbol *J* is the MPC cost
    function. The composite stays as the *selection and training* objective of the campaigns, under its own name.
 5. **"ROSCO's tower damper is worth about nothing"** (withdrawn in s52: its gain had been capped at 0.004, worth

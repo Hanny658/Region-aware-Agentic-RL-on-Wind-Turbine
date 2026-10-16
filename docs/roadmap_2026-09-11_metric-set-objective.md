@@ -3737,3 +3737,95 @@ Same resume and restart rules as above.
 llm r5 at its shipped start). Same resume and restart rules as above.
 
 **Resumed 2026-10-16 21:02 on request** (session intact, llm r5 continuing from its shipped start).
+
+### 62.3 The result: told the screen, the agent drives to its edge in every run and ships in one of six (2026-10-17, 07:29)
+
+**Finished 2026-10-17 07:29** (`~/wtrl/exp/rosco_margin.log`, `docs/tables/rosco_proposer_test_margin_campaign.csv`;
+18 runs, 416 distinct tunings, 38 the plant could not run, zero infrastructure failures, zero malformed replies;
+24 h 43 min wall of which 5 h 10 min paused on request, the classical arms fast because of the warmed cache).
+Read under the endpoints of 62.2.
+
+**Primary endpoint, measured off the design winds under the unchanged shipping rule: llm 1 of 6, local 3 of 6,
+bayes 2 of 6.** The agent arm against its own s59 count (0 of 6) is Fisher two-sided p = 1.0; against the
+classical arms within the campaign p = 0.55 (local) and 1.0 (bayes). **This is the pre-registered branch
+"agent arm at 2 of 6 or fewer": the 62.1 read does not generalise beyond its own runs, the main text keeps the
+s59.6 wording, and D3 reports the campaign in full.**
+
+| run | selection, travel | regulation design / held out / fresh | worst single wind design / held out / fresh | set-mean tower | ships |
+|---|---|---|---|---|---|
+| llm r0 | #11 omega 0.638 zeta 0.700 corner 3.400 damper 0.0050 hpf 0.800, 1.128x | +31.94 / +31.25 / +33.09 | +0.3 / +0.86 / -0.09 (blade, 16) | +7.67 | yes |
+| llm r1 | #18 omega 0.618 zeta 0.750 corner 3.500 damper off, 1.134x | +32.42 / +31.74 / +33.38 | +0.4 / +0.07 / **-1.96** (tower, 24) | +5.04 | no |
+| llm r2 | #22 omega 0.636 zeta 0.710 corner 3.400 damper off, 1.118x | +32.94 / +32.25 / +34.00 | +0.2 / -0.59 / **-2.21** (tower, 24) | +4.70 | no |
+| llm r3 | #23 omega 0.628 zeta 0.738 corner 3.400 damper off, 1.133x | +33.27 / +32.65 / +34.30 | -0.0 / -0.38 / **-2.17** (tower, 24) | +4.30 | no |
+| llm r4 | #20 omega 0.602 zeta 0.810 corner 3.400 damper off, 1.163x | +32.39 / +32.07 / +33.27 | +0.0 / +0.17 / **-1.92** (tower, 24) | +3.52 | no |
+| llm r5 | #19 omega 0.600 zeta 0.810 corner 3.750 damper off, 1.195x | +33.04 / +32.80 / +33.92 | +0.1 / +0.67 / **-1.62** (tower, 24) | +4.56 | no |
+| bayes r1 | #14 (the row of 62.1), 1.183x | +26.89 / +27.96 / +28.69 | +0.3 / -0.00 / -0.73 (tower, 24) | +3.90 | yes |
+| bayes r4 | #21 omega 0.583 zeta 0.814 corner 4.101 damper 0.0017 hpf 0.490, 1.207x | +29.02 / +29.44 / +30.78 | +1.0 / +1.68 / +0.80 | +8.16 | yes |
+| local r0 | #21 (as s59), 2.719x | +14.30 / +14.20 / +11.62 | -0.0 / +1.12 / +0.33 | +17.78 | yes |
+| local r3 | #8 (as s59), 1.050x | +27.64 / +26.76 / +28.66 | +0.1 / +0.32 / -0.87 (tower, 24) | +7.39 | yes |
+| local r4 | #10 (as s59), 2.377x | +15.97 / +19.07 / +16.40 | +1.2 / +1.99 / +1.10 | +9.75 | yes |
+
+bayes r0, r2, r3, r5 and local r1, r2, r5 have no candidate that holds both loads at every wind speed on the
+design set.
+
+**What the agent did when it was told the rule.** It did what the rule said, in every run, and consistently:
+the first candidate of all six runs was the one-knob filter corner at 3.0 to 3.4 rad/s (feasible, screen
+held, +22.6 to +24.1), it then raised omega and zeta at that corner until the design-set worst single wind
+touched zero, and it stopped there: the six selections span omega 0.60 to 0.64, zeta 0.70 to 0.81, corner 3.4
+to 3.75, damper off in five of six, travel 1.12x to 1.20x, design regulation +31.9 to +33.3, design worst
+single wind -0.0 to +0.4. Of its 24 candidates per run, 19 to 21 hold the screen (the classical arms 0 to 4),
+0 of 144 destabilised the plant (second campaign at 0 of 144; local 15, bayes 23 of 144), and its explanations
+name the wind speed and the margin this time ("adding margin at the 20 m/s tower-load dip", "backing off
+bandwidth to preserve high-wind tower-load margin"). **Measured off the design winds, five of the six sit
+exactly where the screen could not see: held out they are within the tolerance (worst +0.67 to -0.59), fresh
+they lose 1.6 to 2.2 points of tower-base DEL at 24 m/s, every one of them.** The screen with two episodes per
+wind is gamed by an optimiser that is told it, the way the set-mean screen was gamed by one that was not: fifth
+instance of a screen being optimised against (s32, s53.2, s55, s59.6, this), first with a per-wind screen.
+
+**The secondary endpoint that must not be read as a proposer result.** Simulations to the first candidate
+holding the screen: llm 1 in all six runs, local [8, 10, 18, 25, 25, 25], bayes [13, 15, 25, 25, 25, 25],
+one-sided exact p = 0.0011 against both, the smallest attainable. **This measures the prompt, not the search:
+`SHIP_TEXT` told the agent that "the filter corner buys regulation nearly free up to about 3.4 rad/s" and that
+"turning the tower damper off ... loses the tower-base load at the highest wind speeds", which are the s52.3
+and s55 findings in words**, and the agent's first proposal in every run cites "the known filter-corner
+benefit". The classical arms were told nothing. 62.2 disclosed the information asymmetry as the design; it did
+not foresee that the two sentences meant to describe the rule also located the ladder, and no between-arm
+reading of this campaign in the agent's favour survives that. The only informative part is the agent arm's own
+behaviour under the rule, above. `SHIP_TEXT` also stated that "every candidate that read above zero at every
+wind speed held", which was true of the ten rows s55 verified and is false now - it was a statement about ten
+rows at two episodes per wind.
+
+**The set-mean tower margin predicts holding for the sixth time, and the boundary is now bracketed.** The
+five agent rows that fail carry +3.5 to +5.0 points of set-mean tower DEL; the rows that ship carry +7.4 to
++17.8 (local), +8.2 (bayes r4), +7.7 (llm r0, the one agent row with the damper on, at 0.005), and the one
+exception is bayes r1 at +3.9 shipping by 0.27 points. With 62.1 (+3.84 to +3.92 failing or marginal, +6.0 and
+above shipping) the boundary sits between +5.0 and +6.0 points of set-mean tower margin: a tuning below it
+loses the tower-base load at 24 m/s on wind realisations it has not seen, whatever its per-wind screen reads.
+That is the lever the next campaign should give every arm, as a constraint rather than a sentence, and it is
+not the design set's resolution alone: at two episodes per wind the screen cannot see 1.6 to 2.2 points at one
+wind speed, and the margin is the proxy that can.
+
+**A seed-set effect that is now systematic.** For every one of the eleven selections the worst cell is lower
+on fresh seeds 7-10 than on held-out seeds 3-6, by 0.7 to 2.3 points, and in nine of eleven that cell is the
+tower-base load at 24 m/s. s55 and s59.6 saw the same direction. The shipping rule requires both sets, so it is
+the fresh set that decides, and a tuning that passes held out by half a point is not a pass. No claim follows,
+but the fresh set is the harder test at 24 m/s and every report of a per-wind pass must say which set.
+
+**The classical arms are not independent new runs.** The local search replayed its s59 trajectories exactly in
+r0 to r3 (24 of 24 candidates cache hits, because the screen never changed its incumbent there: r1 and r2
+never found a feasible candidate, r0 and r3 selected the same row under both rules), diverged at candidate 22
+in r4 and at 10 in r5 (which then found nothing, so local goes 4 of 6 to 3 of 6 on one changed path); 128 of
+144 of its candidates were cache hits. Bayesian optimisation diverged early (same-run prefixes 4 to 11, 67 of
+144 cache hits) and found one new delivered row, bayes r4 #21 at +30.78 fresh and 1.207x travel with +8.2 of
+set-mean tower margin, the best Bayesian row of the study. The screen alone did not move either classical arm
+(secondary endpoint 2 of 62.2).
+
+**What this changes, and what it does not.** Leg 1 keeps the s59.6 wording in the main text, as pre-registered.
+D3 reports the 62.1 read and this campaign together: the agent's candidates ship where the screen lets them
+(62.1), and an agent told the screen drives to its edge and ships in one of six (62.3) - the design set, not
+the proposer, is where leg 1 is limited, and the fix is a margin on the set-mean tower term or episodes at the
+winds where the constraint binds, neither of which this campaign changed (one lever at a time, 62.2). The one
+agent row that ships, llm r0 #11 at +33.09 fresh and 1.128x travel, is the most-regulating delivered row at
+near-shipped duty in the study (local r3 #8 is +28.66 at 1.050x); it goes into the D3 table and nowhere else,
+because it is one row of six and the five beside it fail. No proposer claim follows in either direction, and
+the 0 of 144 divergence count is now observed twice and stays post hoc.

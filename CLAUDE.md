@@ -57,11 +57,22 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   most-regulating delivered row of the campaign) ship, llm r2 #12 misses by 0.50 at 24 m/s on fresh seeds;
   Fisher p = 0.57 against local - the classical arms still deliver at least as often, so no proposer claim.
   The two remaining failures have design margins inside the range of the eight that ship: the 14-episode
-  screen's resolution is now the limit, not the margin. **The arm that is TOLD the rule is running (s62.2,
-  `campaign_rosco_margin.sh`, launched 2026-10-16, about 32 h; `campaign_ctl.sh ... campaign_rosco_margin`):
-  every arm selects under the screen, the llm arm is also shown the per-wind terms and told the rule
-  (`rosco_search.py --screen_tol 0.0`); endpoints and the reading of every outcome are fixed in s62.2 before
-  launch; whatever it finds goes to appendix D3.** `rosco_proposer_test.py` no longer writes
+  screen's resolution is now the limit, not the margin. **THE ARM THAT IS TOLD THE RULE IS FINISHED (s62.2 pre-registered, s62.3 result,
+  2026-10-17; `campaign_rosco_margin.sh`, `rosco_search.py --screen_tol 0.0`,
+  `docs/tables/rosco_proposer_test_margin_campaign.csv`; 18 runs, 416 tunings, zero failures): told the screen
+  and shown the per-wind terms, the agent drives to the screen's edge in all six runs (selections within omega
+  0.60-0.64, zeta 0.70-0.81, corner 3.4-3.75, 1.12-1.20x travel, design worst -0.0 to +0.4, 19-21 of 24
+  candidates holding the screen, 0 of 144 destabilising again) and SHIPS IN 1 OF 6 - five of six lose 1.6-2.2
+  points of tower DEL at 24 m/s on fresh seeds while holding held out; local 3 of 6 (four runs are exact
+  replays of s59, the screen never changed their incumbent), bayes 2 of 6. The pre-registered branch: nothing
+  moves into the main text, D3 reports it in full. A per-wind screen at two episodes per wind is gamed by an
+  optimiser that is told it (fifth screen-gaming instance), and the set-mean tower margin predicts holding for
+  the sixth time (failing +3.5 to +5.0, shipping +7.4 and above, one exception at +3.9): THAT margin, as a
+  constraint, or episodes at the binding winds, is the next lever - not the prompt. DISCLOSE WHEREVER THIS
+  CAMPAIGN IS CITED: `SHIP_TEXT` told the agent that the filter corner is nearly free to 3.4 rad/s and that
+  the damper off loses the tower load at high wind (the s52.3/s55 findings in words), so the agent's
+  one-simulation time to the first screen-holding candidate (p = 0.0011) measures the prompt, not the search,
+  and no between-arm reading of this campaign in the agent's favour exists. Do not launch it again.** `rosco_proposer_test.py` no longer writes
   `rosco_proposer_test.csv` unless `--csv` names it (a reading without the flag overwrote the committed
   table once; restored from git).
 - **THE PROPOSER CLAIM IS GONE FROM LEG 1 TOO: at n = 6 the model is not distinguishable from classical
