@@ -3735,3 +3735,5 @@ Same resume and restart rules as above.
 
 **Paused 2026-10-16 17:34 on request** (session 396, 36 processes stopped; llm r0-r4 finished with best.json,
 llm r5 at its shipped start). Same resume and restart rules as above.
+
+**Resumed 2026-10-16 21:02 on request** (session intact, llm r5 continuing from its shipped start).
