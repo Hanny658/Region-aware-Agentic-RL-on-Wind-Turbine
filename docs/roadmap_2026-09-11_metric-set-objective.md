@@ -3727,3 +3727,6 @@ same command, which resumes llm r0 from its history.
 
 **Resumed 2026-10-16 08:23 on request** (`campaign_ctl.sh resume campaign_rosco_margin`; the session had survived
 the pause intact, llm r0 continuing from candidate 8).
+
+**Paused again 2026-10-16 09:28 on request** (session 396, 36 processes stopped; llm r0 at 22 of 24 candidates).
+Same resume and restart rules as above.
