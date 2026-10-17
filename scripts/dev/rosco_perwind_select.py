@@ -48,6 +48,9 @@ ap.add_argument("--tol", type=float, default=PER_WIND_TOL,
 ap.add_argument("--ship_tol", type=float, default=PER_WIND_TOL,
                 help="the SHIPPING rule: the same tolerance applied off the design winds when deciding whether "
                      "a selection ships; stays at the published 1.0 whatever the screen is")
+ap.add_argument("--tower_margin", type=float, default=None,
+                help="the completed rule of roadmap s62.4: the set-mean tower-base reduction must also be >= this "
+                     "many points on the design set when selecting (6.0 from the census of verified tunings)")
 ap.add_argument("--top", type=int, default=12)
 ap.add_argument("--csv", default=None)
 ap.add_argument("--verify", action="store_true",
@@ -66,6 +69,8 @@ for root in a.roots:
         name = os.path.basename(os.path.dirname(h))
         if "_r" not in name:
             continue                                   # _superseded and _verify are not runs
+        if len(a.roots) > 1:                           # two campaigns share run names: keep them apart
+            name = f"{os.path.basename(root.rstrip('/'))}/{name}"
         runs[name] = [json.loads(line) for line in open(h)]
 
 if not runs:
@@ -82,11 +87,13 @@ for name, hist in runs.items():
 cands = [e["rec"] | {"from": ", ".join(e["runs"])} for e in seen.values()]
 usable = [r for r in cands if r["assess"].get("constraints")]
 set_ok = [r for r in usable if r["assess"]["feasible"]]
-pw_ok = [r for r in set_ok if per_wind_rank_key(r, a.tol)[0] == 1]
+pw_ok = [r for r in set_ok if per_wind_rank_key(r, a.tol, a.tower_margin)[0] == 1]
+MARGIN = (f" and a set-mean tower-base reduction of at least {a.tower_margin:.1f} points"
+          if a.tower_margin is not None else "")
 
 print(f"{len(runs)} runs, {len(cands)} distinct tunings evaluated ({len(cands) - len(usable)} the plant could "
       f"not run), {len(set_ok)} hold the constraints on the set mean, {len(pw_ok)} also hold both loads at "
-      f"every wind speed within {a.tol:.1f} point.")
+      f"every wind speed within {a.tol:.1f} point{MARGIN}.")
 print(f"The design set carries two episodes per wind speed, so per wind this is a screen, not a measurement: "
       f"what it selects has to be confirmed off the design winds.\n")
 
@@ -114,7 +121,7 @@ for d in rows_pw[:a.top]:
           f"{fmt({k: d[k] for k in ('omega_pc', 'zeta_pc', 'lpf_corner', 'fa_ki', 'fa_hpf')})}")
 
 best_set = max(set_ok, key=rank_key) if set_ok else None
-best_pw = max(pw_ok, key=lambda r: per_wind_rank_key(r, a.tol)) if pw_ok else None
+best_pw = max(pw_ok, key=lambda r: per_wind_rank_key(r, a.tol, a.tower_margin)) if pw_ok else None
 if best_set is not None and best_pw is not None:
     ws = worst_per_wind(best_set)
     print(f"\nWhat the per-wind requirement costs: the set-mean rule selects {best_set['assess']['objective']:+.2f} "
@@ -126,11 +133,11 @@ if best_set is not None and best_pw is not None:
     print(f"  per wind rule: {fmt(best_pw['params'])}   ({best_pw['from']})")
 
 print(f"\nPer run, what each rule would select from that run alone:")
-print(f"{'run':>12} {'set-mean rule':>14} {'worst/wind':>11}   {'per-wind rule':>14} {'worst/wind':>11}  changed")
+print(f"{'run':>28} {'set-mean rule':>14} {'worst/wind':>11}   {'per-wind rule':>14} {'worst/wind':>11}  changed")
 for name in sorted(runs):
     hist = runs[name]
-    bs, bp = max(hist, key=rank_key), max(hist, key=lambda r: per_wind_rank_key(r, a.tol))
-    print(f"{name:>12} {bs['assess']['objective']:>14.2f} {worst_per_wind(bs)[0]:>11.1f}   "
+    bs, bp = max(hist, key=rank_key), max(hist, key=lambda r: per_wind_rank_key(r, a.tol, a.tower_margin))
+    print(f"{name:>28} {bs['assess']['objective']:>14.2f} {worst_per_wind(bs)[0]:>11.1f}   "
           f"{bp['assess']['objective']:>14.2f} {worst_per_wind(bp)[0]:>11.1f}  "
           f"{'yes' if bs['i'] != bp['i'] else '-'}")
 
@@ -175,21 +182,21 @@ if a.verify:
         return min(vals) if vals else float("nan")
 
     print()
-    print(f"Each run's per-wind selection (screen: worst single wind >= {-a.tol:+.1f} on the design set) measured "
+    print(f"Each run's per-wind selection (screen: worst single wind >= {-a.tol:+.1f} on the design set{MARGIN}) measured "
           f"off the design winds; it ships if both loads are within {a.ship_tol:.1f} point at every wind speed "
           f"on BOTH seed sets:")
-    print(f"{'run':>12} {'candidate':>10} {'design':>8} {'held out':>9} {'fresh':>8}   {'design w/w':>11} "
+    print(f"{'run':>28} {'candidate':>10} {'design':>8} {'held out':>9} {'fresh':>8}   {'design w/w':>11} "
           f"{'heldout w/w':>12} {'fresh w/w':>10}  ships")
     for name in sorted(runs):
         hist = runs[name]
-        bp = max(hist, key=lambda r: per_wind_rank_key(r, a.tol))
-        if bp["i"] == 0 or per_wind_rank_key(bp, a.tol)[0] != 1:
-            print(f"{name:>12} {'-':>10}   no candidate holds both loads at every wind speed on the design set")
+        bp = max(hist, key=lambda r: per_wind_rank_key(r, a.tol, a.tower_margin))
+        if bp["i"] == 0 or per_wind_rank_key(bp, a.tol, a.tower_margin)[0] != 1:
+            print(f"{name:>28} {'-':>10}   no candidate holds the rule on the design set")
             continue
         ho, fr = ev.run(bp["params"], 0, seeds=[3, 4, 5, 6]), ev.run(bp["params"], 1, seeds=[7, 8, 9, 10])
         w_ho, w_fr = worst_measured(ho), worst_measured(fr)
         ships = w_ho == w_ho and w_fr == w_fr and min(w_ho, w_fr) >= -a.ship_tol
-        print(f"{name:>12} {'#' + str(bp['i']):>10} {bp['assess']['objective']:>8.2f} "
+        print(f"{name:>28} {'#' + str(bp['i']):>10} {bp['assess']['objective']:>8.2f} "
               f"{assess(ho).get('objective', float('nan')):>9.2f} "
               f"{assess(fr).get('objective', float('nan')):>8.2f}   {worst_per_wind(bp)[0]:>11.2f} "
               f"{w_ho:>12.2f} {w_fr:>10.2f}  {'yes' if ships else 'NO'}")

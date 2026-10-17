@@ -46,6 +46,9 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--root", default=os.path.expanduser("~/wtrl/exp/roscosearch_native"))
 ap.add_argument("--tol", type=float, default=PER_WIND_TOL,
                 help="the SHIPPING tolerance, applied off the design winds; the published 1.0")
+ap.add_argument("--tower_margin", type=float, default=None,
+                help="the completed rule of roadmap s62.4: the set-mean tower-base reduction must also be >= this "
+                     "many points on the design set when selecting")
 ap.add_argument("--screen_tol", type=float, default=None,
                 help="the SCREEN tolerance used to select on the design set (default: the same as --tol); "
                      "0.0 is the margin screen of roadmap s62.1")
@@ -122,9 +125,9 @@ for (arm, rep), hist in sorted(runs.items(), key=lambda kv: (ARM_ORDER.index(kv[
     budget = len(cand)
     sm = max(hist, key=rank_key)                                    # the shipped point is always an option
     st = a.tol if a.screen_tol is None else a.screen_tol            # the screen; shipping stays at a.tol
-    pw = max(hist, key=lambda r: per_wind_rank_key(r, st))
+    pw = max(hist, key=lambda r: per_wind_rank_key(r, st, a.tower_margin))
     first_sm = next((h["i"] for h in cand if h["assess"].get("feasible") and h["assess"]["objective"] > 0), None)
-    first_pw = next((h["i"] for h in cand if per_wind_rank_key(h, st)[0] == 1
+    first_pw = next((h["i"] for h in cand if per_wind_rank_key(h, st, a.tower_margin)[0] == 1
                      and h["assess"]["objective"] > 0), None)
     v = verified.get((arm, rep), {})
     k_pw = key_of(pw["params"]) if first_pw is not None else ""

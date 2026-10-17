@@ -50,6 +50,22 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
 
 ### Leg 1 - the shipped GSPI, tuned by the agent (`docs/MAIN_LINE.md` leg 1)
 
+- **RUNNING (launched 2026-10-17, roadmap s62.4, pre-registered; the user's instruction: remove the prompt leak,
+  then test the set-mean margin): THE RULE COMPLETED.** The leak is out of `SHIP_TEXT` (no finding of an
+  earlier campaign is told any more, only the rule and the design set's resolution). The census of the 36
+  tunings verified on both seed sets: at a design-set set-mean tower-base reduction >= 6.0 points **12 of 12
+  ship**, below it 2 of 24, so the rule is now feasible AND worst single wind >= 0 AND set-mean tower >= 6.0 on
+  the design set (`per_wind_rank_key(rec, tol, tower_margin)`, `rosco_search.py --screen_tol 0.0
+  --tower_margin 6.0`; the shipped tuning stays admissible so a holding row with negative regulation never
+  wins). 62.4a (`campaign_rule6.sh`, about 2 h) re-reads the 39 existing runs under it: on the s59 runs it
+  selects seven rows that all already ship (llm 2, local 4, bayes 1 of 6), on the s62.3 runs it selects six
+  unmeasured rows (five of them the agent's, walked past by the per-wind screen) - endpoint: how many of the
+  six ship. 62.4b (`campaign_rosco_rule6.sh`, waits for 62.4a, about 32 h, repeats 6-11 so nothing replays,
+  `~/wtrl/exp/rosco_rule6.log`, `campaign_ctl.sh ... campaign_rosco_rule6`): every arm selects under the
+  completed rule, the agent is told it. Endpoints fixed in s62.4: deliveries per arm, the PRECISION of the
+  rule (ships / selections), and what each outcome means; no superiority claim unless 6 of 6 against at most
+  1 of 6. `rosco_perwind_select.py --roots A B` now prefixes run names with the root (two campaigns share
+  `llm_r0`). Do not launch either again; read `=== done` in the logs.
 - **THE SCREEN WAS THE FAILURE, MEASURED (roadmap s62.1, 2026-10-16, pre-registered; `campaign_rule_margin.sh`,
   `docs/tables/rosco_proposer_test_margin.csv`): with one point of margin in the design-set screen (worst
   single-wind load term >= 0; shipping rule unchanged) the SAME 21 runs deliver local 4 of 6, bayes 2 of 6,

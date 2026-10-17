@@ -3829,3 +3829,100 @@ agent row that ships, llm r0 #11 at +33.09 fresh and 1.128x travel, is the most-
 near-shipped duty in the study (local r3 #8 is +28.66 at 1.050x); it goes into the D3 table and nowhere else,
 because it is one row of six and the five beside it fail. No proposer claim follows in either direction, and
 the 0 of 144 divergence count is now observed twice and stays post hoc.
+
+### 62.4 The rule completed: the set-mean tower margin added to the screen, the prompt leak removed - pre-registered before anything ran (2026-10-17)
+
+**The user's instruction (2026-10-17):** take the information leak out of `SHIP_TEXT`, then test whether adding the
+set-mean margin to the rule has an effect.
+
+**The leak, removed (`scripts/rosco_search.py`, `SHIP_TEXT`).** Three things the s62.3 text said are no longer
+said: that "the filter corner buys regulation nearly free up to about 3.4 rad/s" and that "turning the tower
+damper off buys regulation and loses the tower-base load at the highest wind speeds" (the s52.3 and s55
+findings), and that "every candidate that read above zero at every wind speed held" (falsified by s62.3). The
+worked example "+30 at -0.5 is worth nothing; +23 at +0.5 ships" is replaced by the same sentence without
+numbers. What remains is the rule, the resolution of the design set, and that a candidate which only just
+meets the rule on the design set can fail off it. The system prompt is unchanged. No arm is told a result.
+
+**The threshold, from data that exist (`scratchpad/margin_census.py`, no simulation).** Of the 36 tunings
+measured off the design winds on both seed sets across s55, s59.6, s62.1 and s62.3, by design-set set-mean
+tower-base reduction: below 2 points 0 of 9 ship, 2 to 4 points 1 of 7 (bayes r1 #13 at +3.90, by 0.27), 4 to 5
+points 0 of 6, 5 to 6 points 1 of 2 (bayes r2 #21 at +5.08 ships, llm r1 #18 at +5.04 fails), **6 points and
+above 12 of 12** (6.00 to 17.78, including the four highest-regulation rows that ship: llm r5 #14 at +34.63 with
+6.00, llm r0 #11 at +31.94 with 7.67, bayes r4 #21 at +29.02 with 8.16, llm r1 #11 at +28.60 with 13.58). With
+the per-wind screen as well: 6 and above 12 of 12, 2 to 6 1 of 8. The threshold is **6.0 points**, the smallest
+value above which every verified tuning ships; it is chosen on these 36 rows and will be applied unchanged to
+everything below, so a failure at 6.0 to 6.2 in the rows that follow is a result about the threshold, not a
+reason to move it.
+
+**The completed rule (`eval/selection.py per_wind_rank_key(rec, tol, tower_margin)`, `rosco_search.py
+--tower_margin`, `rosco_perwind_select.py --tower_margin`, `rosco_proposer_test.py --tower_margin`).** A
+candidate holds the rule on the design set if it is feasible on the set mean, its worst single-wind load term
+is >= 0 and its set-mean tower-base reduction is >= 6.0; the selection is the largest regulation among those,
+or the shipped tuning if none holds or none improves on it (the shipped tuning stays admissible: it scores 0 on
+everything by definition and cannot carry a margin, and a holding candidate with negative regulation must
+still lose to it - the first dry run selected -63.59 before this was fixed). Every arm selects under it: the
+local search's incumbent, Bayesian optimisation's feasibility model (the tower GP thresholded at the margin),
+each run's best.json, and the agent's task text, which now states the rule with the margin clause and labels
+every history row HOLDS THE RULE / fails the rule (a wind speed | tower margin) / infeasible. The shipping rule
+is unchanged: both loads within 1.0 point at every wind speed on 28 held-out AND 28 fresh episodes. Smoke-tested
+on three histories without API or simulation (selections #11 / #11 / #11 at +28.60 / +30.52 / +31.94; the six
+leak phrases absent from the prompt; the margin clause present; local and Bayesian proposers run).
+
+**62.4a - the rule read on the 39 existing runs (`scripts/wsl/campaign_rule6.sh`, no search re-run).** Counted
+from the caches before any evaluation:
+- s59 campaign: the rule has a candidate in llm r1 (#11, +28.60) and r5 (#14, +34.63), local r0, r3, r4, r5
+  (#21, #8, #10, #18), bayes r5 (#15), random none - **all seven already measured, all seven ship**, so on the
+  s59 runs the completed rule reads llm 2 of 6, local 4 of 6, bayes 1 of 6 with a precision of 7 of 7; it costs
+  bayes its r1 #13 (+28.69 at 3.90), the rule's one false negative so far.
+- s62.3 campaign: llm r0 (#11, +31.94, measured, ships) and r1 to r5 (+27.58, +31.50, +30.52, +26.44, +24.02,
+  **five unmeasured rows the agent visited and the screen walked past**, three of them at 6.0 to 6.2 of margin),
+  bayes r1 (+19.92, unmeasured) and r4 (#21, measured, ships), local r0, r3, r4 (measured, ship).
+- So the pass costs six selections, 336 episodes, about two hours. **Endpoint: how many of the six ship** (the
+  census says 12 of 12 at this margin). Five or six of six: the completed rule holds as a screen at the
+  resolution this design set has, and the s62.3 agent runs, re-selected under it, deliver in at least five of
+  six - the s62.1 reading a second time, with the margin doing the work. Three or fewer: the margin is not a
+  sufficient proxy at its boundary and the threshold would have to rise, which this pass may say but the
+  campaign below may not use (its threshold is fixed at 6.0 now).
+
+**62.4b - the campaign (`scripts/wsl/campaign_rosco_rule6.sh`, root `roscosearch_rule6`, waits for 62.4a).**
+Arms llm, local, bayes, repeats 6 to 11 so that no arm replays an earlier trajectory (the local search of s62.3
+replayed four s59 runs); eighteen runs; random not re-run. Unchanged: box, shipped start, 24 candidates, the
+14-episode design set, the evaluation and its caches (warmed from both earlier campaigns for every arm alike).
+Changed for every arm: selection under the completed rule. Changed for the agent only: the task text states
+the completed rule and the resolution, and shows the two load terms per wind speed for every tuning tried, as
+in s62.3, minus the leak. The asymmetry (the classical arms are screened, the agent is told) is the design and
+is disclosed; this time nothing but the rule is told. About 32 h, then the verification of the unmeasured
+selections and `rosco_proposer_test.py --screen_tol 0.0 --tower_margin 6.0`.
+
+**Endpoints.**
+1. *Primary:* per arm, the number of its six runs whose selection ships (held-out AND fresh, tolerance 1.0),
+   and **the precision of the completed rule**, selections that ship over selections, pooled over arms and per
+   arm. The agent arm against its own earlier counts, independent runs, Fisher two-sided: against 0 of 6 (s59)
+   4 of 6 is p = 0.061, 5 of 6 p = 0.015; against 1 of 6 (s62.3) 4 of 6 is p = 0.24, 5 of 6 p = 0.080, 6 of 6
+   p = 0.015.
+2. *Secondary:* simulations to the first candidate holding the completed rule on the design set (one-sided
+   exact permutation, censored at 25) - now not located by the prompt, but the agent is still told the rule and
+   the classical arms are not, so it is reported as a property of the told arm and not as a proposer
+   comparison; the regulation and pitch travel of the delivered rows; the divergence and malformed-reply counts.
+3. *Between arms within the campaign:* as in 62.2, only 6 of 6 against at most 1 of 6 is below 0.05 two-sided;
+   everything else is a direction.
+
+**What each outcome means, decided now.**
+- Precision of the rule pooled over arms at 0.9 or above (with at least ten selections): the completed rule is
+  a validated design-set screen for this plant - a measurement-discipline result that goes into the paper's §8
+  beside the four instances of set-mean gaming, as the screen that does not get gamed. Below 0.7: the margin is
+  not sufficient and the design set's resolution is the next lever; D3 only.
+- Agent arm at 4 of 6 or more with its own precision at 0.8 or above: once the rule is complete and told, the
+  agent's selections ship; leg 1's main text may carry that count beside D2, with the disclosure that the
+  classical arms received the rule as a screen. No superiority claim unless 6 of 6 against at most 1 of 6.
+- Agent arm at 3 of 6: a direction; D3.
+- Agent arm at 2 of 6 or fewer: being told the complete rule does not make the agent's selections ship; the
+  main text keeps the s59.6 wording and D3 reports it.
+- A classical arm rising as far as the agent arm says the rule, not the telling, is the lever, and the text
+  says so.
+
+**Housekeeping, before launch.** `rosco_perwind_select.py` with several roots now prefixes run names with the
+root (two campaigns share `llm_r0`; the first dry run silently merged them). Pausable with `campaign_ctl.sh
+{pause|resume|stop|status} campaign_rule6` / `campaign_rosco_rule6`; after a VM restart `integrity_check.py`
+first, then relaunch (finished runs skip on best.json, an unfinished run resumes from its history.jsonl).
+Launch follows the commit of this section.

@@ -145,11 +145,26 @@ def worst_per_wind(rec: dict, keys=("tower", "blade")) -> tuple[float, str, str]
     return (worst, at, which) if at else (float("nan"), "", "")
 
 
-def per_wind_rank_key(rec: dict, tol: float = PER_WIND_TOL) -> tuple[int, float]:
-    """Constraint domination with the load constraints required per wind speed as well as over the set."""
+# Roadmap s62.4: a per-wind screen with two episodes per wind is gamed by an optimiser that is told it (s62.3), and
+# of the 36 tunings measured off the design winds on both seed sets, the 12 with a design-set set-mean tower-base
+# reduction of at least 6.0 points all ship while 2 of the 24 below it do. The margin is the proxy the screen can
+# measure for what it cannot see at one wind speed, so the rule may require it as well.
+TOWER_MARGIN = 6.0
+
+
+def per_wind_rank_key(rec: dict, tol: float = PER_WIND_TOL, tower_margin: float | None = None) -> tuple[int, float]:
+    """Constraint domination with the load constraints required per wind speed as well as over the set, and,
+    with `tower_margin`, the set-mean tower-base reduction required to be at least that many points."""
     a = rec.get("assess", rec)
+    if tower_margin is not None and rec.get("i") == 0:
+        return (1, 0.0)             # the shipped tuning is always an admissible selection (s52.1): it scores
+                                    # 0 on every quantity by definition, so it cannot carry the margin, and a
+                                    # holding candidate with negative regulation must still lose to it
     w = worst_per_wind(rec)[0]
     over = max(0.0, -tol - w) if w == w else FAILED_SHORTFALL
+    if tower_margin is not None:
+        tv = ((a.get("constraints") or {}).get("tower") or {}).get("value")
+        over += max(0.0, tower_margin - float(tv)) if tv is not None and tv == tv else FAILED_SHORTFALL
     ok = bool(a.get("feasible")) and over == 0.0
     return (1 if ok else 0,
             a.get("objective", -FAILED_SHORTFALL) if ok else -(a.get("shortfall", FAILED_SHORTFALL) + over))

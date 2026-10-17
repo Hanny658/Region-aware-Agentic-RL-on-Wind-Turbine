@@ -50,11 +50,14 @@ SCORED_S = 580.0            # 600 s simulated, the first 20 s discarded
 # roadmap s62 - the same rule with the worst single-wind load term required >= -t on the design set, which
 # every proposer selects under and which the llm proposer is told about. Set by main() from --screen_tol.
 SCREEN_TOL = None
+# roadmap s62.4 - the rule completed: the set-mean tower-base reduction must also be >= this many points on the
+# design set (the census of s62.4: 12 of 12 verified tunings at >= 6.0 ship, 2 of 24 below). Set from --tower_margin.
+TOWER_MARGIN = None
 
 
 def select_key(rec):
-    """The key the run selects by: feasible first, then the objective - on the set mean, or per wind."""
-    return rank_key(rec) if SCREEN_TOL is None else per_wind_rank_key(rec, SCREEN_TOL)
+    """The key the run selects by: feasible first, then the objective - on the set mean, or under the rule."""
+    return rank_key(rec) if SCREEN_TOL is None else per_wind_rank_key(rec, SCREEN_TOL, TOWER_MARGIN)
 RATE_LIMIT_DEG_S = 10.0     # the controller's own pitch rate limit, for the actuator duty cycle
 
 
@@ -167,7 +170,8 @@ def propose_bayes(hist, n, rng, **_):
         if not np.isfinite(cv).all():
             continue
         cm, cs = _gp(X, cv, cand)
-        p_feas *= _ncdf(cm / np.maximum(cs, 1e-9))          # P(reduction >= 0)
+        thr = TOWER_MARGIN if (name == "tower" and TOWER_MARGIN is not None) else 0.0
+        p_feas *= _ncdf((cm - thr) / np.maximum(cs, 1e-9))  # P(reduction >= 0, or >= the tower margin)
     if SCREEN_TOL is not None:                               # the same screen the llm arm is told about
         wv = np.array([worst_per_wind(h)[0] for h in done], float)
         if np.isfinite(wv).all():
@@ -243,19 +247,20 @@ load, blade-root out-of-plane damage-equivalent load, and energy capture must ea
 candidate counts as infeasible only where the loss is larger than the measurement can resolve. A candidate that
 improves regulation but loses tower fatigue is of no use."""
 
+# s62.4: the rule and the resolution of the design set only. The s62.3 text also stated where earlier campaigns
+# had found the ladder (the filter corner to 3.4 rad/s, the damper), which is a search result and not the rule,
+# and a claim about screen-holding candidates that s62.3 falsified. Neither is told any more.
 SHIP_TEXT = """
 The rule that decides what is reported is stricter than the constraints above, and it is the rule you are
 selected under. The selected tuning is the one with the largest regulation reduction whose tower-base AND
 blade-root load terms are >= 0 at EVERY ONE of the seven wind speeds on these design episodes - one point of
-margin inside the published tolerance of -1. It is then measured on eight further wind realisations per wind
-speed that you will never see, and it ships only if both load terms stay within 1 point of shipped at every
-wind speed there. The design episodes are two per wind speed, so a per-wind load term read here is uncertain
-by about one point. In the campaigns so far every candidate that held the set-mean constraints but read below
-zero at a single wind speed on the design episodes failed off them - always on the tower-base load at 22-24
-m/s - and every candidate that read above zero at every wind speed held. A candidate at +30 regulation that
-reads -0.5 at 24 m/s is worth nothing; a candidate at +23 that reads +0.5 at every wind speed ships. Turning
-the tower damper off buys regulation and loses the tower-base load at the highest wind speeds; the filter
-corner buys regulation nearly free up to about 3.4 rad/s."""
+margin inside the published tolerance of -1{margin_clause}. It is then measured on eight further wind
+realisations per wind speed that you will never see, and it ships only if both load terms stay within 1 point
+of shipped at every wind speed there. The design episodes are two per wind speed, so a per-wind load term read
+here is uncertain by about one point, and a candidate that only just meets the rule here can fail there. A
+candidate that fails the rule is worth nothing, whatever its regulation."""
+MARGIN_CLAUSE = (" - AND whose tower-base load reduction averaged over the design episodes is at least "
+                 "{margin:.1f} points")
 
 
 def _per_wind_cells(h: dict) -> str:
@@ -282,9 +287,14 @@ def propose_llm(hist, n, rng, client=None, **_):
         if SCREEN_TOL is None:
             flag = "FEASIBLE" if a["feasible"] else "infeasible"
         elif select_key(h)[0] == 1:
-            flag = "HOLDS AT EVERY WIND SPEED"
+            flag = "HOLDS THE RULE" if TOWER_MARGIN is not None else "HOLDS AT EVERY WIND SPEED"
+        elif not a["feasible"]:
+            flag = "infeasible"
+        elif TOWER_MARGIN is not None:
+            flag = "fails the rule" + (" (tower margin)" if per_wind_rank_key(h, SCREEN_TOL)[0] == 1
+                                       else " (a wind speed)")
         else:
-            flag = "set mean only - fails the rule" if a["feasible"] else "infeasible"
+            flag = "set mean only - fails the rule"
         rows.append(f"  omega {p['omega_pc']:.3f} zeta {p['zeta_pc']:.3f} corner {p['lpf_corner']:.3f} "
                     f"damper {p['fa_ki']:.4f} hpf {p['fa_hpf']:.3f}"
                     f"  ->  speed {a['objective']:+7.2f}  power {a.get('power', float('nan')):+7.2f}"
@@ -292,11 +302,14 @@ def propose_llm(hist, n, rng, client=None, **_):
                     f"  energy {c['energy']['value']:+6.3f}"
                     f"  {flag}" + (_per_wind_cells(h) if SCREEN_TOL is not None else ""))
     box = "\n".join(f"  {k}: {v[0]} to {v[1]}" for k, v in BOX.items())
-    task = OBJECTIVE_TEXT + (SHIP_TEXT if SCREEN_TOL is not None else "")
+    clause = MARGIN_CLAUSE.format(margin=TOWER_MARGIN) if TOWER_MARGIN is not None else ""
+    task = OBJECTIVE_TEXT + (SHIP_TEXT.format(margin_clause=clause) if SCREEN_TOL is not None else "")
     user = (f"{task}\n\nBox (a candidate outside it is clipped):\n{box}\n\n"
             f"The shipped controller is omega_pc 0.6, zeta_pc 0.7, lpf_corner 1.5708, fa_ki 0 and scores 0 on "
             f"every quantity by definition.\n\nTried so far, best first under the rule "
-            + ("that a tuning holding both loads at every wind speed beats one that does not, and a feasible one "
+            + ("that a tuning holding the rule above beats one that does not, and a feasible one beats an "
+               "infeasible one" if TOWER_MARGIN is not None else
+               "that a tuning holding both loads at every wind speed beats one that does not, and a feasible one "
                "beats an infeasible one" if SCREEN_TOL is not None else "that a feasible tuning beats an "
                "infeasible one")
             + f" ({len(hist) - 1} used of the budget):\n"
@@ -339,6 +352,10 @@ def main():
     ap.add_argument("--template", default="~/wtrl/runs/template_5mw")
     ap.add_argument("--config_run", default="~/wtrl/exp/jg3t_s0")
     ap.add_argument("--port0", type=int, default=7800)
+    ap.add_argument("--tower_margin", type=float, default=None,
+                    help="with --screen_tol: the set-mean tower-base reduction must also be >= this many points "
+                         "on the design set (roadmap s62.4: 6.0). Every proposer selects under it and the llm "
+                         "proposer is told it as part of the rule")
     ap.add_argument("--screen_tol", type=float, default=None,
                     help="select under the margin screen of roadmap s62: the worst single-wind load term must "
                          "be >= -screen_tol on the design set (0.0 = one point of margin). Every proposer "
@@ -346,8 +363,11 @@ def main():
     ap.add_argument("--emit_template", default=None, metavar="DST",
                     help="write the case template of this run's selected design to DST and exit")
     a = ap.parse_args()
-    global SCREEN_TOL
+    global SCREEN_TOL, TOWER_MARGIN
     SCREEN_TOL = a.screen_tol
+    TOWER_MARGIN = a.tower_margin
+    if TOWER_MARGIN is not None and SCREEN_TOL is None:
+        ap.error("--tower_margin needs --screen_tol")
 
     a.root = os.path.expanduser(f"{a.root}/{a.name or f'{a.proposer}_r{a.repeat}'}")
     root = Path(a.root)
