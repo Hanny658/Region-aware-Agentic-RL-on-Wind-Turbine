@@ -3926,3 +3926,9 @@ root (two campaigns share `llm_r0`; the first dry run silently merged them). Pau
 {pause|resume|stop|status} campaign_rule6` / `campaign_rosco_rule6`; after a VM restart `integrity_check.py`
 first, then relaunch (finished runs skip on best.json, an unfinished run resumes from its history.jsonl).
 Launch follows the commit of this section.
+
+**Paused 2026-10-17 09:07 on request** (sessions 426 and 446 stopped: the 62.4a re-read with two of its six new
+selections measured and the third in flight; the 62.4b campaign still in its wait loop, nothing of it started).
+Resume with `campaign_ctl.sh resume campaign_rule6` and `campaign_ctl.sh resume campaign_rosco_rule6`; after a
+VM restart `integrity_check.py` first, then relaunch both scripts (the re-read repeats only the in-flight
+evaluation, everything measured is in the cache).
