@@ -3932,3 +3932,7 @@ selections measured and the third in flight; the 62.4b campaign still in its wai
 Resume with `campaign_ctl.sh resume campaign_rule6` and `campaign_ctl.sh resume campaign_rosco_rule6`; after a
 VM restart `integrity_check.py` first, then relaunch both scripts (the re-read repeats only the in-flight
 evaluation, everything measured is in the cache).
+
+**Resumed 2026-10-17 13:18 on request** (both sessions intact through the pause, no VM restart: the 62.4a re-read
+continues its third new selection with seven OpenFAST workers, the 62.4b campaign is back in its wait loop; the two
+measured rows are unchanged, llm_r0 #11 ships and llm_r1 #7 fails fresh at -1.34).
