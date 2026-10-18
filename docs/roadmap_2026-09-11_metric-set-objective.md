@@ -4043,3 +4043,6 @@ off +26.55, both unmeasured); bayes r6 (omega 0.588 zeta 0.806 corner 4.512 hpf 
 0.775 corner 7.737 damper 0.0011 hpf 0.267, +10.13) selected, r9-r11 pending; then the verification pass and the
 delivery table. Resume with `campaign_ctl.sh resume campaign_rosco_rule6`; after a VM restart `integrity_check.py` first,
 then relaunch `campaign_rosco_rule6.sh` (finished runs skip on best.json, bayes r8 resumes from its history.jsonl).
+
+**Resumed 2026-10-18 19:13 on request** (session 446 intact through the pause, no VM restart; 14 OpenFAST workers running
+again on bayes r8, the log unchanged since the pause).
