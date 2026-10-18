@@ -3936,3 +3936,102 @@ evaluation, everything measured is in the cache).
 **Resumed 2026-10-17 13:18 on request** (both sessions intact through the pause, no VM restart: the 62.4a re-read
 continues its third new selection with seven OpenFAST workers, the 62.4b campaign is back in its wait loop; the two
 measured rows are unchanged, llm_r0 #11 ships and llm_r1 #7 fails fresh at -1.34).
+
+### 62.4a The completed rule read on the 39 existing runs - RESULT (re-read finished 2026-10-17 14:44; `campaign_rule6.sh`, `docs/tables/rosco_proposer_test_rule6_s59.csv`, `rosco_proposer_test_rule6_s62.csv`; six selections verified, 336 episodes, no failure)
+
+**Endpoint: 3 of the six new selections ship.** The pre-registered reading is the lower branch: *the margin is not
+a sufficient proxy at its boundary and the threshold would have to rise* - which this pass may say and the
+campaign may not use (its threshold stays 6.0).
+
+| run (s62.3 campaign) | selection | tuning | design: regulation / tower margin / worst wind | held out: regulation / worst | fresh: regulation / worst | travel | ships |
+|---|---|---|---|---|---|---|---|
+| bayes r1 | #15 | omega 0.528 zeta 0.893 corner 5.160 damper 0.0019 hpf 0.172 | +19.92 / +11.87 / +1.1 | +21.17 / +1.91 | +21.22 / +1.25 | 1.372x | yes |
+| llm r1 | #7 | omega 0.600 zeta 0.740 corner 3.400 damper off | +27.58 / +7.28 / +0.7 | +26.95 / +0.51 | +28.19 / **-1.34** tower 24 m/s | 1.073x | NO |
+| llm r2 | #15 | omega 0.630 zeta 0.700 corner 3.500 damper off | +31.50 / +6.13 / +0.6 | +30.80 / -0.28 tower 24 | +32.19 / **-1.95** tower 24 m/s | 1.099x | NO |
+| llm r3 | #11 | omega 0.627 zeta 0.700 corner 3.400 damper off | +30.52 / +6.09 / +0.4 | +29.78 / -0.36 tower 24 | +31.39 / **-1.83** tower 24 m/s | 1.086x | NO |
+| llm r4 | #4 | omega 0.600 zeta 0.750 corner 3.400 damper 0.0100 hpf 1.100 | +26.44 / +11.03 / +0.4 | +26.22 / +0.83 | +27.89 / +0.19 | 1.125x | yes |
+| llm r5 | #1 | omega 0.600 zeta 0.700 corner 3.400 damper off | +24.02 / +8.99 / +0.5 | +23.73 / +0.44 | +24.92 / -0.86 tower 24 m/s | 1.028x | yes |
+
+- **Every failure is the tower-base load at 24 m/s on fresh seeds**, as in s55 and s62.3; r2 #15 and r3 #11 were
+  already -0.3 there held out. The set-mean margin these rows carry (6.1 to 7.3 points) is all at 12-16 m/s
+  (+15 to +20 on fresh seeds) and none of it is at 22-24 m/s (+1.1 to +1.6 at 22, -1.3 to -2.0 at 24). A set-mean
+  margin cannot say which wind speed carries it: the s32 / s53.2 aggregation defect, one level up, now in the
+  margin instead of the constraint.
+- **The threshold, re-read on 42 tunings** (the 36 of the census plus these six): at a design-set tower margin of
+  **7.5 and above 14 of 14 ship**; 6.0 to 7.5 **1 of 4** (s59 llm r5 #14 at 6.00 ships with fresh worst -0.24;
+  the three above fail at 6.09, 6.13, 7.28); below 6.0, 2 of 24. The boundary is not monotone (6.00 ships, 7.28
+  fails, 7.67 ships), so a higher threshold buys precision only at the cost of the +30 rows: everything that ships
+  at 7.5 and above sits between +11.6 and +35.7 of regulation, and the three +30 rows it would exclude are exactly
+  the agent's.
+- llm r4 #4 (corner 3.4 with a strong, high-passed damper, 1.125x travel) is the first agent selection in any
+  campaign with **every load cell positive on both seed sets**; llm r5 #1 is the one-knob corner at 3.4 - the
+  s52.3 row, told to that campaign's agent in the leaked `SHIP_TEXT` (disclosed in s62.3).
+
+**Delivery counts under the completed rule** (`rosco_proposer_test.py --screen_tol 0.0 --tower_margin 6.0`,
+shipping rule unchanged):
+- s59 runs (`..._rule6_s59.csv`): **llm 2 of 6** (r1 #11 +28.35 fresh at 1.572x, r5 #14 +35.71 at 2.178x),
+  **local 4 of 6** (r0 #21, r3 #8, r4 #10, r5 #18), **bayes 1 of 6** (r5 #15 +23.30), random 0 of 3; precision
+  7 of 7, all seven already measured in s59.6 / s62.1. Fisher llm against local two-sided p = 0.57, against bayes
+  1.0. Identical to the s62.1 margin-screen counts except that bayes loses r1 #13 (+28.69 at a margin of 3.90,
+  shipped by 0.27) - the completed rule's one false negative so far.
+- s62.3 runs (`..._rule6_s62.csv`): **llm 3 of 6** (r0 #11, r4 #4, r5 #1; 1 of 6 under the per-wind screen),
+  **local 3 of 6** (r0 #21, r3 #8, r4 #10, unchanged: the margin never changed a local incumbent), **bayes 2 of
+  6** (r1 #15, new, in place of r1 #14 = the +28.69 row at 3.90, excluded by the margin and 8.8 points more
+  regulating; r4 #21); precision 8 of 11. Fisher llm against local 1.0, against bayes 1.0.
+- Pooled precision of the completed rule on the existing runs: **15 of 18 = 0.83**, between the 0.7 and 0.9 the
+  campaign's reading was fixed at; the campaign's own selections decide it.
+- The agent's six s62.3 runs re-selected under the completed rule deliver 3 of 6 - not the five or six that would
+  have repeated the s62.1 reading - and the three that ship are the lowest three of its six selections in
+  regulation (+24.0, +26.4, +31.9 against +27.6, +30.5, +31.5 failing): position on the front again, s59.6's
+  reading, now inside one arm of one campaign.
+
+### 62.4b INTERIM - the agent arm is finished and it is 0 of 6 (read 2026-10-18 09:20 while the classical arms run; the campaign's full reading waits for `=== done` in `~/wtrl/exp/rosco_rule6.log`)
+
+The agent arm ran first (llm r6-r11, 2026-10-17 14:44 to 2026-10-18 01:08, about 1 h 40 min per run): 144
+candidates, 75 API calls, **0 malformed replies**; 129 candidates the model's own and 15 uniform random fills (a
+batch whose two candidates both repeat a tuning already tried is replaced by two random draws,
+`rosco_search.py`); **all 7 divergences are among the 15 fills, the model's own 129 candidates destabilised
+nothing** (as its 144 in s59 and 144 in s62.3). **A regulation reduction above shipped: 1 of 144** (r10 #4, +8.17,
+infeasible, tower -2.38). **Holding the completed rule on the design set: 80 of 144 - every one of them with a
+regulation reduction between -2.7 and -463 points**, i.e. worse than the shipped controller. In 6 of 6 runs the
+selection is the shipped tuning itself (s52.1), so the arm delivers **0 of 6** before the classical arms have
+finished, and its primary endpoint is decided: the pre-registered branch *"2 of 6 or fewer: being told the
+complete rule does not make the agent's selections ship; the main text keeps the s59.6 wording and D3 reports
+it"*. Against s59 (0 of 6) and s62.3 (1 of 6) nothing moved; against s62.1's re-read of s59 (2 of 6) and 62.4a's
+re-read of s62.3 (3 of 6), the first arm of the agent's to be TOLD the complete rule found nothing at all.
+
+**Mechanism, from the transcripts (`roscosearch_rule6/llm_r*/llm_transcript.jsonl`):**
+1. **It optimises the margin and drops the objective.** In five of six runs the first batch is the damper
+   switched on (infeasible, tower -3 to -72) and a slower, more damped loop (feasible, regulation -30 to -120);
+   r9 probes omega 0.8 once (-23, tower -60) and turns down. From there every run walks omega DOWN (0.6 to
+   0.25-0.49) with the filter corner at or below 2.4 rad/s, which is the direction that holds every load with
+   margin (tower +8 to +29 on the set mean, +20 to +44 at 12-14 m/s) and gives up regulation. No run puts one of
+   its own candidates above 2.4 rad/s on the corner. The s59 agent, under the race-framed system prompt and no
+   rule text, raised omega first in all six runs (0.8-1.0) and had the corner at 3.8 or 5.0 by its sixth
+   candidate in two of them (+42.7, +27.4); the s62.3 agent was told the corner. Told only the rule - with the
+   system prompt's "what counts is a tuning that still holds both load terms at every wind speed ... exploit it
+   with margin" - it does exactly that.
+2. **Its stated reasons contradict the numbers in front of it.** 62 of its `why` sentences claim a regulation
+   improvement ("Lowering omega_pc has consistently improved regulation", "extends the demonstrated
+   low-bandwidth regulation trend", "refines the strongest regulation region") while the regulation term in its
+   own history falls from -77 to -306 (r6), -3.8 to -51.5 (r7), -74 to -120 (r8), -118 to -463 (r9), -16 to
+   -345 (r10) and -63 to -184 (r11). The task text says once that positive is better and that the shipped
+   controller scores 0 on every quantity; the model reads the large positive tower terms and the HOLDS THE RULE
+   flag as success. gpt-5.6-luna, 512 reasoning tokens per call, JSON mode, as in every earlier arm.
+3. **A defect of the task text, mine, to disclose wherever this arm is cited.** The history is listed "best
+   first" under the selection key - holding rows above all others, then by regulation - and the shipped row is
+   not in the list. So a HOLDS THE RULE row at -113.85 heads the list as the best tuning so far, above an
+   infeasible +8.17, and nothing in the list shows that the shipped tuning at 0 beats every one of them (one
+   sentence of the task text says so). The run's own incumbent (`best under the rule`) correctly stayed "none
+   yet" in all six runs, and the selection is correct. Whether a list that carries the shipped row, or ranks a
+   below-zero holding row under it, would turn the agent is not measured and is not launched unprompted.
+4. **It repeats itself.** In 4 of 6 runs the model re-proposed a tuning it had already tried (4-7 of 24-26
+   proposals per run; 0 in s59 and s62.3), and a batch of two repeats became two random draws - the 15 fills.
+
+**What it means, under the pre-registration.** Nothing moves into the main text; D3 reports the arm in full with
+items 1-3; the s59.6 wording stands. Across the three campaigns the agent arm's regulation came from the
+race-framed exploration (s59: +47.79 best, 0 deliveries), or from the leak (s62.3: 6 of 6 first candidates at the
+corner, 1 delivery), and never from being told the rule: **the telling is the lever in both directions, and the
+proposer is not.** The classical arms decide the campaign's precision endpoint: local r6-r9 so far 1 of 4 with a
+selection (r8 #12, omega 0.524 zeta 0.859 corner 2.997 damper 0.0011 hpf 0.270, +12.60 at tower +10.34,
+unmeasured), r10 running, r11 and bayes r6-r11 pending; `=== done` expected late on 2026-10-18.

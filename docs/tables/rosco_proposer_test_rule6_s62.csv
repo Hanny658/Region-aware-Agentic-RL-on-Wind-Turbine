@@ -1,0 +1,19 @@
+proposer,repeat,budget,n_filled_randomly,n_diverged,setmean_gain,setmean_sims_to_first,setmean_regulation,setmean_worst_per_wind_design,setmean_heldout_worst_per_wind,setmean_fresh_worst_per_wind,setmean_fresh_regulation,perwind_gain,perwind_sims_to_first,perwind_regulation,perwind_worst_per_wind_design,perwind_candidate,perwind_params,perwind_key,perwind_travel,perwind_heldout_regulation,perwind_heldout_worst,perwind_fresh_regulation,perwind_fresh_worst,delivers_off_design,delivered_sims_to_first,delivered_regulation
+local,0,24,0,3,True,18,14.3,-0.0,1.12,0.33,11.62,True,18,14.3,-0.0,local_r0#21,omega 0.613 zeta 0.607 corner 8.747 damper 0.0000 (off),72f0dee8e539,2.719,14.2,1.12,11.62,0.33,True,18,11.62
+local,1,24,0,2,False,,0.0,0.0,0.0,0.0,0.0,False,,0.0,,,,,,,,,,False,,0.0
+local,2,24,0,4,False,,0.0,0.0,0.0,0.0,0.0,False,,0.0,,,,,,,,,,False,,0.0
+local,3,24,0,0,True,8,27.64,0.1,0.32,-0.87,28.66,True,8,27.64,0.1,local_r3#8,omega 0.633 zeta 0.664 corner 3.214 damper 0.0012 hpf 0.360,74282b453246,1.05,26.76,0.32,28.66,-0.87,True,8,28.66
+local,4,24,0,1,True,10,43.81,-5.5,-3.64,-2.19,45.63,True,10,15.97,1.2,local_r4#10,omega 0.499 zeta 1.035 corner 5.911 damper 0.0016 hpf 0.050,5e1abe4e6a21,2.377,19.07,1.99,16.4,1.1,True,10,16.4
+local,5,24,0,5,True,9,31.18,-5.4,-2.5,-3.92,34.53,False,,0.0,,,,,,,,,,False,,0.0
+bayes,0,24,0,3,False,,0.0,0.0,0.0,0.0,0.0,False,,0.0,,,,,,,,,,False,,0.0
+bayes,1,24,0,1,True,7,46.76,-2.3,-0.71,-1.24,48.62,True,13,19.92,1.1,bayes_r1#15,omega 0.528 zeta 0.893 corner 5.160 damper 0.0019 hpf 0.172,3c70a1b77bf5,1.372,21.17,1.91,21.22,1.25,True,13,21.22
+bayes,2,24,0,8,False,,0.0,0.0,2.37,0.25,16.57,False,,0.0,,,,,,,,,,False,,0.0
+bayes,3,24,0,1,True,24,11.17,-1.0,0.57,-1.15,26.72,False,,0.0,,,,,,,,,,False,,0.0
+bayes,4,24,0,0,True,5,38.04,-3.6,-8.34,-6.78,10.71,True,15,29.02,1.0,bayes_r4#21,omega 0.583 zeta 0.814 corner 4.101 damper 0.0017 hpf 0.490,1a50bfc1f1d9,1.207,29.44,1.68,30.78,0.8,True,15,30.78
+bayes,5,24,0,10,True,23,15.59,-2.2,2.17,0.84,23.3,False,,0.0,,,,,,,,,,False,,0.0
+llm,0,24,0,0,True,1,32.01,-0.3,-4.64,-2.87,49.55,True,1,31.94,0.3,llm_r0#11,omega 0.638 zeta 0.700 corner 3.400 damper 0.0050 hpf 0.800,42a30082e6a1,1.128,31.25,0.86,33.09,-0.09,True,1,33.09
+llm,1,24,0,0,True,1,33.72,-0.2,-7.61,-2.07,42.49,True,1,27.58,0.7,llm_r1#7,omega 0.600 zeta 0.740 corner 3.400 damper 0.0000 (off),5400d74ec244,1.073,26.95,0.51,28.19,-1.34,False,,0.0
+llm,2,24,0,0,True,1,33.78,-0.1,-2.72,-3.73,38.9,True,1,31.5,0.6,llm_r2#15,omega 0.630 zeta 0.700 corner 3.500 damper 0.0000 (off),e0e30055ecd2,1.099,30.8,-0.28,32.19,-1.95,False,,0.0
+llm,3,24,0,0,True,1,33.36,-0.1,0.0,0.0,0.0,True,1,30.52,0.4,llm_r3#11,omega 0.627 zeta 0.700 corner 3.400 damper 0.0000 (off),fc44fe4c20bd,1.086,29.78,-0.36,31.39,-1.83,False,,0.0
+llm,4,24,0,0,True,1,35.48,-12.2,-8.67,-1.33,25.0,True,1,26.44,0.4,llm_r4#4,omega 0.600 zeta 0.750 corner 3.400 damper 0.0100 hpf 1.100,9e577515df9f,1.125,26.22,0.83,27.89,0.19,True,1,27.89
+llm,5,24,0,0,True,1,34.07,-1.3,-8.27,-2.1,41.81,True,1,24.02,0.5,llm_r5#1,omega 0.600 zeta 0.700 corner 3.400 damper 0.0000 (off),40475459011b,1.028,23.73,0.44,24.92,-0.86,True,1,24.92

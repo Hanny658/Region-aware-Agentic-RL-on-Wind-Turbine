@@ -65,7 +65,22 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   completed rule, the agent is told it. Endpoints fixed in s62.4: deliveries per arm, the PRECISION of the
   rule (ships / selections), and what each outcome means; no superiority claim unless 6 of 6 against at most
   1 of 6. `rosco_perwind_select.py --roots A B` now prefixes run names with the root (two campaigns share
-  `llm_r0`). Do not launch either again; read `=== done` in the logs.
+  `llm_r0`). **62.4a RESULT (2026-10-17 14:44; `docs/tables/rosco_proposer_test_rule6_{s59,s62}.csv`): 3 of the
+  six ship** (bayes r1 #15 +21.22 fresh, llm r4 #4 +27.89 with every load cell positive on both seed sets, llm r5
+  #1 +24.92 = the one-knob corner 3.4); the three failures (llm r1 #7, r2 #15, r3 #11 at margins 7.28 / 6.13 /
+  6.09) all lose the tower-base load at 24 m/s on fresh seeds (-1.34 / -1.95 / -1.83) - the pre-registered
+  branch 'the margin is not a sufficient proxy at its boundary': the margin sits at 12-16 m/s and none of it at
+  24, the s32 aggregation defect one level up. Re-read on 42 tunings: 7.5 and above 14 of 14 ship, 6.0-7.5 1 of
+  4, below 6.0 2 of 24. Counts under the completed rule: s59 runs llm 2 / local 4 / bayes 1 of 6 (precision 7 of
+  7), s62.3 runs llm 3 / local 3 / bayes 2 (8 of 11), pooled 15 of 18; no Fisher below 0.57. **62.4b INTERIM
+  (2026-10-18 09:20): THE AGENT ARM IS FINISHED AT 0 OF 6** - told the complete rule and nothing else, 1 of its
+  144 candidates improves regulation at all (infeasible), 80 of 144 hold the rule with regulation -2.7 to -463,
+  every selection is the shipped tuning; it walks omega down to 0.25-0.49 and never puts the corner above 2.4,
+  its `why` claims a regulation improvement 62 times while the term falls, 0 malformed replies, 0 divergences
+  of its own (7 among 15 random fills after repeated proposals). DISCLOSE: the task text lists holding rows at
+  -113 as 'best first' without the shipped row (my defect; not relaunched unprompted). Pre-registered branch:
+  nothing into the main text, D3 in full, s59.6 wording stands. The classical arms are still running; read the
+  rest at `=== done` in the logs. Do not launch either again.
 - **THE SCREEN WAS THE FAILURE, MEASURED (roadmap s62.1, 2026-10-16, pre-registered; `campaign_rule_margin.sh`,
   `docs/tables/rosco_proposer_test_margin.csv`): with one point of margin in the design-set screen (worst
   single-wind load term >= 0; shipping rule unchanged) the SAME 21 runs deliver local 4 of 6, bayes 2 of 6,
