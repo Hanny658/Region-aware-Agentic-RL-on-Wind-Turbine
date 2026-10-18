@@ -4035,3 +4035,11 @@ corner, 1 delivery), and never from being told the rule: **the telling is the le
 proposer is not.** The classical arms decide the campaign's precision endpoint: local r6-r9 so far 1 of 4 with a
 selection (r8 #12, omega 0.524 zeta 0.859 corner 2.997 damper 0.0011 hpf 0.270, +12.60 at tower +10.34,
 unmeasured), r10 running, r11 and bayes r6-r11 pending; `=== done` expected late on 2026-10-18.
+
+**Paused 2026-10-18 15:17 on request** (session 446 stopped, 36 processes including 14 OpenFAST workers in state T; bayes r8
+in flight since 14:43, its first candidates not yet flushed to the log). State at the pause: llm r6-r11 finished (0 of 6,
+above); local r6-r11 finished with a selection in 2 of 6 (r8 #12 +12.60, r11 omega 0.553 zeta 0.889 corner 4.372 damper
+off +26.55, both unmeasured); bayes r6 (omega 0.588 zeta 0.806 corner 4.512 hpf 0.636, +30.82) and r7 (omega 0.564 zeta
+0.775 corner 7.737 damper 0.0011 hpf 0.267, +10.13) selected, r9-r11 pending; then the verification pass and the
+delivery table. Resume with `campaign_ctl.sh resume campaign_rosco_rule6`; after a VM restart `integrity_check.py` first,
+then relaunch `campaign_rosco_rule6.sh` (finished runs skip on best.json, bayes r8 resumes from its history.jsonl).
