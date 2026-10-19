@@ -50,8 +50,8 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
 
 ### Leg 1 - the shipped GSPI, tuned by the agent (`docs/MAIN_LINE.md` leg 1)
 
-- **RUNNING (launched 2026-10-17, roadmap s62.4, pre-registered; the user's instruction: remove the prompt leak,
-  then test the set-mean margin): THE RULE COMPLETED.** The leak is out of `SHIP_TEXT` (no finding of an
+- **FINISHED 2026-10-19 03:15 (roadmap s62.4, pre-registered; the user's instruction: remove the prompt leak, then
+  test the set-mean margin): THE RULE COMPLETED, AND THE AGENT TOLD ONLY THE RULE FINDS NOTHING.** The leak is out of `SHIP_TEXT` (no finding of an
   earlier campaign is told any more, only the rule and the design set's resolution). The census of the 36
   tunings verified on both seed sets: at a design-set set-mean tower-base reduction >= 6.0 points **12 of 12
   ship**, below it 2 of 24, so the rule is now feasible AND worst single wind >= 0 AND set-mean tower >= 6.0 on
@@ -79,8 +79,21 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   its `why` claims a regulation improvement 62 times while the term falls, 0 malformed replies, 0 divergences
   of its own (7 among 15 random fills after repeated proposals). DISCLOSE: the task text lists holding rows at
   -113 as 'best first' without the shipped row (my defect; not relaunched unprompted). Pre-registered branch:
-  nothing into the main text, D3 in full, s59.6 wording stands. The classical arms are still running; read the
-  rest at `=== done` in the logs. Do not launch either again.
+  nothing into the main text, D3 in full, s59.6 wording stands. **62.4b RESULT (`docs/tables/
+  rosco_proposer_test_rule6_campaign.csv`, 18 runs, 432 tunings): llm 0 of 6, local 2 of 6, bayes 4 of 6, and
+  EVERY ONE OF THE SIX SELECTIONS SHIPS** (precision 6 of 6; 21 of 24 over everything measured under the completed
+  rule, the three failures all the agent's 62.4a rows at margins 6.1-7.3 on the 24 m/s tower cell). Fisher llm
+  against bayes p = 0.061, against local 0.45; on the search's own set-mean rule the agent found a gain in 0 of 6
+  against 5 of 6 and 5 of 6 (p = 0.015, not the pre-registered primary). Delivered rows: bayes r6 #17 +32.13 fresh
+  at 1.259x (damper off), local r11 #21 +27.85 at 1.276x, bayes r8 #21 +21.29 at 1.086x, **local r8 #12 +12.80 at
+  0.997x - the first search delivery on LESS pitch travel than shipped**, two heavy-damper bayes rows +10.3 / +7.2
+  at 3.3x / 3.5x. Bayes with the margin in its feasibility model has its highest count of any campaign. Margin
+  re-read on 48 tunings: 7.5 and above 18 of 18 ship, 6.0-7.5 3 of 6, below 6.0 2 of 24; the binding cell in 7 of
+  the 8 boundary rows is the tower-base load at 24 m/s on fresh seeds - the remaining lever is design episodes at
+  24 m/s, not a larger margin and not the prompt. The precision condition for a §8 statement (0.9 with at least
+  ten selections) is not met on count (six), so the completed rule is D3 and one sentence of §9 only. Across
+  leg 1 the agent arm's regulation came from the race-framed exploration of s59 or the leak of s62.3, never from
+  being told the rule. Nothing of s62.4 is pending; do not launch any of its scripts again.
 - **THE SCREEN WAS THE FAILURE, MEASURED (roadmap s62.1, 2026-10-16, pre-registered; `campaign_rule_margin.sh`,
   `docs/tables/rosco_proposer_test_margin.csv`): with one point of margin in the design-set screen (worst
   single-wind load term >= 0; shipping rule unchanged) the SAME 21 runs deliver local 4 of 6, bayes 2 of 6,

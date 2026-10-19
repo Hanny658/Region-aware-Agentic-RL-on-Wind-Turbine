@@ -1,0 +1,19 @@
+proposer,repeat,budget,n_filled_randomly,n_diverged,setmean_gain,setmean_sims_to_first,setmean_regulation,setmean_worst_per_wind_design,setmean_heldout_worst_per_wind,setmean_fresh_worst_per_wind,setmean_fresh_regulation,perwind_gain,perwind_sims_to_first,perwind_regulation,perwind_worst_per_wind_design,perwind_candidate,perwind_params,perwind_key,perwind_travel,perwind_heldout_regulation,perwind_heldout_worst,perwind_fresh_regulation,perwind_fresh_worst,delivers_off_design,delivered_sims_to_first,delivered_regulation
+local,6,24,0,1,True,21,24.0,-3.3,,,,False,,0.0,,,,,,,,,,False,,0.0
+local,7,24,0,3,True,4,28.8,-2.4,,,,False,,0.0,,,,,,,,,,False,,0.0
+local,8,24,0,0,True,2,22.88,-1.0,,,,True,12,12.6,1.1,local_r8#12,omega 0.524 zeta 0.859 corner 2.997 damper 0.0011 hpf 0.270,23d837bcd628,0.997,13.17,1.89,12.8,1.25,True,12,12.8
+local,9,24,0,0,False,,0.0,0.0,,,,False,,0.0,,,,,,,,,,False,,0.0
+local,10,24,0,1,True,10,5.73,-4.4,,,,False,,0.0,,,,,,,,,,False,,0.0
+local,11,24,0,0,True,21,26.55,1.3,,,,True,21,26.55,1.3,local_r11#21,omega 0.553 zeta 0.889 corner 4.372 damper 0.0000 (off),2151f37e639a,1.276,27.93,2.03,27.85,-0.17,True,21,27.85
+bayes,6,24,0,0,True,9,37.16,-1.6,,,,True,9,30.82,1.0,bayes_r6#17,omega 0.588 zeta 0.806 corner 4.512 damper 0.0000 hpf 0.636,1d46fae5eebf,1.259,31.1,1.73,32.13,-0.65,True,9,32.13
+bayes,7,24,0,1,True,11,34.61,-5.4,,,,True,16,10.13,1.0,bayes_r7#16,omega 0.564 zeta 0.775 corner 7.737 damper 0.0011 hpf 0.267,81ae168e5299,3.268,11.28,0.35,10.31,0.76,True,16,10.31
+bayes,8,24,0,3,True,13,19.32,1.6,,,,True,21,19.32,1.6,bayes_r8#21,omega 0.542 zeta 0.871 corner 3.370 damper 0.0005 hpf 0.261,18dbdc0ea7ec,1.086,20.83,1.88,21.29,0.58,True,21,21.29
+bayes,9,24,0,5,False,,0.0,0.0,,,,False,,0.0,,,,,,,,,,False,,0.0
+bayes,10,24,0,0,True,5,34.86,0.0,,,,True,7,8.34,0.5,bayes_r10#7,omega 0.587 zeta 0.698 corner 8.496 damper 0.0016 hpf 0.058,30ab54bbe05d,3.489,9.59,-0.03,7.2,-0.1,True,7,7.2
+bayes,11,24,0,5,True,8,16.02,-0.2,,,,False,,0.0,,,,,,,,,,False,,0.0
+llm,6,24,0,0,False,,0.0,0.0,,,,False,,0.0,,,,,,,,,,False,,0.0
+llm,7,24,0,0,False,,0.0,0.0,,,,False,,0.0,,,,,,,,,,False,,0.0
+llm,8,24,0,0,False,,0.0,0.0,,,,False,,0.0,,,,,,,,,,False,,0.0
+llm,9,24,0,1,False,,0.0,0.0,,,,False,,0.0,,,,,,,,,,False,,0.0
+llm,10,24,0,2,False,,0.0,0.0,,,,False,,0.0,,,,,,,,,,False,,0.0
+llm,11,24,0,0,False,,0.0,0.0,,,,False,,0.0,,,,,,,,,,False,,0.0

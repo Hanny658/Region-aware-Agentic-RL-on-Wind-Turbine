@@ -47,7 +47,14 @@ zeta 0.70-0.81, corner 3.4-3.75 at 1.12-1.20x travel, design worst single wind -
 **1 of 6**, five of six losing 1.6-2.2 points of tower DEL at 24 m/s on fresh seeds; local 3 of 6 (replays of
 s59 in four runs), bayes 2 of 6. The per-wind screen at two episodes per wind is gamed too, and the set-mean
 tower margin predicts it for the sixth time (failing rows +3.5 to +5.0, shipping rows +7.4 and above with one
-exception at +3.9).
+exception at +3.9). The rule was then completed with that margin as a constraint (design-set set-mean tower
+reduction >= 6.0, every arm) and the prompt leak removed (s62.4, finished 2026-10-19): read on the existing runs
+it selects six unmeasured rows of which 3 ship (the three failures all the tower-base load at 24 m/s on fresh
+seeds, their 6.1-7.3 points of margin carried entirely at 12-16 m/s), and a third campaign under it (18 runs)
+delivers **llm 0 of 6, local 2 of 6, bayes 4 of 6 with every one of its six selections shipping** (21 of 24 over
+everything measured under the completed rule). Told only the rule, the agent proposes one regulation gain in 144
+candidates and walks the loop frequency down to hold the loads with margin; its regulation on this plant came
+from the exploration of s59 or the leaked sentence of s62.3, never from being told the rule.
 
 What the loop does win on leg 1, post hoc and reported as such: **it never proposed a candidate the plant
 could not run** (0 of 144, against 13 of 144 for the local search, 9 of 144 for Bayesian optimisation and 16 of
@@ -91,7 +98,9 @@ Agent-found rows that hold both load terms at **every** wind speed on 28 held-ou
   local 4 of 6, bayes 2 of 6, llm 2 of 6:** llm r1 #11 (+28.35 at 1.57x) and r5 #14 (+35.71 at 2.18x, the
   most-regulating delivered row of the 21 runs) ship, llm r2 #12 misses by 0.50 at 24 m/s on fresh seeds;
   Fisher p = 0.57 against local. The agent's candidates deliver when the screen lets them, in 2 of the 3
-  runs where it can; the classical arms still deliver at least as often.
+  runs where it can; the classical arms still deliver at least as often. Under the completed rule (margin 6.0,
+  s62.4a) the same runs read local 4, bayes 1, llm 2 of 6 - bayes loses r1 #13 (margin 3.90, shipped by 0.27),
+  the rule's one false negative; the s62.3 runs read llm 3, local 3, bayes 2 of 6 (8 of 11 selections ship).
 - **Post hoc, and the one difference that is large: 0 of 144 llm candidates destabilised the plant**, against
   13 of 144 local (Fisher p = 0.00018), 9 of 144 bayes (p = 0.0034) and 16 of 72 random (p < 1e-5); every one
   of those 144 was really proposed by the model (the malformed-reply audit reads 0 in all six runs). It also
@@ -186,7 +195,9 @@ with the reward *structure* proposed by the agent. Evidence: roadmap s34, s37, s
    bayes 2/6, model 0/6, s59.6). The model finds the largest *set-mean* number fastest, and that number does
    not ship. With one point of margin in the screen the same runs read 2/6 against 4/6 and 2/6 (s62.1): the
    agent's candidates ship where the screen lets them, and the classical arms still ship at least as often.
-   Told that screen, the agent drives to its edge in all six runs and ships in 1/6 (s62.3).
+   Told that screen, the agent drives to its edge in all six runs and ships in 1/6 (s62.3). Told the completed
+   rule and nothing else, it finds no regulation gain at all: 0/6 against 2/6 and 4/6, every classical selection
+   shipping (s62.4b).
 4. **A composite score.** Report the four published reductions, each on its own. The symbol *J* is the MPC cost
    function. The composite stays as the *selection and training* objective of the campaigns, under its own name.
 5. **"ROSCO's tower damper is worth about nothing"** (withdrawn in s52: its gain had been capped at 0.004, worth
@@ -221,13 +232,13 @@ discussion, not in its title.
 
 ## Open, in order
 
-1. **The selection rule, which is now the cheapest open question in the study (not started).** s59.6 closed
-   the leg-1 campaign with the screen, not the search, as the thing that fails: a 14-episode design set with
-   two episodes per wind cannot tell -0.60 from -1.20, so the rule hands the user the highest row on the front
-   and that row loses the tower-base load off the design winds. Two candidate repairs, both cheap because the
-   candidate cache is on disk: screen with a margin (s55 and s59.6 both found the margin predicts holding), or
-   spend design episodes at the winds where the constraint binds. This decides whether the search space is
-   usable, independently of who proposes.
+1. **The selection rule - DONE (s62.1 to s62.4, 2026-10-16 to 2026-10-19), one lever left.** The margin screen
+   (s62.1), the arm told it (s62.3), then the completed rule - set-mean tower margin 6.0 as a constraint for every
+   arm, the leak out of the task text (s62.4): every selection of the completed-rule campaign ships (6 of 6; 21 of
+   24 over everything measured under it), so the search space is usable under that rule, and the three rows it
+   still passes that fail are all the tower-base load at 24 m/s at margins of 6.1-7.3 carried entirely at
+   12-16 m/s. What remains, not started: design episodes at the binding wind (24 m/s) in place of a set-mean
+   margin. The proposer question did not move: told the completed rule, the agent finds no gain (0 of 6).
 2. **The fixed-reward arm under the gate on the native base** - three runs, about 3 h, not started. s58 showed
    that *who* proposes the reward structure does not matter under the gate; this says whether **searching** the
    structure matters there at all. If a fixed reward also holds the loads, leg 3 collapses to the gate; if it

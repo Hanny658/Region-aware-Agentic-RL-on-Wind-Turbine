@@ -202,3 +202,11 @@ null result can buy: the referee believes the rest.
    main text: the agent drives to the screen's edge in all six runs and ships in 1 of 6; app. E carries it
    in full, including that the task text named the filter corner the earlier campaign had found, so the
    one-simulation time to the first screen-holding candidate measures the prompt and not the search.
+   The rule was then completed (s62.4, finished 2026-10-19): the set-mean tower margin of 6.0 as a constraint
+   for every arm, the leaked findings removed from the task text. On the existing runs 3 of its 6 new
+   selections ship (all failures the 24 m/s tower cell); in the third campaign every one of its six selections
+   ships (Bayesian optimisation 4 of 6, local 2 of 6) and the agent, told only the rule, proposes one
+   regulation gain in 144 candidates and delivers 0 of 6 - the pre-registered branch again: one sentence in
+   §9, app. E in full with two disclosures (the task text's history list carried no shipped row to anchor
+   zero; the arms receive the rule asymmetrically). The precision condition for a §8 statement (0.9 with at
+   least ten selections) was not met on count, so §8 keeps its four instances.

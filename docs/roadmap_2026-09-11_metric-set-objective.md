@@ -4046,3 +4046,81 @@ then relaunch `campaign_rosco_rule6.sh` (finished runs skip on best.json, bayes 
 
 **Resumed 2026-10-18 19:13 on request** (session 446 intact through the pause, no VM restart; 14 OpenFAST workers running
 again on bayes r8, the log unchanged since the pause).
+
+### 62.4b RESULT - the campaign under the completed rule (finished 2026-10-19 03:15; `campaign_rosco_rule6.sh`, root `roscosearch_rule6`, 18 runs, 432 tunings, six selections verified on 336 episodes; `docs/tables/rosco_proposer_test_rule6_campaign.csv`; zero infrastructure failures; paused and resumed twice on request)
+
+**Primary endpoint - deliveries per arm (both loads within 1.0 at every wind speed on 28 held-out AND 28 fresh
+episodes): llm 0 of 6, local 2 of 6, bayes 4 of 6. Precision of the completed rule: 6 of 6 selections ship.**
+
+| arm | run | selection | tuning | design: regulation / tower margin / worst wind | held out: regulation / worst | fresh: regulation / worst | travel | ships |
+|---|---|---|---|---|---|---|---|---|
+| local | r8 | #12 | omega 0.524 zeta 0.859 corner 2.997 damper 0.0011 hpf 0.270 | +12.60 / +10.34 / +1.1 | +13.17 / +1.89 | +12.80 / +1.25 | **0.997x** | yes |
+| local | r11 | #21 | omega 0.553 zeta 0.889 corner 4.372 damper off | +26.55 / +6.73 / +1.3 | +27.93 / +2.03 | +27.85 / -0.17 tower 24 m/s | 1.276x | yes |
+| bayes | r6 | #17 | omega 0.588 zeta 0.806 corner 4.512 damper off | +30.82 / +7.09 / +1.0 | +31.10 / +1.73 | **+32.13** / -0.65 tower 24 m/s | 1.259x | yes |
+| bayes | r7 | #16 | omega 0.564 zeta 0.775 corner 7.737 damper 0.0011 hpf 0.267 | +10.13 / +16.27 / +1.0 | +11.28 / +0.35 | +10.31 / +0.76 | 3.268x | yes |
+| bayes | r8 | #21 | omega 0.542 zeta 0.871 corner 3.370 damper 0.0005 hpf 0.261 | +19.32 / +7.98 / +1.6 | +20.83 / +1.88 | +21.29 / +0.58 | 1.086x | yes |
+| bayes | r10 | #7 | omega 0.587 zeta 0.698 corner 8.496 damper 0.0016 hpf 0.058 | +8.34 / +17.95 / +0.5 | +9.59 / -0.03 blade 16 | +7.20 / -0.10 blade 14 | 3.489x | yes |
+
+Runs without a selection: local r6, r7, r10 found set-mean gains (+24.0, +28.8, +5.7 with design worst single
+wind -3.3, -2.4, -4.4) that the completed rule rejected, local r9 found nothing; bayes r11 found +16.0 at a worst
+wind of -0.2 (rejected), bayes r9 nothing; llm r6-r11 nothing (above). `n_diverged` (`failure_kind` diverged, the
+s59 count): llm 3 of 144 - all three among the 15 uniform random draws that replaced batches of repeated
+proposals, the model's own 129 candidates 0 (the interim note above counted 7 by regulation at or below -1000,
+four of which ran to completion with catastrophic terms; both counts are fills only) - local 5 of 144, bayes 14 of
+144; malformed replies 0 of 75 calls.
+
+**The pre-registered readings, applied.**
+1. *Deliveries.* The agent arm at **0 of 6** is the branch "2 of 6 or fewer: being told the complete rule does not
+   make the agent's selections ship; the main text keeps the s59.6 wording and D3 reports it". Against its own
+   earlier counts (s59 0 of 6, s62.3 1 of 6) nothing moved. Between arms: llm against bayes 0 of 6 against 4 of 6,
+   Fisher two-sided **p = 0.061**; against local 0 of 6 against 2 of 6, p = 0.45 - directions, both against the
+   agent, neither below the 0.05 the pre-registration required. On the rule the search itself used (any feasible
+   gain on the set mean) the agent found one in **0 of 6 runs against 5 of 6 for each classical arm, Fisher
+   two-sided p = 0.015** - the one between-arm number of the campaign below 0.05, in the classical arms' favour,
+   on a quantity that was not the pre-registered primary; reported as such.
+2. *Precision.* 6 of 6 in the campaign. The pre-registered condition for the §8 statement ("0.9 or above with at
+   least ten selections") is **not met on count**: six selections. Pooled with the 18 of 62.4a, **21 of 24 =
+   0.875**, between the 0.7 and the 0.9 the reading was fixed at; the three failures are all the agent's s62.3
+   rows at margins 6.09-7.28, all the tower-base load at 24 m/s. So the completed rule goes to D3 and one sentence
+   of §9, not to §8 as "the screen that does not get gamed".
+3. *A classical arm rising as far as the agent arm says the rule, not the telling, is the lever.* Both rose past
+   it. Bayesian optimisation with the margin thresholded in its feasibility model delivers **4 of 6**, its highest
+   count in any campaign (1 of 6 on the s59 runs, 2 of 6 on the s62.3 runs under the same completed rule); the
+   local search 2 of 6 (4 and 3 of 6 on the earlier runs; new seeds, no replay).
+4. *Secondary.* Simulations to the first candidate holding the completed rule on the design set: llm censored in
+   all six (25), local [12, 21, 25, 25, 25, 25] median 25, bayes [7, 9, 16, 21, 25, 25] median 18.5. Regulation
+   and travel of the delivered rows in the table. bayes r6 #17 (+32.13 fresh at 1.259x, damper off) is the
+   second most-regulating delivered row at near-shipped duty in the study after s62.3 llm r0 #11 (+33.09 at
+   1.128x), and **local r8 #12 (+12.80 fresh, tower +10.34 on the design set, every load cell positive on both
+   seed sets) is the first search delivery at LESS pitch travel than the shipped controller** (0.997x; the s55
+   0.974x row was a hand-picked band member). The two heavy-damper rows (bayes r7 #16 and r10 #7, 3.27x and
+   3.49x travel, +10.3 and +7.2) are what the margin buys when the optimiser is free to pick its cheapest source:
+   tower margin from the damper, paid in duty.
+
+**The margin, re-read on 48 tunings** (36 census + 6 of 62.4a + 6 here): design-set tower margin **7.5 and above
+18 of 18 ship**; 6.0 to 7.5 **3 of 6** (s59 llm r5 #14 at 6.00 ships at -0.24, local r11 #21 at 6.73 at -0.17,
+bayes r6 #17 at 7.09 at -0.65; the agent's 62.4a rows at 6.09, 6.13, 7.28 fail at -1.83, -1.95, -1.34); below
+6.0, 2 of 24. In seven of the eight boundary rows the binding cell is the tower-base load at 24 m/s on fresh seeds;
+every one of them is positive at 12-20 m/s by 5 to 20 points. The set-mean margin is a proxy for a 24 m/s cell it
+cannot see; the lever that remains is design episodes at that wind speed, not a larger margin and not the prompt.
+
+**The agent arm, final** (mechanism in the interim note above, unchanged by the classical arms): told the complete
+rule and nothing else, it proposed **1 regulation gain in 144 candidates** (r10 #4, +8.17, infeasible), held the
+rule on the design set with **80 of 144** candidates all regulating worse than shipped (-2.7 to -463), opened five
+of six runs with the damper and a slower loop, walked omega down to 0.25-0.49 with the corner at or below 2.4 rad/s
+in every run, re-proposed tried tunings in four runs, and wrote 62 reasons claiming a regulation improvement while
+its regulation term fell. Across the three campaigns of leg 1 the agent arm's regulation came from the
+race-framed exploration of s59 (+47.79 best, 0 deliveries) or from the leak of s62.3 (6 of 6 first candidates at
+the corner, 1 delivery) and never from being told the rule. **Two disclosures wherever this campaign is cited:**
+(i) the task text listed the tunings tried so far best-first under the selection rule without the shipped
+controller among them, so a holding row at -113.85 headed the list as the best so far above an infeasible +8.17;
+whether a list anchored on the shipped row would have turned the agent is not measured and is not launched
+unprompted (my defect); (ii) the arms are asymmetric by design - the classical searches received the completed
+rule as a screen on their selection and bayes also in its feasibility model, the agent in words.
+
+**What moved where (per the pre-registration).** Main text: the s59.6 wording stands; one sentence added to §9
+beside the s62.1 and s62.3 sentences. App. E (D3): a paragraph in full with both disclosures. `MAIN_LINE.md` leg 1
+and open item 1 (the selection rule is no longer open: the completed rule ships 21 of 24, the remaining lever is
+episodes at 24 m/s), `NARRATIVE.md` §8 item 6, `APPENDIX_PLAN.md` D3, `EVIDENCE.md` §4.4, `README.md` §62,
+CLAUDE.md. Tables: `rosco_proposer_test_rule6_campaign.csv` committed with this section. Nothing of s62.4 is
+pending; do not launch any of its scripts again.

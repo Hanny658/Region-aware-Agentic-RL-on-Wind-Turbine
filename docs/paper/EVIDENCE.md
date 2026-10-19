@@ -89,7 +89,12 @@ one sentence of §9 (with one point of margin in the design-set screen the agent
 its six runs, at the highest regulation of any delivered row, and the classical arms still at least as
 often): appendix D3, `../tables/rosco_proposer_test_margin.csv`. The campaign that told the agent the screen
 (s62.3; one sentence in §9: told that screen, the agent drives to its edge in every run and ships in one of
-six): appendix D3, `../tables/rosco_proposer_test_margin_campaign.csv`.
+six): appendix D3, `../tables/rosco_proposer_test_margin_campaign.csv`. The rule completed (s62.4; one
+sentence in §9: with the set-mean tower margin as a constraint every selection of a third campaign ships, 4 of
+6 runs for Bayesian optimisation and 2 of 6 for the local search, and the agent told only the rule proposes one
+regulation gain in 144 candidates and delivers in none of six; 21 of 24 selections ship over everything
+measured under it): appendix D3, `../tables/rosco_proposer_test_rule6_s59.csv`, `rosco_proposer_test_rule6_s62.csv`,
+`rosco_proposer_test_rule6_campaign.csv`.
 
 ## §5 Leg 2 - the untuned MPC (`../tables/mpc_leg_fresh.csv`, `mpc_leg_heldout.csv`, `design_search.csv`; s33, s38, s57.2)
 
