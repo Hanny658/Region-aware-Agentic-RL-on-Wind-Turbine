@@ -63,7 +63,7 @@ for r in cands:
              "holds" if per_wind_rank_key(r, 0.0)[0] == 1 else "-",
              "holds" if per_wind_rank_key(r, 0.0, 6.0)[0] == 1 else "-")
     print(f"{r['i']:>3} {r['params']['lpf_corner']:>7.2f} {o:>+7.2f} {t:>+7.2f} {b:>+7.2f} {e:>+7.3f} "
-          f"{r.get('travel_ratio', float('nan')):>7.3f} {w:>+6.1f} ({which} {at:g})  {flags[0]:>8}  {flags[1]:>8}  {flags[2]:>9}")
+          f"{r.get('travel_ratio', float('nan')):>7.3f} {w:>+6.1f} ({which} {at})  {flags[0]:>8}  {flags[1]:>8}  {flags[2]:>9}")
 
 selections = {"set-mean rule": sel_set, "per-wind screen": sel_pw, "completed rule": sel_c6}
 for name, r in selections.items():
@@ -145,7 +145,7 @@ if a.csv:
                         "design_regulation": round(o, 2), "design_power": round(r["assess"].get("power", float("nan")), 2),
                         "design_tower": round(t, 2), "design_blade": round(b, 2), "design_energy": round(e, 3),
                         "travel": round(r.get("travel_ratio", float("nan")), 3), "adc": round(r.get("adc", float("nan")), 4),
-                        "design_worst": round(ww, 2), "design_worst_cell": f"{which} {at:g}",
+                        "design_worst": round(ww, 2), "design_worst_cell": f"{which} {at}",
                         "feasible_set_mean": bool(r["assess"].get("feasible")),
                         "holds_per_wind": per_wind_rank_key(r, 0.0)[0] == 1,
                         "holds_completed": per_wind_rank_key(r, 0.0, 6.0)[0] == 1,

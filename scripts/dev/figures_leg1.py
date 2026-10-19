@@ -89,7 +89,8 @@ infeasible = [r for r in ran if not r["assess"]["feasible"]]
 
 print(f"{len(runs)} runs, {len(cands)} distinct PROPOSED tunings ({len(cands) + 1} including the shipped "
       f"tuning itself, which every run evaluates as its identity check and which the tables count), "
-      f"{len(cands) - len(ran)} the plant could not run, {len(set_ok)} hold the set mean, {len(pw_ok)} also "
+      f"{sum(1 for r in cands if r['assess'].get('failure_kind') == 'diverged')} the plant could not run "
+      f"({len(cands) - len(ran)} did not run at all), {len(set_ok)} hold the set mean, {len(pw_ok)} also "
       f"hold both loads at every wind speed.")
 
 # ------------------------------------------------------------------ F2: the front against duty
@@ -124,8 +125,10 @@ axa.set_xlabel("pitch travel, ratio to the shipped controller")
 axa.set_ylabel("generator-speed MSE reduction, %")
 axa.set_title(f"(a) the design screen: {len(cands)} distinct proposed tunings, 14 episodes each")
 axa.legend(loc="lower left", frameon=False, labelspacing=0.6, borderpad=0.2)
-axa.annotate(f"{len(cands) - len(ran)} more the plant could not run at all",
-             (0.98, 0.04), xycoords="axes fraction", fontsize=7, color="#777777", ha="right")
+n_plant = sum(1 for r in cands if r["assess"].get("failure_kind") == "diverged")
+n_inc = len(cands) - len(ran) - n_plant
+axa.annotate(f"{n_plant} more the plant could not run" + (f"\n{n_inc} evaluation did not complete" if n_inc else ""),
+             (0.98, 0.015), xycoords="axes fraction", fontsize=7, color="#777777", ha="right", va="bottom")
 
 # ------------------------------------------------------------------ the verified members, measured off design
 band = []

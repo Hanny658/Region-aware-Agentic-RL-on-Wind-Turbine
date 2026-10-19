@@ -79,7 +79,9 @@ Numbers are sections of `roadmap_2026-09-11_metric-set-objective.md`.
   screen read on the same candidates (§62.1) and the arm that is told the rule (§62.2) and its result, told the screen the agent drives to its edge in
   every run and ships in 1 of 6 (§62.3); the rule completed with the set-mean tower margin as a constraint and the
   leak removed (§62.4): 3 of the 6 re-selected rows ship (§62.4a), the campaign under it delivers llm 0 / local 2 /
-  bayes 4 of 6 with every selection shipping and the agent, told only the rule, finding no gain (§62.4b)**.
+  bayes 4 of 6 with every selection shipping and the agent, told only the rule, finding no gain (§62.4b)** -
+  **§63 review round 1: the candidate counts corrected (504 evaluations, 38 plant failures and one incomplete
+  evaluation), the one-knob sweep as a control (§63.1) and the spectra of the one-line files (§63.2)**.
 - **Leg 2:** §33 the wind-scheduled tower weight - §36 model error over the range - §38 the verified design
   loop finds the schedule by itself and does not beat the hand design - §57 the unscheduled reference on fresh
   seeds.

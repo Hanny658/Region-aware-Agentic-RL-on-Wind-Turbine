@@ -4196,3 +4196,69 @@ not raised at 6.5. No endpoint; the figure and the band powers go into §4.1 as 
 
 Launched together as `campaign_review1.sh` (sid `campaign_review1`, log `~/wtrl/exp/review1.log`, pausable with
 `campaign_ctl.sh ... campaign_review1`), about one hour.
+
+### 63.1 RESULT - the one-knob sweep (`campaign_review1.sh`, finished 10:34 on 2026-10-19; `docs/tables/rosco_sweep.csv`, `rosco_sweep_selections.csv`; four new design-set evaluations, four cache hits, no new off-design evaluation)
+
+| grid point | corner rad/s | regulation | tower | blade | energy | travel | worst wind | set-mean | per-wind screen | completed rule |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 2.04 | +13.13 | +3.40 | +2.49 | +0.035 | 0.971x | +0.5 blade 22 | ok | holds | - |
+| 2 | 2.5 | +18.92 | +5.98 | +3.51 | +0.060 | 0.979x | +0.6 blade 22 | ok | holds | - |
+| 3 | 3.0 | +22.62 | +7.83 | +4.26 | +0.084 | 1.004x | +0.7 blade 22 | ok | holds | holds |
+| 4 | 3.8 | +25.91 | +9.69 | +4.75 | +0.107 | 1.059x | +0.5 blade 22 | ok | holds | holds |
+| 5 | 5.0 | +27.39 | +11.53 | +5.03 | +0.138 | 1.182x | +0.8 blade 22 | ok | holds | holds |
+| 6 | 6.5 | +28.60 | +13.58 | +5.16 | +0.144 | 1.572x | +0.5 blade 22 | ok | holds | holds |
+| 7 | 8.5 | +11.10 | +15.77 | +3.88 | +0.142 | 3.719x | +0.4 blade 16 | ok | holds | holds |
+| 8 | 11.0 | -15.54 | +17.23 | +2.74 | +0.142 | 6.120x | -3.3 blade 16 | ok | - | - |
+
+**Endpoints.** (1) First feasible gain on the set mean at grid point 1; first holding the per-wind screen at grid
+point 1. (2) The selection under the set-mean rule, the per-wind screen and the completed rule is the same point,
+**6.5 rad/s = llm_r1#11**, already measured: held out +27.56 with a worst cell of +1.64 (blade 16), fresh +28.35
+with +0.82 (blade 16) - **ships**. (3) The sweep's rows ARE the agent's rows: its third point is the one-line row
+of Table 2 (+22.62 at 1.004x) and its sixth the 6.5 row (+28.60 at 1.572x). Above 6.5 the ladder turns down
+(+11.1 at 8.5 rad/s for 3.72x travel, -15.5 at 11.0 for 6.12x with the blade-root load lost at 16 m/s): the
+one-knob ladder peaks at 6.5 on the design set, and the price above it is first duty and then regulation itself.
+
+**Reading, as pre-registered:** the finding is a property of the shipped file - its corner has room, and the
+one-knob sweep is the cheapest way to see it - and the agent is one mechanism that finds it without being told
+which of the five parameters to move. The sweep's one simulation to a gain is not a search result (it knows the
+knob); no proposer claim in either direction. In the manuscript: a paragraph of 4.2, the last row of Table 3
+("corner sweep, fixed grid: 1 run, 8 candidates, 0 plant failures, 1 run with a gain, 1 simulation, +28.6"), the
+grid in App. C. The script `rosco_sweep_report.py` crashed once on a wind-label format (fixed, re-run outside the
+campaign script; the verification step needed no simulation because every selection was cached).
+
+### 63.2 RESULT - the spectra (`rosco_spectra.py`, three files on the seven fresh fields of seed 7, logs kept; `f5_spectra.png`, `docs/tables/rosco_spectra.csv`; finished 10:43 on 2026-10-19)
+
+Welch PSDs averaged over the seven wind speeds, 20 s warm-up discarded, 10 ms samples. Band powers (integrated
+PSD; "below the shipped corner" = 0 to 0.25 Hz = 0 to 1.57 rad/s, "tower band" = 0.25-0.40 Hz, "3P band" =
+0.50-0.75 Hz):
+
+| file | speed total / below corner / tower / 3P ((rpm)^2) | tower-base moment total / below / tower / 3P ((kN m)^2 x 1e6) | pitch rate total / below / tower / 3P ((deg/s)^2) |
+|---|---|---|---|
+| shipped 1.57 | 579 / 557 / 2.8 / 8.7 | 70.8 / 35.9 / 25.8 / 3.7 | 0.485 / 0.368 / 0.039 / 0.029 |
+| one line 3.0 | 485 / 462 / 3.3 / 9.8 | 54.5 / 23.7 / 20.1 / 4.1 | 0.470 / 0.247 / 0.036 / 0.067 |
+| line at 6.5 | 456 / 428 / 3.2 / 11.2 | 46.9 / 16.9 / 19.2 / 4.5 | 1.005 / 0.177 / 0.036 / 0.159 |
+
+**What it shows (the pre-registered expectation, confirmed and sharpened).** With the shipped corner all three
+spectra carry a hump just below 1 rad/s - the loop ringing under the filter's 21 deg of lag at omega_pc = 0.6
+rad/s; the faster corners (11 and 5 deg of lag) remove it. Below the shipped corner the speed-error power falls
+17 % (3.0) and 23 % (6.5), the tower-base moment power 34 % and 53 %, the pitch-rate power 33 % and 52 %: the
+regulation gain and the tower-fatigue gain are one event, and the pitch works LESS at the frequencies where the
+shipped loop worked against itself. In the 3P band the pitch-rate power rises 2.4x (3.0) and 5.6x (6.5), the
+content the filter now passes. At 3.0 the two cancel (total pitch-rate power 0.470 against 0.485), which is why
+the one-line row's travel is 1.000x; at 6.5 the total doubles (1.005), which is the 1.65x of the second row; at
+8.5 and 11 the sweep above finds the regulation itself turning down. Around the tower mode the moment's power
+falls a fifth and a quarter, less than its halving below the corner: the one-line row's tower gain is not tower-
+mode damping but the removal of the loop's slow thrust oscillation, largest near rated (per-wind tower terms +15
+to +21 at 12-14 m/s, -0.4 at 24, Table 10 of the manuscript). In the manuscript: 4.3 "Why the corner matters"
+with Fig. 4 (F8); the search is 4.3 and candidates-against-delivery 4.4. The script crashed once on
+`np.trapz` (numpy 2: `np.trapezoid`), fixed and re-run with `--figure_only`.
+
+**Manuscript state after review round 1 (commit of this section):** title *An LLM agent in the wind turbine
+pitch-control loop: controller tuning, MPC scheduling and reward design, verified in simulation*; abstract 234
+words with the pre-registered null in it; three contributions; 4.1 says how Table 2 was determined and prints the
+one-line row with its 0.02 points of room; 4.2 the spectra; 4.3 the search with the corrected counts (504
+candidate evaluations, 485 distinct, 38 plant failures, one evaluation that did not complete) and the sweep; 4.4
+candidates against delivery with Table 4; 6 states the gated null in the text; 7 carries the aggregation beside
+the trade; 9 states the point-rule limitation; App. C corrected and carrying the grid; App. E carrying the band
+of ten and the per-wind interval table. 21 pages, no undefined reference. `authors.tex` remains the only
+pre-submission item.

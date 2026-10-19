@@ -50,6 +50,25 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
 
 ### Leg 1 - the shipped GSPI, tuned by the agent (`docs/MAIN_LINE.md` leg 1)
 
+- **REVIEW ROUND 1 APPLIED (2026-10-19, roadmap s63; `docs/manuscript/Review.md` is the user's reviewer notes).**
+  Two counts in the manuscript were wrong and are corrected everywhere: the 21 runs made **504 candidate
+  evaluations on 485 distinct tunings** (the "561" of s59.6 is withdrawn), and the plant could not run **38**
+  of them while **one evaluation did not complete for a non-plant reason** (bayes r4 #20, `failure_kind`
+  infrastructure, counted as a failed candidate; App. C no longer says "zero infrastructure failures"). Two
+  additions, pre-registered and done: **the one-knob sweep** (`rosco_search.py --proposer sweep`, grid 2.04 to
+  11 rad/s, `docs/tables/rosco_sweep.csv`) finds the one-line row at its third point and the agent's 6.5 row at
+  its sixth, selects 6.5 under every reading and that row ships; above 6.5 the ladder turns down (+11.1 at 8.5
+  for 3.7x travel, -15.5 at 11). It is a control row of Table 3, not a search; no proposer claim. **The spectra**
+  (`scripts/dev/rosco_spectra.py`, `f5_spectra.png`, `rosco_spectra.csv`): the shipped corner's 21 deg of lag at
+  omega_pc lets the loop ring just below 1 rad/s in speed, tower moment and pitch rate; corners 3.0 and 6.5
+  remove it (power below 1.57 rad/s: speed -17/-23 %, tower moment -34/-53 %, pitch rate -33/-52 %) and pass 3P
+  content into the pitch (3P-band pitch-rate power x2.4/x5.6); at 3.0 the two cancel (total pitch-rate power
+  0.470 vs 0.485 = the 1.000x travel), at 6.5 the total doubles (the 1.65x). Manuscript: new title (three
+  objects), abstract with the pre-registered null, three contributions, 4.1 states how Table 2 was fixed and
+  prints the one-line row's 0.02 points of room (per-wind interval table in App. E, 83 % of resamples inside
+  the tolerance), 4.2 the spectra, 4.4 candidates against delivery (Table 4), 6 the gated null in the text, App.
+  E the band of ten. `band_perwind_intervals.py`, `rosco_sweep_report.py` are the new tables' scripts. Nothing
+  of s63 is pending.
 - **FINISHED 2026-10-19 03:15 (roadmap s62.4, pre-registered; the user's instruction: remove the prompt leak, then
   test the set-mean margin): THE RULE COMPLETED, AND THE AGENT TOLD ONLY THE RULE FINDS NOTHING.** The leak is out of `SHIP_TEXT` (no finding of an
   earlier campaign is told any more, only the rule and the design set's resolution). The census of the 36
@@ -120,7 +139,7 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
   `rosco_proposer_test.csv` unless `--csv` names it (a reading without the flag overwrote the committed
   table once; restored from git).
 - **THE PROPOSER CLAIM IS GONE FROM LEG 1 TOO: at n = 6 the model is not distinguishable from classical
-  search (roadmap s59.4, 2026-10-14; 21 runs, 561 tunings, `scripts/dev/rosco_proposer_test.py`,
+  search (roadmap s59.4, 2026-10-14; 21 runs, 504 candidate evaluations, `scripts/dev/rosco_proposer_test.py`,
   `docs/tables/rosco_proposer_test.csv`).** The primary endpoint of s59.1, fixed before the runs existed:
   simulations to the first feasible gain, one-sided exact permutation - llm against bayes **p = 0.31**,
   against local p = 0.19, against random p = 0.048; runs with a gain llm 5/6, bayes 5/6, local 4/6,

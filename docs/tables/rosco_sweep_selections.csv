@@ -1,0 +1,4 @@
+selection,candidate,corner,key,design_regulation,design_worst,heldout_regulation,heldout_worst,heldout_worst_cell,fresh_regulation,fresh_worst,fresh_worst_cell,fresh_power,fresh_tower,fresh_blade,travel,ships
+set-mean rule,6,6.5,52645b613ce6,28.6,0.5,27.56,1.64,blade 16,28.35,0.82,blade 16,24.2,16.25,2.48,1.572,True
+per-wind screen,6,6.5,52645b613ce6,28.6,0.5,27.56,1.64,blade 16,28.35,0.82,blade 16,24.2,16.25,2.48,1.572,True
+completed rule,6,6.5,52645b613ce6,28.6,0.5,27.56,1.64,blade 16,28.35,0.82,blade 16,24.2,16.25,2.48,1.572,True

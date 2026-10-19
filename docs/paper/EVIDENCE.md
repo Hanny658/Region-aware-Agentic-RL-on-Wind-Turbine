@@ -55,14 +55,37 @@ speed on 28 held-out *and* 28 fresh episodes.
 
 `F_LPFCornerFreq` alone, shipped gains untouched, every load term positive at every wind speed:
 3.0 rad/s **+22.62** regulation at **1.004x** travel; 3.8 (3P) +25.91 at 1.06x; 5.0 +27.39 at 1.18x;
-6.5 +28.60 at 1.57x. Nothing is traded - it is a default left unexamined, and every comparison that uses the
-shipped ROSCO as its baseline starts this far below the same controller with one number changed.
+6.5 +28.60 at 1.57x. It is a default left unexamined, and every comparison that uses the shipped ROSCO as
+its baseline starts this far below the same controller with one number changed. **The one-knob sweep as a
+control (s63.1, `rosco_sweep.csv`, `rosco_sweep_selections.csv`; grid fixed before it ran):** 2.04 +13.13 at
+0.971x, 2.5 +18.92 at 0.979x, 3.0 +22.62 at 1.004x, 3.8 +25.91 at 1.059x, 5.0 +27.39 at 1.182x, 6.5 +28.60 at
+1.572x, 8.5 +11.10 at 3.719x, 11.0 -15.54 at 6.120x (blade -3.3 at 16 m/s); the first seven hold both loads at
+every wind speed on the design screen; first feasible gain at grid point 1; selection under the set-mean rule,
+the per-wind screen and the completed rule alike = 6.5 rad/s = llm_r1#11, which ships (+27.56 held out, worst
++1.64; +28.35 fresh, worst +0.82). **Per-wind intervals of the Table 2 rows (s63, `band_perwind_intervals.csv`,
+held-out and fresh pooled, eight episodes per cell, 4000 resamples within wind bins):** one line (3.0): worst
+pooled cell -0.36 (tower 24), inside the tolerance in 82.7 % of resamples, above zero in 26.0 %; 6.5: +1.23,
+99.1 %, 88.7 %; stage 1: -0.29 (blade 16), 74.1 %, 30.4 %; local sub-shipped duty: +1.36, 99.7 %, 94.4 %.
+**The spectra (s63.2, `rosco_spectra.csv`, F8; three files on the seven fresh fields of seed 7, Welch PSDs
+averaged over wind speed):** filter lag at omega_pc = 0.6 rad/s 20.9 / 11.3 / 5.3 deg for corners 1.57 / 3.0 /
+6.5; the filter passes 61 / 83 / 95 % of the tower mode (2.04 rad/s) and 38 / 62 / 86 % of 3P (3.80). Band
+powers below 1.57 rad/s against shipped: speed error -17 % / -23 %, tower-base moment -34 % / -53 %, pitch
+rate -33 % / -52 %; 3P-band pitch-rate power x2.4 / x5.6; total pitch-rate power 0.485 -> 0.470 -> 1.005
+(deg/s)^2, which is the 1.000x and 1.65x travel of the two rows. Around the tower mode the moment's power
+falls 22 % / 25 %.
 
 ### 4.3 The search, per arm (`rosco_search.csv`, `rosco_proposer_test.csv`; s53, s59.4)
 
-21 runs, **561 tunings proposed**, 486 distinct, 39 the plant could not run, 211 holding the set-mean
-constraints, 114 also holding per wind on the design screen. Zero infrastructure failures in the campaign
-itself.
+21 runs, **504 candidate evaluations**, 485 distinct tunings (486 with the shipped tuning, which every run
+evaluates as its identity check; 19 tunings were proposed by more than one run), **38 the plant could not run**
+and **one evaluation that did not complete** for a reason unrelated to the plant (bayes r4 #20, omega 0.456
+zeta 0.163 corner 0.336, `failure_kind` infrastructure, counted as a failed candidate of its run), 210 distinct
+tunings holding the set-mean constraints (211 with shipped), 113 also holding per wind on the design screen
+(114 with shipped). The 561 of s59.6 was not reproducible from the histories and is withdrawn (s63). Per arm,
+candidate level (`arm_counts.py`, s63): feasible gain on the set mean llm 58 / local 12 / bayes 10 / random 0
+of 144 / 144 / 144 / 72; holding the per-wind screen with a gain 9 / 8 / 4 / 0; run level: a gain 5 / 4 / 5 /
+0, the selection ships 0 / 4 / 2 / 0, under the margin screen 2 / 4 / 2 / 0, under the completed rule
+2 / 4 / 1 / 0 (4.4 of the manuscript, T8).
 
 | arm | runs | candidates | **unrunnable** | runs reaching a feasible gain | median sims to it | regulation of the selection |
 |---|---|---|---|---|---|---|

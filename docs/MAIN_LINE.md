@@ -77,7 +77,7 @@ Agent-found rows that hold both load terms at **every** wind speed on 28 held-ou
 | `llm_r1#11` - the same line at 6.5 rad/s | +24.2 | +28.3 | +16.3 | +2.5 | 1.647x | - |
 | stage 1, **the baseline row** - filter + damper (fixed recipe, *not* an agent arm) | +25.3 | +29.7 | +25.3 | +1.7 | 2.016x | 0.0968 |
 
-- **Search efficiency, at n = 6 per arm and on a pre-registered endpoint (s59.4, 21 runs, 561 tunings; the
+- **Search efficiency, at n = 6 per arm and on a pre-registered endpoint (s59.4, 21 runs, 504 candidate evaluations; the
   s53 numbers below it were n = 3):** simulations to the first feasible gain, one-sided exact permutation -
   llm against bayes **p = 0.31**, against local p = 0.19, against random p = 0.048. Runs with a gain: llm 5/6,
   bayes 5/6, local 4/6, random 0/3. Medians 10 / 18 / 14 / censored. The s53 reading (llm 3/3, median 8

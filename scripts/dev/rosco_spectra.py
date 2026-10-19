@@ -141,7 +141,7 @@ for name, corner, _, _ in ROWS:
 # mode (0.25 to 0.40 Hz) and around 3P (0.50 to 0.75 Hz)
 def band(f, P, lo, hi):
     m = (f >= lo) & (f < hi)
-    return float(np.trapz(P[m], f[m])) if m.sum() > 1 else float("nan")
+    return float(np.trapezoid(P[m], f[m])) if m.sum() > 1 else float("nan")
 
 
 rows_out = []
@@ -189,9 +189,9 @@ ax.set_xlabel("frequency, rad/s")
 ax.set_ylabel("filter gain, dB")
 ax.set_title("the speed filter, first order")
 ax.set_ylim(-24, 1)
-for x, lab in ((CROSS, "loop"), (TOWER, "tower"), (THREE_P, "3P")):
+for x, lab, ha in ((CROSS, "loop", "center"), (TOWER, "tower ", "right"), (THREE_P, " 3P", "left")):
     ax.axvline(x, color="#999999", lw=0.7, ls=":")
-    ax.text(x, -23, lab, fontsize=7, color="#777777", ha="center", va="bottom")
+    ax.text(x, -23, lab, fontsize=7, color="#777777", ha=ha, va="bottom")
 ax.legend(frameon=False, loc="lower left", bbox_to_anchor=(0.0, 0.08))
 for ax, (q, title, unit) in zip(axes[1:], quant):
     for name, corner, c, ls in ROWS:

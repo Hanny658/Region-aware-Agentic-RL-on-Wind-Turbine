@@ -27,7 +27,7 @@ A-J (lettered A-K in the PDF because the IPC chapter is its own appendix). The t
 What the loop delivers, in the four published reductions, on wind seeds no part of the design saw:
 
 - **On the shipped ROSCO GSPI:** a tuning file the controller can take that reduces generator-speed
-  regulation error by **+23.0 %** and tower-base fatigue by **+8.7 %** at **exactly the shipped pitch duty**
+  regulation error by **+23.0 %** and tower-base fatigue by **+8.7 %** at **the shipped pitch duty** (1.000x travel, ADC 0.048 against 0.0476)
   (1.000x travel, ADC 0.048 against 0.0476), found in 8 simulations; and a second row at **+28.4 % / +16.3 %**
   for 1.65x travel. Both hold every load term at every wind speed on 28 held-out *and* 28 fresh episodes.
   Random search finds nothing in 72 candidates.
@@ -47,6 +47,9 @@ What the loop delivers, in the four published reductions, on wind seeds no part 
 2. *Agentic controller tuning for wind turbines: one simulation-verified loop on a shipped PI controller, an
    untuned MPC, and a learned residual layer*
 3. *What an LLM agent is worth in wind turbine control design: tuning files the controller can take*
+4. **Chosen (review round 1, 2026-10-19):** *An LLM agent in the wind turbine pitch-control loop: controller
+   tuning, MPC scheduling and reward design, verified in simulation* - names the three objects, claims the
+   application, claims no comparison.
 
 **Guardrail on the title (pre-registered, roadmap s59.1):** the title may name the agent as the *object of
 study* and may claim the *application* as new. It may **not** claim or imply that the agent beats another
@@ -57,13 +60,13 @@ written to satisfy this; anything of the form "LLM-*guided* / -*optimal* tuning 
 
 ## 2. Contributions, each with its novelty status
 
+**Three, since review round 1 (2026-10-19; the five of 2026-10-15 are merged, nothing is dropped).**
+
 | # | contribution | evidence | novelty status |
 |---|---|---|---|
-| **C1** | **First LLM agent in the loop for wind turbine controller tuning.** The agent proposes complete ROSCO tuning files; OpenFAST and the constrained selection rule decide. | roadmap s52-s53, s59; `../tables/rosco_search.csv` | **Domain-first, defensible with "to our knowledge".** Four targeted searches (2026-10-15) and the 2026-09-23 audit found no LLM in any wind turbine control-design loop; the one conference record with a relevant title could not be verified (repository entry only) and is, by the user's decision, neither cited nor mentioned (§8). Mechanism prior art, in other domains, must be cited beside the claim: ControlAgent (arXiv:2410.19811), Shou et al. (arXiv:2607.26594, an LLM agent tuning PID for chemical processes), Chen et al. (Processes 14:2954, 2026, LLM gain-ranking benchmark), Wu et al. (Building Simulation 2026, LLM reward weights on a real energy system). |
-| **C2** | **One loop, three design spaces, no rebuild** - ROSCO's own gains and filters, an MPC's cost structure, an RL reward expression - with no acquisition function, no population and no per-space surrogate. It beats random search in all three. | s53, s38, s49 | **New as a demonstration.** It is a portability claim, not a performance claim, which is why n = 6 does not threaten it. |
-| **C3** | **What the shipped controller leaves on the table, in tuning files:** one line of the shipped file (`F_LPFCornerFreq`, a generic rule of thumb rather than an optimisation) is worth +23.0 % of regulation and +8.7 % of tower fatigue at shipped duty; the verified band is a **duty ladder** from 0.97x to 2.02x travel. | s52.3, s55.2-55.3; `../tables/rosco_band_verified.csv`, `rosco_band_rows_{fresh,heldout}.csv` | **Survives (audit A(iv)):** no CPC-only method beating a *tuned* ROSCO on regulation and both DELs was found. Needs the Abbas et al. WES 7:53 (2022) §2.1 citation for why the shipped corner is the untuned part. |
-| **C4** | **Proposal admissibility: 0 of 144 candidates destabilised the plant**, 0 malformed replies in six runs, against 13/144, 9/144 and 16/72 for the classical and random arms (Fisher p = 0.00018, 0.0034, < 1e-5). The agent spends no simulation budget on controllers that cannot run. | s59.4; `../tables/rosco_proposer_test.csv`, column `n_diverged` | **New and large.** Reported as **post hoc** - s59.1 did not pre-register it. See the wording guardrail in §7. |
-| **C5** | **The measurement protocol:** load constraints held per wind speed and *measured off the design winds*, paired stratified bootstraps over episodes, actuator duty beside every row, one aggregation rule. | s28, s52.3, s54, s55; `scripts/dev/paired_bootstrap.py` | **Above the field's bar** (audit §3.7-3.8). Stated as the discipline the results are measured under, in the setup and the discussion. |
+| **C1** | **An LLM agent in the design loop of a wind turbine controller, on three objects.** One proposal-and-verification architecture, with each space's own evaluator and selection rule, on the shipped controller's parameters, an MPC's cost structure and a learned layer's reward expression; the plant decides in all three; where the agent succeeds and where it does not is measured against classical search with endpoints fixed before the runs existed. | s52-s53, s59, s62, s38, s49, s58; `rosco_proposer_test*.csv`, `design_search.csv`, `gate_proposer_control.csv` | **Domain-first, defensible with "to our knowledge"** (four targeted searches 2026-10-15 and the 2026-09-23 audit; the unverifiable conference record is neither cited nor mentioned by the user's decision). A portability claim and a measurement, never a performance claim: the pre-registered proposer endpoint is null and the delivery count is reversed (App. D, E). |
+| **C2** | **What the shipped controller leaves in its own file, and what it costs.** One line of the shipped file (`F_LPFCornerFreq`) is worth +23.0 % of regulation and +8.7 % of tower fatigue at shipped duty; the verified band is a duty ladder from 0.97x to 2.02x travel, every member meeting the per-wind tolerance on 56 episodes; the mechanism in the loop's own spectra (F8); a one-knob sweep on the same budget finds the same rows (T3, last row). | s52.3, s55.2-55.3, s63; `rosco_band_verified.csv`, `band_perwind_intervals.csv`, `rosco_sweep.csv`, `rosco_spectra.csv` | **Survives (audit A(iv))**: no CPC-only method beating a *tuned* ROSCO on regulation and both DELs was found. The one-line row meets the rule with 0.02 points to spare at its narrowest cell on fresh seeds (83 % of episode resamples inside the tolerance) and is printed as such. |
+| **C3** | **A measurement protocol, and what it shows about the loop.** Load constraints per wind speed measured off the design winds, paired stratified bootstraps, one aggregation rule with the site-weighted reading beside it, duty beside every row; under it the step that limits simulation-fed design here is the selection under noisy per-wind constraints, not the proposal (4.4, App. E). | s28, s52.3, s54, s55, s59.6, s62; `paired_bootstrap.py` | **Above the field's bar** (audit 3.7-3.8). The admissibility count (0 of 144 agent candidates destabilised the plant) stays a **post hoc** observation inside 4.2, not a contribution. |
 
 ---
 
@@ -71,16 +74,16 @@ written to satisfy this; anything of the form "LLM-*guided* / -*optimal* tuning 
 
 | § | what it argues | evidence | floats |
 |---|---|---|---|
-| **1 Introduction** | A shipped controller is the realistic starting point, its tuning is a rule of thumb, and tuning it is a search problem in a space a language model can read and write. Contributions C1-C5. | - | - |
+| **1 Introduction** | A shipped controller is the realistic starting point, its tuning is a rule of thumb, and tuning it is a search problem in a space a language model can read and write. Contributions C1-C3. | - | - |
 | **2 Related work** | Four paragraphs: RL for wind pitch control; MPC for wind turbines; residual RL and gating; **LLM agents for control design and tuning**. The last one carries C1's attributions and says plainly what is prior art. | `literature_2026-09-23*.md` §1 A(i)-A(iv), D1-D3 | - |
 | **3 Setup** | Plant, wind protocol, the four published reductions, the seed split, the paired statistics, the constrained selection rule, and the agent loop itself (slow timescale, JSON proposal, deterministic verification). | s28, `design_2026-10-11_rosco-native-search.md`, `RESULTS_2026-09-10_data-and-caveats.md` | T1, **F1** |
-| **4 Leg 1 - the shipped pitch controller** | **The paper's centre.** The search space (five ROSCO parameters, every candidate a tuning file, every box limit read off the plant); what the agent finds and how fast; the verified duty ladder; the one-line result. | s51-s53, s55; `rosco_search.csv`, `rosco_band_verified.csv`, `rosco_band_rows_fresh.csv` | T2, T3, **F2**, **F3** |
+| **4 Leg 1 - the shipped pitch controller** | **The paper's centre.** The search space (five ROSCO parameters, every candidate a tuning file, every box limit read off the plant); what the agent finds and how fast; the verified duty ladder; the one-line result and why the corner matters (the spectra, F8); the one-knob sweep as a control (T3, last row); candidates against delivery (4.4, T8). | s51-s53, s55, s63; `rosco_search.csv`, `rosco_band_verified.csv`, `rosco_band_rows_fresh.csv`, `rosco_sweep.csv`, `rosco_spectra.csv` | T2, T3, T8, **F2**, **F3**, F8 |
 | **5 Leg 2 - the untuned MPC** | The agent repairs a per-wind feasibility violation it did not design for, in 24 simulations, where random search does not. The set mean hides the entire repair - which is also C5 in action. | s33, s38, s57.2; `mpc_leg_fresh.csv`, `design_search.csv` | T4, F4 |
 | **6 Leg 3 - the learned layer** | A searched reward *structure* buys the level on top of the tuned baseline; the wind gate is where the layer may act (prior art, attributed). | s41, s56; `gated_native.csv`, `gated_residual.csv` | T5, F4 |
 | **7 The ladder, and what each rung costs** | The four reductions from shipped to the full stack, per term, with duty. The second rung is a trade, not an addition: no single decomposition exists. | s54; `ladder_published_fresh.csv` | T6, **F5** |
 | **8 How the numbers were read** (discipline) | Aggregation convention and wind weighting; the per-wind constraint; actuator duty. v6's claim, demoted to method. | s42, s48, s52.3; `lifetime_del.csv`, `wohler.csv` | T7, F6 |
 | **9 Discussion** | What transfers (the space and the protocol), what the loop costs, and - in one short paragraph - **what this does not show**, pointing at the appendix (see §6). | - | - |
-| **10 Conclusion** | C1-C5, nothing new. | - | - |
+| **10 Conclusion** | C1-C3, nothing new. | - | - |
 
 v6's `main.tex` is the substrate: its §3 setup, §5.2 aggregation, §5.3 Wohler, §5.6 actuation and appendices
 A-G are reusable almost as they stand. What changes is that §5's organising principle becomes the three legs
@@ -100,6 +103,7 @@ instead of the six reporting choices, and the composite leaves every reported nu
 | **F5** | **The ladder**, four published reductions per rung with paired bootstrap bars. **No composite panel, and the hand-scaled baseline is not a rung.** | the same arrays as T6 | **done**: `f5_stack.png`, same script |
 | **F6** | **Weighting**: Rayleigh weights for classes I-III, and the same controllers equally weighted and site weighted, **on the native baseline** (the v6 panel was keyed on the hand-scaled row). | `lifetime_del.csv` as `lifetime_del.py --csv` now writes it | **done**: `f5_weighting.png`, `scripts/dev/figures_weighting.py` |
 | **F7** | **Before and after, as levels** (the user's request of 2026-10-15): the per-episode quantities the reductions are computed from, bin means per wind speed, the shipped controller overlaid with the agent's two tuning files (top row) and the untuned MPC with the agent-scheduled one (bottom row), MSE panels logarithmic. The shipped level is derived from each evaluation's own reduction and must agree across evaluations file by file; the script checks it (6e-16). | the four evaluations' own CSV/JSON pairs | **done**: `f5_overlay.png`, `scripts/dev/figures_overlay.py` |
+| **F8** | **Why the corner matters** (review round 1): the first-order speed filter's gain at the plant's landmarks (loop 0.6, tower mode 2.04, 3P 3.80 rad/s) for the shipped corner, 3.0 and 6.5, beside the measured PSDs of the generator-speed error, the tower-base moment and the pitch rate of the three files on the seven fresh fields of seed 7, averaged over wind speed. | `~/wtrl/exp/rosco_spectra`, `rosco_spectra.csv` | **done**: `f5_spectra.png`, `scripts/dev/rosco_spectra.py` (simulates with `--dump_log`, then draws) |
 
 F2-F5 are drawn from the arrays their tables are made from, not from a parallel path: `figures_leg1.py`
 re-derives the first feasible gain of all 21 runs and **exits non-zero if any of them, or any arm's count and
@@ -126,6 +130,9 @@ duty knee, s26) and `../figures/r3_*.png` (R3 trajectories) are appendix candida
 | **T5** | **Leg 3.** The gated layer on the native baseline, three seeds, paired against its own base, both seed sets. | `gated_native.csv` | `scripts/dev/gated_native_table.py` |
 | **T6** | **The ladder** in four published reductions, fresh seeds, with duty. | `ladder_published_fresh.csv` | `scripts/dev/ladder_published.py` |
 | **T7** | **Three aggregations** of five controllers (native baseline, the agent's one-line row, the scheduled MPC, the two gated rungs): per-episode mean, level ratio equally weighted, Rayleigh at V_ave 10 / 8.5 / 7.5, for tower DEL and speed MSE. | `lifetime_del.csv` | `scripts/dev/lifetime_del.py --csv` (rows moved to the native baseline on 2026-10-15; the hand-scaled row is out) |
+| **T8** | **Candidates and deliveries per arm** (4.3): candidates, plant failures, feasible gains on the set mean, per-wind gains on the design screen; runs with a gain, selections shipping under the search's rule, with one point of margin, under the completed rule. | `rosco_proposer_test*.csv`, the run histories | `scratchpad` counts of s63 (`arm_counts.py`), hand into `main.tex` |
+| **T9** | **The band of ten** (App. E): every band member with its design regulation, travel, held-out and fresh regulation and worst cell, and whether it meets the tolerance on both sets; the four that do are T2. | `rosco_band_verified.csv` | generated into `main.tex` by the s63 apply script |
+| **T10** | **Per-wind load terms with intervals** of the four T2 rows (App. E): bin means over the eight pooled episodes per wind speed with 95 % bootstrap intervals, the worst cell, and the share of episode resamples with the worst cell inside the tolerance and above zero. | `band_perwind_intervals.csv` | `scripts/dev/band_perwind_intervals.py` |
 
 Appendix tables: `gate_proposer_control.csv` (A3), `range_residual.csv` (A3), `rosco_proposer_test.csv`
 (A1-A2, the same file read under the shipping rule), `wohler.csv` (A5), `verification_probe.csv`,
@@ -151,7 +158,7 @@ to distrust everything else in the paper.
 **Recommendation, costing three sentences in §9:** state that the proposer comparison against two dedicated
 searches was pre-registered and came out null at n = 6, that under the shipping rule the classical arms
 delivered more often than the agent arm, and that both are reported in full in appendix A1-A2. The positive
-claims C1-C5 do not depend on either, so the disclosure costs the paper nothing and buys it the one thing a
+claims C1-C3 do not depend on either, so the disclosure costs the paper nothing and buys it the one thing a
 null result can buy: the referee believes the rest.
 
 ## 7. Wording guardrails that survive into LaTeX
@@ -165,7 +172,7 @@ null result can buy: the referee believes the rest.
 3. The gate is **prior art** - Kim (arXiv:2609.21307), Abbas (IET CTA 2026) - attributed where it is
    introduced; the MPC weight schedule is Wintermeyer-Kallen et al. (2021); offset-free MPC in wind is Liu
    et al. (IEEE TII 2024). Our claim on each is the measurement, never the formulation.
-4. C4 is **post hoc**, and it says that none of the agent's candidates destabilised the plant, i.e. it is
+4. The admissibility count is **post hoc**, and it says that none of the agent's candidates destabilised the plant, i.e. it is
    about the admissibility of the proposals. It is **not** evidence that the delivered tunings are more
    robust - no gain or phase margin and no plant-parameter sweep was run on them.
 5. Name the band member used in every comparison; the baseline is a band from 0.97x to 2.02x travel, not a
@@ -210,3 +217,13 @@ null result can buy: the referee believes the rest.
    §9, app. E in full with two disclosures (the task text's history list carried no shipped row to anchor
    zero; the arms receive the rule asymmetrically). The precision condition for a §8 statement (0.9 with at
    least ten selections) was not met on count, so §8 keeps its four instances.
+7. **Review round 1 (2026-10-19, `../manuscript/Review.md`, roadmap s63).** Accepted into the manuscript:
+   the abstract carries the pre-registered null and is shorter; the title names the three objects; three
+   contributions; 4.4 separates candidate quality from delivery (T8); the one-line row is printed with its
+   per-wind intervals and its 0.02 points of room (T10) and without "nothing is traded"; the band of ten is
+   listed (T9); the one-knob sweep is a control row of T3 (its selection is the agent's 6.5 rad/s row, which
+   ships; its first grid point is a gain, which is not a search result because the sweep knows the knob); the
+   spectra are F8; 6 states the gated null in the text; the counts are corrected (504 candidate evaluations,
+   485 distinct, 38 plant failures and one evaluation that did not complete). Declined: a joint non-inferiority
+   test across cells (the rule stays a point rule; the limitation is stated) and a load-threshold line on
+   F2(b) (its axes are regulation and duty).
