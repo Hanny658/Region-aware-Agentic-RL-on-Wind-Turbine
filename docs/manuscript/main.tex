@@ -107,20 +107,23 @@ Figure~\ref{fig:loop} is the whole method. A proposer writes a candidate as a JS
 \centering
 \resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[font=\small, node distance=5mm and 7mm,
-  box/.style={draw, rounded corners=2pt, align=center, inner sep=4pt, minimum height=9mm},
+  box/.style={draw, rounded corners=2pt, align=center, inner sep=4pt, text width=36mm, minimum height=17mm},
   arr/.style={-{Latex[length=2mm]}, thick}]
-  \node[box, fill=red!8] (agent) {proposer\\(the LLM agent, or a classical search)};
-  \node[box, right=of agent] (file) {candidate\\a complete tuning file: five ROSCO parameters};
+  % the deterministic half is two rows of boxes; the proposer stands outside it on the left, centred on the
+  % two rows, and its two arrows run in the gap between it and the dashed box
+  \node[box] (file) {candidate\\a complete tuning file: five ROSCO parameters};
   \node[box, right=of file] (sim) {OpenFAST, 600\,s\\7 wind speeds $\times$ 2 seeds, paired to shipped};
-  \node[box, below=of sim] (metrics) {four reductions, energy, travel, duty;\\per-wind load terms; bootstrap intervals};
-  \node[box, left=of metrics] (rule) {constrained rule\\maximise regulation s.t. loads, energy no worse};
-  \node[box, left=of rule] (hist) {history\\every candidate, kept or not};
-  \draw[arr] (agent) -- (file);
+  \node[box, right=of sim] (metrics) {four reductions, energy, travel, duty; per-wind load terms; bootstrap intervals};
+  \node[box, below=of metrics] (rule) {constrained rule\\maximise regulation s.t.\ loads, energy no worse};
+  \node[box, anchor=north] (hist) at (rule.north -| sim) {history\\every candidate,\\kept or not};
+  \node[box, fill=red!8, text width=28mm, anchor=east, xshift=-7mm] (agent)
+        at ($(file.west)!0.5!(file.west |- hist.west)$) {proposer\\(the LLM agent, or a classical search)};
+  \draw[arr] ([yshift=3mm]agent.east) -- ++(3.5mm,0) |- (file.west);
   \draw[arr] (file) -- (sim);
   \draw[arr] (sim) -- (metrics);
   \draw[arr] (metrics) -- (rule);
   \draw[arr] (rule) -- (hist);
-  \draw[arr] (hist) -- (agent);
+  \draw[arr] (hist.west) -| ([xshift=3.5mm,yshift=-3mm]agent.east) -- ([yshift=-3mm]agent.east);
   \node[draw, dashed, rounded corners=3pt, inner sep=5pt, fit=(file) (sim) (metrics) (rule) (hist),
         label={[font=\scriptsize]below:the deterministic half: nothing the proposer says is kept unless the plant confirms it}] {};
 \end{tikzpicture}}
@@ -345,8 +348,10 @@ MPC + layer (seed 1) & 18.9 & 29.4 & 40.6 & 43.7 & 46.0 & 58.0 & 64.9 & 43.7 & 3
 \label{sec:conclusion}
 A language-model agent placed in the simulation loop of a wind turbine's pitch controller, with the simulator deciding everything the agent proposes, found in eight simulations that one line of the shipped ROSCO tuning file is worth 23\,\% of generator-speed regulation and 9\,\% of tower-base fatigue at the shipped pitch duty, and a second line worth 28\,\% and 16\,\% for 1.65 times the travel, each holding every load term at every wind speed on 56 episodes it was not designed on, where random search over the same box found nothing in 72. The same loop repaired an untuned model-predictive controller's per-wind feasibility failure in 24 simulations and wrote the reward structure of a learned layer that adds six points of regulation to the tuned baseline without losing tower fatigue. Across 144 candidates it proposed none the plant could not run. The protocol under which this was measured, loads per wind speed off the design winds, paired intervals, duty beside every row, is what makes the claims checkable, and it is the part of this paper that should outlive its numbers.
 
+\clearpage
 \bibliographystyle{plainnat}
 \bibliography{references}
+\clearpage
 
 \appendix
 

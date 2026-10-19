@@ -168,13 +168,13 @@ if os.path.exists(base):
             axb.scatter([bx], [by], s=44, marker="D", c="#333333", zorder=5,
                         label="stage 1, the fixed recipe")
             axb.annotate("stage 1 (fixed recipe,\nnot an agent arm)", (bx, by), textcoords="offset points",
-                         xytext=(13, 9), fontsize=7, color="#333333", ha="left",
+                         xytext=(13, -8), fontsize=7, color="#333333", ha="left", va="top",
                          arrowprops=dict(arrowstyle="-", lw=0.6, color="#777777"))
 
 LBL = {"llm_r1#9": ("one line of the shipped file\n(corner 1.57 -> 3.0), 1.00x travel", (13, -3), "left"),
        "llm_r1#11": ("the same line at 6.5", (-13, -13), "right"),
        "local_r0#22": ("sub-shipped duty, 0.97x", (13, -2), "left"),
-       "llm_r1#12": ("the most regulating row:\n-1.17 at 24 m/s", (-13, -18), "right")}
+       "llm_r1#12": ("the most regulating row:\n-1.17 at 24 m/s", (18, -22), "left")}
 for r in band:
     key = r.get("from", "")
     if key in LBL:
@@ -188,6 +188,7 @@ axb.set_ylabel("generator-speed MSE reduction, fresh seeds, %")
 axb.set_title("(b) off the design winds: 28 held-out + 28 fresh episodes")
 axb.legend(loc="lower right", frameon=False)
 fig.tight_layout()
+fig.subplots_adjust(wspace=0.30)          # the (a) title overhangs its axes; keep it off the (b) y label
 fig.savefig(f"{a.out}/f5_front.png", bbox_inches="tight")
 print(f"-> {a.out}/f5_front.png")
 

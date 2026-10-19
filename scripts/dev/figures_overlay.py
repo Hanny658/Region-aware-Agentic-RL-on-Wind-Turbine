@@ -50,8 +50,8 @@ LEG2 = [
 ]
 # column in the CSV (the level), key in the JSON (the reduction), panel title, y label
 TERMS = [
-    ("power_mse_R3", "power_mse_red_pct", "power MSE", "per-episode power MSE, as scored"),
-    ("gen_speed_mse_R3", "gen_speed_mse_red_pct", "generator-speed MSE", "per-episode speed MSE, as scored"),
+    ("power_mse_R3", "power_mse_red_pct", "power MSE", "power MSE, as scored"),
+    ("gen_speed_mse_R3", "gen_speed_mse_red_pct", "generator-speed MSE", "speed MSE, as scored"),
     ("TwrBsMyt_DEL_MNm", "TwrBsMyt_DEL_red_pct", "tower-base DEL", "DEL, MN m"),
     ("RootMyc1_DEL_MNm", "RootMyc1_DEL_red_pct", "blade-root DEL", "DEL, MN m"),
 ]
@@ -121,16 +121,27 @@ for row, (leg, colours, styles) in enumerate(((LEG1, ("#55A868", "#2E7D4F"), ("-
         else:
             ax.set_xlabel("mean wind speed, m/s")
         ax.set_ylabel(ylab)
+# the two row headers are long and must not take part in the layout computation: with them in it, tight_layout
+# reserved the width of the header text for the first column and squeezed every panel to a third of its width
 axes[0][0].annotate("leg 1: the shipped pitch loop, tuned by the agent", (0.0, 1.16), xycoords="axes fraction",
-                    fontsize=8.5, fontweight="bold", ha="left")
+                    fontsize=8.5, fontweight="bold", ha="left", in_layout=False)
 axes[1][0].annotate("leg 2: the untuned MPC, scheduled by the agent", (0.0, 1.06), xycoords="axes fraction",
-                    fontsize=8.5, fontweight="bold", ha="left")
+                    fontsize=8.5, fontweight="bold", ha="left", in_layout=False)
+for ax in axes[1]:
+    ax.set_xticks([12, 16, 20, 24])
 h1, l1 = axes[0][0].get_legend_handles_labels()
 h2, l2 = axes[1][0].get_legend_handles_labels()
 fig.legend(h1 + h2[1:], l1 + l2[1:], loc="lower center", ncol=3, frameon=False, bbox_to_anchor=(0.5, -0.07))
 fig.suptitle(f"the levels the reductions are computed from: bin means over {len(common)} fresh-seed episodes "
              f"({a.seeds[1:]}), every curve on the same wind files", fontsize=8.5, y=1.03)
-fig.tight_layout()
+fig.tight_layout(h_pad=3.0)             # room for the second row header
+for _ in range(3):                      # each panel as long along the wind axis as it is tall
+    w, h = fig.get_size_inches()
+    boxes = [ax.get_position() for ax in axes.flat]
+    aw = float(np.mean([b.width for b in boxes])) * w
+    ah = float(np.mean([b.height for b in boxes])) * h
+    fig.set_size_inches(w, h * aw / ah)
+    fig.tight_layout(h_pad=3.0)
 fig.savefig(f"{a.out}/f5_overlay.png", bbox_inches="tight")
 print(f"-> {a.out}/f5_overlay.png")
 
