@@ -4124,3 +4124,75 @@ and open item 1 (the selection rule is no longer open: the completed rule ships 
 episodes at 24 m/s), `NARRATIVE.md` §8 item 6, `APPENDIX_PLAN.md` D3, `EVIDENCE.md` §4.4, `README.md` §62,
 CLAUDE.md. Tables: `rosco_proposer_test_rule6_campaign.csv` committed with this section. Nothing of s62.4 is
 pending; do not launch any of its scripts again.
+
+## 63 Review round 1 (2026-10-19): what the manuscript accepts, two counts corrected, and two additions pre-registered
+
+**The review (`docs/manuscript/Review.md`, the user's reviewer notes of 2026-10-19), read against the data.** Accepted and
+applied to the manuscript in this section's commits: the abstract states the pre-registered null (no significant
+difference from local search or Bayesian optimisation on simulations to the first feasible gain) and is shortened;
+the title no longer names only leg 1; the contributions are three; §4 gains a short subsection that separates
+candidate quality from the delivered controller (candidate-level and run-level counts in one table, App. E for
+the mechanism) and says how the rows of Table 2 were determined (band fixed on the design set, verified on both
+held-out sets, the four that hold on both printed; fresh seeds generated after every controller was frozen);
+the load wording is the pre-specified tolerance, not "holds"; "nothing is traded" and "exactly the shipped
+duty" are gone (travel 1.000x on fresh seeds, 1.004x on the design set, ADC 0.048 against 0.0476); a per-wind
+table with intervals for the Table 2 rows (held-out and fresh pooled, eight episodes per cell, and the share of
+episode resamples in which the worst cell stays inside the tolerance); §6 states in the text that under the gate
+a random reward structure holds in 3 of 3 seeds as the agent's does (s58), pointing to App. F; "the same loop,
+unchanged" becomes the same proposal-and-verification architecture with each space's evaluator and selection
+rule; every "the MPC buys regulation with tower fatigue" carries its aggregation (per episode; the site-weighted
+reading reverses it, Table 7); the count of candidates is corrected (below). Declined or deferred: a formal
+joint non-inferiority test across winds and loads (the rule stays the pre-specified point rule; the limitation
+is stated); a neutral rewording of the research question (the narrative of s60 stands, the abstract carries the
+null); Fig. 2(b) load-threshold line (the panel's axes are regulation and duty; the per-wind loads are Fig. 5).
+
+**Two counts corrected.** §4.2 said 561 tunings were proposed in the 21 runs; the histories hold **504 candidate
+evaluations** (21 x 24), **485 distinct tunings** (19 proposed by more than one run), of which 210 held the three
+set-mean constraints and 113 also held both loads at every wind speed on the design screen. The 561 of s59.6 is
+not reproducible from the histories and is withdrawn. Fig. 2 said 39 could not run and Table 3 summed to 38:
+**38 are plant divergences** (`failure_kind` diverged: 0 agent, 13 local, 9 bayes, 16 random) and the 39th is
+**bayes r4 #20 (omega 0.456 zeta 0.163 corner 0.336 damper 0.0001), whose evaluation did not complete for a reason
+unrelated to the plant** (`failure_kind` infrastructure, n_episodes 0) and which counts as a failed candidate of
+that run. App. C's "zero infrastructure failures" was therefore wrong by one and is corrected; the figure counts
+38 and names the one. Terminology fixed for the manuscript: candidate evaluations (504), distinct tunings (485),
+plant failures (38), one evaluation that did not complete.
+
+### 63.1 The one-knob control, pre-registered (`scripts/wsl/campaign_review1.sh`, `rosco_search.py --proposer sweep`, `scripts/dev/rosco_sweep_report.py`, `docs/tables/rosco_sweep.csv`)
+
+The reviewer's question: would a physics-informed sweep of the one parameter the agent changed, on the agent's
+budget, find the same row? The sweep is what an engineer with the agent's landmarks and no search would do: the
+generator-speed filter corner alone, shipped gains, damper off, upward from the first tower fore-aft mode on a
+roughly log-spaced grid through 3P towards the filter ceiling - **2.04, 2.5, 3.0, 3.8, 5.0, 6.5, 8.5, 11.0 rad/s,
+eight design-set evaluations in that order** (the budget in which the agent found its one-line row), one run,
+no randomness. Fixed here before it ran. Four of the eight grid points are in the design-set cache already (3.0,
+3.8, 5.0, 6.5: the ladder of s52.3, read from the agent's run), which is stated, not hidden: the sweep is a
+reading of the same evaluations plus four new ones.
+
+**Endpoints.** (1) Simulations to the first candidate feasible on the set mean with positive regulation, and to
+the first holding the per-wind screen. (2) The sweep's selection under each of the three rules (set mean,
+per-wind screen, completed rule), measured on held-out seeds 3-6 and fresh seeds 7-10 through the same evaluator
+and cache as every arm; ships under the unchanged rule. (3) Regulation and pitch travel of what ships, beside the
+agent's one-line row (+23.0 at 1.000x fresh) and its 6.5 row (+28.4 at 1.647x).
+
+**What each outcome means, decided now.** A sweep that ships a row within the agent's band says the finding is a
+property of the shipped file - its corner has room, and the one-knob sweep is the cheapest way to see it - and the
+agent is one mechanism that finds it; the manuscript says exactly that, as a control, in §4.2 and Table 3, and
+claims no more for the agent. A sweep whose selection fails off the design winds (the upper grid points lose
+the tower-base load at 24 m/s on fresh seeds, as the s55 band members above 6.5 did) says the one-knob sweep
+needs the same screen as every search. Neither outcome supports a proposer claim in either direction.
+
+### 63.2 The spectra, pre-registered as an analysis (`scripts/dev/rosco_spectra.py`, `f5_spectra.png`, `docs/tables/rosco_spectra.csv`)
+
+The manuscript explained the one-line result in words ("the shipped corner costs the loop phase") without
+showing it. Three files differing in one line (corner 1.5708, 3.0, 6.5) are run on the seven fresh fields of
+seed 7 with per-step logs kept, and the power spectral densities of the generator-speed error, the tower-base
+fore-aft moment and the pitch rate are drawn, averaged over wind speed, beside the first-order filter's gain
+at the plant's landmarks. The analytic part is fixed in advance: at the loop's own frequency (omega_pc = 0.6
+rad/s) the filter lags by atan(0.6/corner) = 20.9 deg at 1.57, 11.3 at 3.0, 5.3 at 6.5; it passes 61 / 83 / 95 %
+of the tower mode (2.04 rad/s) and 38 / 62 / 86 % of 3P (3.80). Expected in the measured spectra, to be
+confirmed or not: less low-frequency speed-error power with the faster corner (the regulation), more pitch-rate
+power in the tower and 3P bands (the duty), the tower-moment spectrum lower around the tower mode at 3.0 and
+not raised at 6.5. No endpoint; the figure and the band powers go into §4.1 as the mechanism.
+
+Launched together as `campaign_review1.sh` (sid `campaign_review1`, log `~/wtrl/exp/review1.log`, pausable with
+`campaign_ctl.sh ... campaign_review1`), about one hour.

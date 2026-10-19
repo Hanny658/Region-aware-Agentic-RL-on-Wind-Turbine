@@ -16,6 +16,8 @@ the next point:
              the constraints and the whole history
     tune     the recipe of roadmap s29, half random draws then a local search -- used to re-derive the paper's
              tuned baseline in the native parameterisation, not as an arm of the comparison
+    sweep    the one-knob control of roadmap s63: the generator-speed filter corner alone, shipped gains, damper
+             off, on a fixed grid between the tower mode and the filter ceiling (SWEEP_GRID), in grid order
 
 The searched quantities are ROSCO's own (`scripts/rosco_native.py`: omega_pc, zeta_pc, F_LPFCornerFreq, FA_KI,
 FA_HPFCornerFreq), every box limit is read off the plant, and selection is the constrained rule of
@@ -106,6 +108,22 @@ def _uniform(n, rng):
 
 def propose_random(hist, n, rng, **_):
     return _uniform(n, rng), "draw from the box"
+
+
+# roadmap s63 (review round 1): what an engineer with the agent's landmarks and no search would do - sweep the one
+# knob the shipped file leaves to a rule of thumb, upward from the tower mode (2.04 rad/s) on a roughly log-spaced
+# grid through 3P (3.80) towards the filter ceiling, eight points, the budget the agent's one-line row took.
+# Fixed before the sweep ran; not a search, so one run.
+SWEEP_GRID = [2.04, 2.5, 3.0, 3.8, 5.0, 6.5, 8.5, 11.0]
+
+
+def propose_sweep(hist, n, rng, **_):
+    done = len(hist) - 1
+    pts = SWEEP_GRID[done:done + n]
+    if not pts:
+        return _uniform(n, rng), "the grid is exhausted: draw from the box"
+    return ([canon({**START, "lpf_corner": g}) for g in pts],
+            f"corner sweep, grid point{'s' if len(pts) > 1 else ''} {', '.join(f'{g:g}' for g in pts)} rad/s")
 
 
 def propose_local(hist, n, rng, **_):
@@ -332,7 +350,7 @@ def propose_llm(hist, n, rng, client=None, **_):
 
 
 PROPOSERS = {"random": propose_random, "local": propose_local, "bayes": propose_bayes,
-             "llm": propose_llm, "tune": propose_tune}
+             "llm": propose_llm, "tune": propose_tune, "sweep": propose_sweep}
 
 
 def main():
