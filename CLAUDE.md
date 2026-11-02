@@ -529,6 +529,15 @@ F (tower-DEL priority with constraint tiers) stays computable for the historical
 
 ### Infrastructure, data, and F-era history
 
+- **THE WSL EXPERIMENT ENVIRONMENT WAS REMOVED ON 2026-11-02 (user's request, disk space): nothing can be
+  simulated until it is rebuilt.** Everything is in `G:\wind-n-openfast-backup\wsl` as plain tar files with a
+  MANIFEST.txt (sha256, entry counts): `wtrl.tar` and `wtrl600.tar` (2026-09-26) hold the wind banks (`wind/`
+  192 files, `wind600/` 370) and both baseline sets (82 + 100 files), verified file by file against WSL on
+  2026-11-02 (identical: no wind field was generated after 2026-09-26); `wtrl_exp_2026-11-02.tar` holds every
+  campaign of s52-s63 (`~/wtrl/exp`, `runs`, `schedules`, logs); the four range environments have their own
+  archives. Rebuild: `WTRL_SKIP_WIND=1 bash scripts/wsl/bootstrap.sh`, then extract the wind, wind600 and
+  baselines trees of `wtrl.tar`, all of `wtrl600.tar`, and the exp archive if the caches are wanted. The
+  committed tables in `docs/tables/` are the paper's evidence and need none of it.
 - **After any interruption (VM restart, full disk) run `scripts/dev/integrity_check.py --since <time> [--delete]` FIRST:**
   a full disk left 7 zero-byte TurbSim fields (the generator skips existing names) and 9 unreadable baseline .npz.
 - Data: WSL `~/wtrl/{exp,wind,baselines/openfast}`, copy at `../wtrl-data/`; J tables via
